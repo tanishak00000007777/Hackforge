@@ -1,0 +1,17 @@
+from app.routers import (
+    auth,
+    users,
+    organizations,
+    hackathons,
+    tracks,
+    registrations,
+    teams,
+    submissions,
+    judges,
+    scores,
+    leaderboard,
+    certificates,
+    announcements,
+    sponsors,
+    analytics,
+)
