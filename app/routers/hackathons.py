@@ -34,3 +34,20 @@ async def publish(
     db: AsyncSession = Depends(get_db),
 ):
     return await publish_hackathon(hackathon_id, current_user, db)
+
+
+@router.patch("/{hackathon_id}/website-config", response_model=HackathonResponse)
+async def update_config(
+    hackathon_id: uuid.UUID,
+    config: dict,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.services.hackathon_service import update_website_config
+    return await update_website_config(hackathon_id, config, current_user, db)
+
+
+@router.get("/", response_model=list[HackathonResponse])
+async def list_published(db: AsyncSession = Depends(get_db)):
+    from app.services.hackathon_service import get_all_hackathons
+    return await get_all_hackathons(db)
