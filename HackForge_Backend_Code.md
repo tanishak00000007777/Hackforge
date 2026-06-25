@@ -1,6 +1,49 @@
 # HackForge Backend — Complete Code Documentation
 > Python FastAPI + Supabase PostgreSQL
-> Everything built in today's session, phase by phase.
+> Written so that anyone — even a beginner — can understand, run, and extend this project.
+
+---
+
+## What is This Project?
+
+HackForge is a platform where organizers can create and run hackathons. Think of it like "Shopify for hackathons" — one platform that handles everything:
+- Organizers create events and manage participants
+- Participants register, form teams, and submit projects
+- Judges score submissions using a rubric
+- Leaderboard and certificates are generated automatically
+
+This document covers the **backend only** — the API that the frontend talks to.
+
+---
+
+## How the Backend Works (Simple Explanation)
+
+```
+Frontend (React)
+      ↓  sends HTTP requests
+FastAPI (our backend)
+      ↓  reads/writes data
+Supabase PostgreSQL (our database hosted in the cloud)
+```
+
+When the frontend wants to register a user, it sends a POST request to our API.
+Our API validates the data, hashes the password, saves it to Supabase, and returns a response.
+That's it. Every feature works this same way.
+
+---
+
+## Tech Stack — What We Use and Why
+
+| Tool | What it does | Why we chose it |
+|------|-------------|----------------|
+| **FastAPI** | Web framework — handles HTTP requests | Fast, modern, auto-generates Swagger docs |
+| **SQLAlchemy (Async)** | Talks to the database | Handles multiple requests at the same time without slowing down |
+| **asyncpg** | PostgreSQL driver | Async version — works with our async SQLAlchemy |
+| **Alembic** | Database migrations | Tracks every change to the database like Git tracks code |
+| **Pydantic** | Data validation | Automatically checks that incoming data is correct |
+| **python-jose** | JWT tokens | Handles login sessions securely |
+| **passlib + bcrypt** | Password hashing | Converts plain passwords to unreadable hashes |
+| **Supabase** | Cloud PostgreSQL database | Free tier, easy setup, has a dashboard to view data |
 
 ---
 
@@ -9,33 +52,56 @@
 ```
 hackforge/
 └── backend/
-    ├── alembic/
-    │   ├── versions/
-    │   │   └── 6fab80cbbd75_create_users_table.py   ← auto-generated migration
-    │   ├── env.py                                    ← alembic configuration
-    │   └── script.py.mako                            ← migration template
+    ├── alembic/                          ← Database migration files
+    │   ├── versions/                     ← One .py file per migration
+    │   ├── env.py                        ← Alembic configuration
+    │   └── script.py.mako               ← Template for new migrations
+    │
     ├── app/
     │   ├── __init__.py
-    │   ├── main.py                                   ← FastAPI entry point
+    │   ├── main.py                       ← App entry point. Registers all routers.
+    │   │
     │   ├── config/
-    │   │   ├── __init__.py
-    │   │   └── settings.py                           ← env vars
+    │   │   └── settings.py              ← Reads .env file. All config lives here.
+    │   │
     │   ├── core/
-    │   │   ├── __init__.py
-    │   │   ├── database.py                           ← DB engine + session
-    │   │   ├── dependencies.py                       ← JWT auth dependency
-    │   │   └── security.py                           ← JWT create/decode
-    │   ├── models/
-    │   │   ├── __init__.py                           ← imports all models
-    │   │   ├── base_model.py                         ← shared id, created_at, updated_at
-    │   │   └── user.py                               ← User table
-    │   ├── schemas/
-    │   │   ├── __init__.py
-    │   │   └── user.py                               ← pydantic request/response
-    │   ├── routers/
-    │   │   ├── __init__.py                           ← imports all routers
-    │   │   ├── auth.py                               ← /auth/register, /auth/login
-    │   │   ├── users.py
+    │   │   ├── database.py              ← Creates DB connection and session
+    │   │   ├── dependencies.py          ← get_current_user() — used in all protected routes
+    │   │   └── security.py             ← Creates and decodes JWT tokens
+    │   │
+    │   ├── models/                      ← Database tables (SQLAlchemy ORM)
+    │   │   ├── __init__.py             ← MUST import every model here for Alembic
+    │   │   ├── base_model.py           ← Parent class: gives id, created_at, updated_at to all models
+    │   │   ├── user.py                 ← users table
+    │   │   ├── organization.py         ← organizations table
+    │   │   ├── hackathon.py            ← hackathons table
+    │   │   ├── registration.py         ← registrations table
+    │   │   ├── team.py                 ← teams table
+    │   │   ├── team_member.py          ← team_members table
+    │   │   ├── track.py                ← tracks table
+    │   │   ├── submission.py           ← submissions table
+    │   │   ├── judge.py                ← judges table
+    │   │   ├── rubric_criteria.py      ← rubric_criteria table
+    │   │   ├── score.py                ← scores table
+    │   │   ├── certificate.py          ← certificates table
+    │   │   └── announcement.py         ← announcements table
+    │   │
+    │   ├── schemas/                     ← What the API accepts and returns (Pydantic)
+    │   │   ├── user.py
+    │   │   ├── organization.py
+    │   │   ├── hackathon.py
+    │   │   ├── registration.py
+    │   │   ├── team.py
+    │   │   ├── track.py
+    │   │   ├── submission.py
+    │   │   ├── judge.py
+    │   │   ├── score.py
+    │   │   ├── certificate.py
+    │   │   └── announcement.py
+    │   │
+    │   ├── routers/                     ← URL routes. One file per feature.
+    │   │   ├── __init__.py             ← Imports all routers
+    │   │   ├── auth.py                 ← /auth/register, /auth/login
     │   │   ├── organizations.py
     │   │   ├── hackathons.py
     │   │   ├── tracks.py
@@ -43,79 +109,101 @@ hackforge/
     │   │   ├── teams.py
     │   │   ├── submissions.py
     │   │   ├── judges.py
-    │   │   ├── scores.py
     │   │   ├── leaderboard.py
     │   │   ├── certificates.py
     │   │   ├── announcements.py
-    │   │   ├── sponsors.py
     │   │   └── analytics.py
-    │   ├── services/
-    │   │   ├── __init__.py
-    │   │   └── auth_service.py                       ← register + login logic
-    │   ├── middleware/
-    │   │   └── __init__.py
+    │   │
+    │   ├── services/                    ← Business logic. Routers call these.
+    │   │   ├── auth_service.py
+    │   │   ├── organization_service.py
+    │   │   ├── hackathon_service.py
+    │   │   ├── registration_service.py
+    │   │   ├── team_service.py
+    │   │   ├── track_service.py
+    │   │   ├── submission_service.py
+    │   │   ├── judging_service.py
+    │   │   ├── leaderboard_service.py
+    │   │   ├── certificate_service.py
+    │   │   ├── announcement_service.py
+    │   │   └── analytics_service.py
+    │   │
     │   └── utils/
-    │       ├── __init__.py
-    │       └── hashing.py                            ← bcrypt password hashing
-    ├── venv/
-    ├── .env                                          ← secret, never commit
-    ├── .env.example
-    ├── alembic.ini
-    ├── requirements.txt
-    └── requirements-dev.txt
+    │       └── hashing.py              ← hash_password() and verify_password()
+    │
+    ├── venv/                            ← Python virtual environment (never commit)
+    ├── .env                             ← Secret keys and DB URL (never commit)
+    ├── .env.example                     ← Empty template — commit this one
+    ├── alembic.ini                      ← Alembic config file
+    ├── requirements.txt                 ← Production dependencies
+    └── requirements-dev.txt             ← Dev + test dependencies
 ```
 
 ---
 
-## Phase 1 — FastAPI Setup
+## The Golden Rule of This Project
 
-### `requirements.txt`
-```txt
-fastapi==0.111.0
-uvicorn[standard]==0.29.0
-sqlalchemy[asyncio]==2.0.30
-asyncpg==0.29.0
-alembic==1.13.1
-python-dotenv==1.0.1
-pydantic==2.7.1
-pydantic-settings==2.2.1
-email-validator==2.2.0
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-bcrypt==3.2.2
-python-multipart==0.0.9
-httpx==0.27.0
-supabase==2.5.0
 ```
+Router → Service → Database
 
-### `requirements-dev.txt`
-```txt
--r requirements.txt
-pytest==8.3.2
-pytest-asyncio==0.23.6
+Router:  only handles HTTP (receives request, returns response)
+Service: only handles business logic (validation, rules, calculations)
+Database: only stores and retrieves data
+
+NEVER write database queries inside a router.
+NEVER write business logic inside a router.
 ```
-
-> **Why asyncpg not psycopg2?**
-> We use async SQLAlchemy. psycopg2 is synchronous and will conflict with AsyncSession.
-> asyncpg is the async PostgreSQL driver.
-
-> **Why bcrypt==3.2.2 not 4.x?**
-> passlib 1.7.4 breaks with bcrypt >= 4.0.0 due to an internal API change.
 
 ---
 
-## Phase 2 — Supabase Connection
+## How to Run This Project
 
-### `.env`
+### Step 1 — Clone and setup
+```bash
+git clone https://github.com/tanishak00000007777/Hackforge.git
+cd Hackforge/backend
+
+python -m venv venv
+venv\Scripts\activate        # Windows
+source venv/bin/activate     # Mac/Linux
+
+pip install -r requirements.txt
+```
+
+### Step 2 — Configure environment
+```bash
+cp .env.example .env
+# Open .env and fill in your values
+```
+
+### Step 3 — Run migrations (creates all tables in Supabase)
+```bash
+alembic upgrade head
+```
+
+### Step 4 — Start the server
+```bash
+uvicorn app.main:app --reload
+```
+
+### Step 5 — Open Swagger docs
+```
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## Environment Variables (.env)
+
 ```env
 APP_NAME=HackForge
 APP_VERSION=0.1.0
 DEBUG=True
 SECRET_KEY=your-super-secret-key-change-this-in-production
 
-# Get this from Supabase → Connect button → URI
+# From Supabase → Connect button → URI
 # IMPORTANT: change postgresql:// to postgresql+asyncpg://
-DATABASE_URL=postgresql+asyncpg://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+DATABASE_URL=postgresql+asyncpg://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
 
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
@@ -123,685 +211,302 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 
-# From Supabase → Settings → API Keys
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 ```
 
-> **Never commit `.env` to GitHub.**
-> Always commit `.env.example` with empty values.
+> ⚠️ Never commit `.env` to GitHub. Only commit `.env.example` with empty values.
+
+> If your Supabase password contains `@`, it gets URL-encoded as `%40`. Keep it as `%40` in the URL — that is correct.
+
+---
+
+## All Database Tables
+
+| Table | What it stores |
+|-------|---------------|
+| `users` | All users — organizers, participants, judges |
+| `organizations` | The college or company that owns hackathons |
+| `hackathons` | Hackathon events with all settings |
+| `registrations` | Who registered for which hackathon |
+| `teams` | Teams within a hackathon |
+| `team_members` | Which users are in which team |
+| `tracks` | Problem tracks within a hackathon (e.g. AI, Web3) |
+| `submissions` | Project submissions from teams |
+| `judges` | Which users are judges for which hackathon |
+| `rubric_criteria` | Scoring criteria set by organizer |
+| `scores` | Individual scores given by judges |
+| `certificates` | Issued certificates with verification ID |
+| `announcements` | Updates sent by organizers to participants |
+
+Every table automatically has: `id` (UUID), `created_at`, `updated_at`
+
+---
+
+## All API Endpoints
+
+### 🔓 Public — No login required
+
+| Method | URL | What it does |
+|--------|-----|-------------|
+| GET | `/health` | Check if server is running |
+| POST | `/api/v1/auth/register` | Create a new account |
+| POST | `/api/v1/auth/login` | Login and get JWT tokens |
+| GET | `/api/v1/hackathons/{slug}` | Get a hackathon by its URL slug |
+| GET | `/api/v1/hackathons/` | List all published hackathons |
+| GET | `/api/v1/judges/{hackathon_id}/rubric` | View scoring rubric |
+| GET | `/api/v1/tracks/{hackathon_id}` | View tracks |
+| GET | `/api/v1/announcements/{hackathon_id}` | View announcements |
+| GET | `/api/v1/certificates/verify/{verification_id}` | Verify a certificate |
+
+### 🔐 Protected — Login required (send Bearer token in header)
+
+#### Organizations
+| Method | URL | What it does |
+|--------|-----|-------------|
+| POST | `/api/v1/organizations/` | Create an organization |
+| GET | `/api/v1/organizations/me` | Get my organizations |
+
+#### Hackathons
+| Method | URL | What it does |
+|--------|-----|-------------|
+| POST | `/api/v1/hackathons/{org_id}` | Create a hackathon |
+| POST | `/api/v1/hackathons/{id}/publish` | Publish the hackathon |
+| PATCH | `/api/v1/hackathons/{id}/website-config` | Update website design config |
+
+#### Tracks
+| Method | URL | What it does |
+|--------|-----|-------------|
+| POST | `/api/v1/tracks/{hackathon_id}` | Add a track |
+| DELETE | `/api/v1/tracks/{track_id}` | Delete a track |
+
+#### Registrations
+| Method | URL | What it does |
+|--------|-----|-------------|
+| POST | `/api/v1/registrations/{hackathon_id}` | Register for a hackathon |
+| GET | `/api/v1/registrations/{hackathon_id}` | List all registrations (organizer) |
+| PATCH | `/api/v1/registrations/{id}/status` | Approve / reject / waitlist |
+
+#### Teams
+| Method | URL | What it does |
+|--------|-----|-------------|
+| POST | `/api/v1/teams/{hackathon_id}` | Create a team |
+| POST | `/api/v1/teams/{hackathon_id}/join` | Join a team using invite code |
+| GET | `/api/v1/teams/{hackathon_id}/my-team` | Get my team |
+| DELETE | `/api/v1/teams/{hackathon_id}/leave` | Leave a team |
+
+#### Submissions
+| Method | URL | What it does |
+|--------|-----|-------------|
+| POST | `/api/v1/submissions/{hackathon_id}` | Create a submission |
+| PATCH | `/api/v1/submissions/{id}` | Update submission |
+| POST | `/api/v1/submissions/{id}/submit` | Finalize and submit |
+| GET | `/api/v1/submissions/{hackathon_id}/all` | List all submissions |
+
+#### Judging
+| Method | URL | What it does |
+|--------|-----|-------------|
+| POST | `/api/v1/judges/{hackathon_id}/invite` | Invite a judge |
+| POST | `/api/v1/judges/{hackathon_id}/accept` | Accept judge invitation |
+| POST | `/api/v1/judges/{hackathon_id}/rubric` | Add rubric criteria |
+| POST | `/api/v1/judges/scores/{submission_id}` | Submit a score |
+| GET | `/api/v1/judges/scores/{submission_id}` | Get scores for a submission |
+
+#### Results
+| Method | URL | What it does |
+|--------|-----|-------------|
+| GET | `/api/v1/leaderboard/{hackathon_id}` | Get ranked leaderboard |
+| POST | `/api/v1/certificates/{hackathon_id}/issue` | Issue a certificate |
+| GET | `/api/v1/certificates/me` | Get my certificates |
+| GET | `/api/v1/certificates/{hackathon_id}` | List all certificates for hackathon |
+
+#### Announcements
+| Method | URL | What it does |
+|--------|-----|-------------|
+| POST | `/api/v1/announcements/{hackathon_id}` | Post an announcement |
+
+#### Analytics
+| Method | URL | What it does |
+|--------|-----|-------------|
+| GET | `/api/v1/analytics/{hackathon_id}` | Get registration, team, submission, judge stats |
+
+---
+
+## How Authentication Works
+
+```
+1. User registers → password gets hashed → user saved in DB
+2. User logs in → password verified → two tokens returned:
+   - access_token  → expires in 60 mins → used for every API call
+   - refresh_token → expires in 7 days  → used to get new access token
+
+3. For protected routes, frontend sends:
+   Header: Authorization: Bearer <access_token>
+
+4. Backend decodes the token → gets user ID → fetches user from DB
+5. If token is invalid or expired → returns 401 Unauthorized
+```
+
+---
+
+## Key Files Explained
 
 ### `app/config/settings.py`
-```python
-from pydantic_settings import BaseSettings
-from functools import lru_cache
-
-
-class Settings(BaseSettings):
-    app_name: str = "HackForge"
-    app_version: str = "0.1.0"
-    debug: bool = False
-    secret_key: str
-
-    database_url: str
-
-    jwt_algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
-    refresh_token_expire_days: int = 7
-
-    allowed_origins: list[str] = ["http://localhost:3000"]
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-
-
-@lru_cache()
-def get_settings() -> Settings:
-    return Settings()
-```
-
-> **Why `@lru_cache()`?**
-> Without it, `.env` is read on every single request.
-> With it, `.env` is read once when the app starts and cached in memory.
+Reads all environment variables from `.env` once when the app starts.
+`@lru_cache()` means it only reads the file once — not on every request.
 
 ### `app/core/database.py`
-```python
-from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
-from sqlalchemy.orm import DeclarativeBase
-from app.config.settings import get_settings
-
-settings = get_settings()
-
-engine = create_async_engine(
-    settings.database_url,
-    echo=True,          # logs SQL queries — set False in production
-    future=True,
-    pool_pre_ping=True, # checks connection health before using it
-)
-
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=False,
-    autocommit=False,
-)
-
-
-class Base(DeclarativeBase):
-    pass
-
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
-```
-
-> **Why commit/rollback in get_db?**
-> If a route throws an error mid-transaction, rollback cleans up dirty data automatically.
-> Without this, failed requests can leave partial data in the session.
-
----
-
-## Phase 3 — Base Model
-
-### `app/models/base_model.py`
-```python
-import uuid
-from datetime import datetime
-from sqlalchemy import DateTime
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.sql import func
-from app.core.database import Base
-
-
-class BaseModel(Base):
-    """
-    Abstract base — never creates its own table.
-    Every model inherits from this instead of Base directly.
-    Gives every table: id, created_at, updated_at for free.
-    """
-    __abstract__ = True
-
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        nullable=False,
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False,
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
-    )
-```
-
-> **Why `__abstract__ = True`?**
-> Tells SQLAlchemy this class itself is not a table.
-> Only its children create actual tables in the database.
-
-> **Every future model follows this pattern:**
-> ```python
-> class Hackathon(BaseModel):
->     __tablename__ = "hackathons"
->     # id, created_at, updated_at are inherited automatically
->     title: Mapped[str] = mapped_column(String(255), nullable=False)
-> ```
-
-### `app/models/__init__.py`
-```python
-from app.models.base_model import BaseModel
-from app.models.user import User
-# add every new model here as you create it
-```
-
-> **Why import models here?**
-> Alembic discovers tables through `Base.metadata`.
-> If a model is not imported, Alembic cannot see it and will not migrate it.
-
----
-
-## Phase 4 — Authentication
-
-### `app/models/user.py`
-```python
-import enum
-from sqlalchemy import String, Boolean, Enum as SAEnum
-from sqlalchemy.orm import Mapped, mapped_column
-from app.models.base_model import BaseModel
-
-
-class UserRole(str, enum.Enum):
-    organizer = "organizer"
-    participant = "participant"
-    judge = "judge"
-    admin = "admin"
-
-
-class User(BaseModel):
-    __tablename__ = "users"
-
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, nullable=False, index=True
-    )
-    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[UserRole] = mapped_column(
-        SAEnum(UserRole), nullable=False, default=UserRole.participant
-    )
-    org_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
-```
-
-> **Columns inherited from BaseModel:** `id`, `created_at`, `updated_at`
-> **Why index=True on email?** Every login query searches by email. Index makes it fast.
-> **Why store hashed_password not password?** Plain text passwords are never stored. Ever.
-
----
-
-### `app/schemas/user.py`
-```python
-import uuid
-from datetime import datetime
-from enum import Enum
-from pydantic import BaseModel, EmailStr
-
-
-class UserRole(str, Enum):
-    organizer = "organizer"
-    participant = "participant"
-    judge = "judge"
-    admin = "admin"
-
-
-class UserCreate(BaseModel):
-    """What the API accepts when registering a new user"""
-    email: EmailStr
-    full_name: str
-    password: str
-    role: UserRole = UserRole.participant
-    org_name: str | None = None
-
-
-class UserLogin(BaseModel):
-    """What the API accepts when logging in"""
-    email: EmailStr
-    password: str
-
-
-class UserResponse(BaseModel):
-    """What the API returns — never includes hashed_password"""
-    id: uuid.UUID
-    email: EmailStr
-    full_name: str
-    role: UserRole
-    org_name: str | None
-    is_active: bool
-    is_verified: bool
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class TokenResponse(BaseModel):
-    """Returned after successful login"""
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-```
-
-> **Models vs Schemas — the key difference:**
-> - `models/user.py` = how the data is stored in the database (SQLAlchemy)
-> - `schemas/user.py` = what the API accepts and returns (Pydantic)
-> - `UserResponse` never includes `hashed_password` — security by design
-
----
-
-### `app/utils/hashing.py`
-```python
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-```
-
-> **How bcrypt works:**
-> `hash_password("password123")` → `$2b$12$randomsaltXXXXXXhashedvalue`
-> Every time you hash the same password, the result is different (random salt).
-> `verify_password` handles the comparison correctly despite different hashes.
-
----
-
-### `app/core/security.py`
-```python
-from datetime import datetime, timedelta, timezone
-from jose import JWTError, jwt
-from app.config.settings import get_settings
-
-settings = get_settings()
-
-
-def create_access_token(subject: str | int) -> str:
-    """
-    subject = user ID (UUID as string)
-    Expires in ACCESS_TOKEN_EXPIRE_MINUTES (default 60 mins)
-    """
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=settings.access_token_expire_minutes
-    )
-    payload = {"sub": str(subject), "exp": expire, "type": "access"}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
-
-
-def create_refresh_token(subject: str | int) -> str:
-    """
-    Expires in REFRESH_TOKEN_EXPIRE_DAYS (default 7 days)
-    Used to get a new access token without logging in again
-    """
-    expire = datetime.now(timezone.utc) + timedelta(
-        days=settings.refresh_token_expire_days
-    )
-    payload = {"sub": str(subject), "exp": expire, "type": "refresh"}
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.jwt_algorithm)
-
-
-def decode_token(token: str) -> dict:
-    """
-    Raises JWTError if token is invalid or expired.
-    Returns the payload dict with 'sub' = user ID
-    """
-    return jwt.decode(
-        token, settings.secret_key, algorithms=[settings.jwt_algorithm]
-    )
-```
-
-> **Why two tokens?**
-> - `access_token` expires in 60 mins — used for every API call
-> - `refresh_token` expires in 7 days — used only to get a new access token
-> This way if an access token is stolen, it expires quickly.
-
----
+Creates the connection to Supabase. The `get_db()` function gives each request its own database session and automatically commits on success or rolls back on error.
 
 ### `app/core/dependencies.py`
+`get_current_user()` is used in every protected route. It reads the JWT token from the request header, decodes it, and returns the full User object from the database.
+
 ```python
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError
-from app.core.security import decode_token
-
-bearer_scheme = HTTPBearer()
-
-
-async def get_current_user_id(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-) -> int:
-    """
-    Reads the Bearer token from Authorization header.
-    Decodes it and returns the user ID.
-    Used as: user_id: int = Depends(get_current_user_id)
-    Will be upgraded to return full User object in Phase 5.
-    """
-    try:
-        payload = decode_token(credentials.credentials)
-        user_id = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token payload",
-            )
-        return int(user_id)
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token is invalid or expired",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+# How to protect any route:
+@router.get("/something")
+async def my_route(current_user = Depends(get_current_user)):
+    # current_user is the logged-in User object
 ```
 
----
+### `app/models/base_model.py`
+Every model inherits from this. It gives every table `id`, `created_at`, `updated_at` automatically. `__abstract__ = True` means this class itself never creates a table.
 
-### `app/services/auth_service.py`
+### `app/models/__init__.py`
+Imports every model. This is critical — Alembic discovers tables through `Base.metadata`. If a model is not imported here, Alembic will not see it and will not create the table.
+
 ```python
-from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-
+# Current state of models/__init__.py
+from app.models.base_model import BaseModel
 from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin, TokenResponse
-from app.utils.hashing import hash_password, verify_password
-from app.core.security import create_access_token, create_refresh_token
-
-
-async def register_user(user_data: UserCreate, db: AsyncSession) -> User:
-    # Check if email already exists
-    result = await db.execute(
-        select(User).where(User.email == user_data.email)
-    )
-    existing = result.scalar_one_or_none()
-
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
-        )
-
-    new_user = User(
-        email=user_data.email,
-        full_name=user_data.full_name,
-        hashed_password=hash_password(user_data.password),
-        role=user_data.role,
-        org_name=user_data.org_name,
-    )
-
-    db.add(new_user)
-    await db.flush()        # sends INSERT, gets id back, stays in transaction
-    await db.refresh(new_user)  # reloads from DB to get server-set values
-    return new_user
-
-
-async def login_user(login_data: UserLogin, db: AsyncSession) -> TokenResponse:
-    result = await db.execute(
-        select(User).where(User.email == login_data.email)
-    )
-    user = result.scalar_one_or_none()
-
-    # Same error for wrong email and wrong password — security best practice
-    # Never tell the user which one was wrong
-    if not user or not verify_password(login_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
-
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is deactivated",
-        )
-
-    return TokenResponse(
-        access_token=create_access_token(str(user.id)),
-        refresh_token=create_refresh_token(str(user.id)),
-    )
-```
-
-> **Why same error message for wrong email and wrong password?**
-> If you say "email not found" the attacker knows which emails exist in your system.
-> Always return the same message for both cases.
-
----
-
-### `app/routers/auth.py`
-```python
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.database import get_db
-from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse
-from app.services.auth_service import register_user, login_user
-
-router = APIRouter(prefix="/auth", tags=["Authentication"])
-
-
-@router.post("/register", response_model=UserResponse, status_code=201)
-async def register(
-    user_data: UserCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    return await register_user(user_data, db)
-
-
-@router.post("/login", response_model=TokenResponse)
-async def login(
-    login_data: UserLogin,
-    db: AsyncSession = Depends(get_db)
-):
-    return await login_user(login_data, db)
-```
-
-> **Router rule:** Routers never touch the database directly.
-> Router calls service. Service calls DB. Always.
-
----
-
-### `app/main.py`
-```python
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from app.config.settings import get_settings
-from app.routers import (
-    auth, users, organizations, hackathons, tracks,
-    registrations, teams, submissions, judges, scores,
-    leaderboard, certificates, announcements, sponsors, analytics,
-)
-
-settings = get_settings()
-
-app = FastAPI(
-    title=settings.app_name,
-    version=settings.app_version,
-    description="HackForge — Customizable Hackathon Hosting SaaS",
-    docs_url="/docs",
-    redoc_url="/redoc",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-API_PREFIX = "/api/v1"
-
-app.include_router(auth.router,          prefix=API_PREFIX)
-app.include_router(users.router,         prefix=API_PREFIX)
-app.include_router(organizations.router, prefix=API_PREFIX)
-app.include_router(hackathons.router,    prefix=API_PREFIX)
-app.include_router(tracks.router,        prefix=API_PREFIX)
-app.include_router(registrations.router, prefix=API_PREFIX)
-app.include_router(teams.router,         prefix=API_PREFIX)
-app.include_router(submissions.router,   prefix=API_PREFIX)
-app.include_router(judges.router,        prefix=API_PREFIX)
-app.include_router(scores.router,        prefix=API_PREFIX)
-app.include_router(leaderboard.router,   prefix=API_PREFIX)
-app.include_router(certificates.router,  prefix=API_PREFIX)
-app.include_router(announcements.router, prefix=API_PREFIX)
-app.include_router(sponsors.router,      prefix=API_PREFIX)
-app.include_router(analytics.router,     prefix=API_PREFIX)
-
-
-@app.get("/health", tags=["Health"])
-async def health_check():
-    return {"status": "ok", "version": settings.app_version}
+from app.models.organization import Organization
+from app.models.hackathon import Hackathon
+from app.models.registration import Registration
+from app.models.team import Team
+from app.models.team_member import TeamMember
+from app.models.submission import Submission
+from app.models.judge import Judge
+from app.models.rubric_criteria import RubricCriteria
+from app.models.score import Score
+from app.models.track import Track
+from app.models.certificate import Certificate
+from app.models.announcement import Announcement
 ```
 
 ---
 
-## Alembic Configuration
+## Alembic — Database Migrations Explained
 
-### `alembic.ini` (key section)
-```ini
-[alembic]
-script_location = alembic
-prepend_sys_path = .
-sqlalchemy.url = driver://user:pass@localhost/dbname
-```
-
-> The `sqlalchemy.url` here is overridden by `env.py` at runtime.
-> The value here does not matter.
-
-### `alembic/env.py`
-```python
-import asyncio
-from logging.config import fileConfig
-
-from sqlalchemy.ext.asyncio import async_engine_from_config
-from sqlalchemy import pool
-
-from alembic import context
-
-from app.core.database import Base
-from app.models.user import User
-from app.config.settings import get_settings
-
-settings = get_settings()
-
-config = context.config
-
-# % in passwords breaks configparser — replace with %%
-config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
-
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
-
-target_metadata = Base.metadata
-
-
-def run_migrations_offline() -> None:
-    url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-    )
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-def do_run_migrations(connection):
-    context.configure(
-        connection=connection,
-        target_metadata=target_metadata,
-    )
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-async def run_async_migrations() -> None:
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-    await connectable.dispose()
-
-
-def run_migrations_online() -> None:
-    asyncio.run(run_async_migrations())
-
-
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
-```
-
-> **Why `.replace("%", "%%")`?**
-> Supabase passwords can contain special characters like `@` which get URL-encoded as `%40`.
-> Python's configparser chokes on `%` — doubling it to `%%` escapes it correctly.
-
----
-
-## Alembic Commands Reference
+Alembic is version control for your database. Every time you change a model, you create a migration file that describes the change. This way everyone on the team can sync their database with one command.
 
 ```bash
-# Generate a new migration after changing a model
-alembic revision --autogenerate -m "description_of_change"
+# After changing any model file, run this to generate a migration:
+alembic revision --autogenerate -m "describe what you changed"
 
-# Apply all pending migrations to the database
+# Then apply the migration to the database:
 alembic upgrade head
 
-# Roll back one migration
+# Roll back the last migration if something went wrong:
 alembic downgrade -1
 
-# See current migration version
-alembic current
-
-# See migration history
+# See what migrations have been applied:
 alembic history
+
+# See current version your DB is on:
+alembic current
 ```
 
----
-
-## API Endpoints Built
-
-| Method | Route | Description | Auth Required |
-|--------|-------|-------------|---------------|
-| GET | `/health` | Health check | No |
-| POST | `/api/v1/auth/register` | Register new user | No |
-| POST | `/api/v1/auth/login` | Login, get tokens | No |
-
-**Swagger UI:** `http://127.0.0.1:8000/docs`
-**ReDoc:** `http://127.0.0.1:8000/redoc`
+> ⚠️ If your Supabase password has `%` in it, the migration will fail with a configparser error.
+> Fix: in `alembic/env.py`, use `settings.database_url.replace("%", "%%")`
 
 ---
 
-## How to Run
+## How to Add a New Feature (Step by Step)
 
+Say you want to add a `Sponsor` feature. Here is exactly what to do:
+
+**Step 1 — Create the model** `app/models/sponsor.py`
+```python
+from app.models.base_model import BaseModel
+# define your table columns here
+```
+
+**Step 2 — Import it** in `app/models/__init__.py`
+```python
+from app.models.sponsor import Sponsor
+```
+
+**Step 3 — Create the schema** `app/schemas/sponsor.py`
+```python
+# SponsorCreate, SponsorResponse using Pydantic BaseModel
+```
+
+**Step 4 — Create the service** `app/services/sponsor_service.py`
+```python
+# All business logic — create_sponsor(), get_sponsors(), etc.
+```
+
+**Step 5 — Create the router** `app/routers/sponsors.py`
+```python
+router = APIRouter(prefix="/sponsors", tags=["Sponsors"])
+# routes that call service functions
+```
+
+**Step 6 — Register the router** in `app/main.py`
+```python
+app.include_router(sponsors.router, prefix=API_PREFIX)
+```
+
+**Step 7 — Run migration**
 ```bash
-cd backend
-source venv/bin/activate      # Windows: venv\Scripts\activate
-uvicorn app.main:app --reload
+alembic revision --autogenerate -m "add_sponsors"
+alembic upgrade head
 ```
 
 ---
 
-## Phase Completion Status
+## Common Errors and Fixes
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `getaddrinfo failed` | Cannot reach Supabase | Switch to mobile hotspot or change DNS to 8.8.8.8 |
+| `invalid interpolation syntax` | `%` in password breaks configparser | Use `.replace("%", "%%")` in env.py |
+| `ModuleNotFoundError: No module named 'app'` | Running from wrong folder | `cd backend` first |
+| `FAILED: No config file 'alembic.ini' found` | Wrong folder | Must be in `backend/` folder to run alembic |
+| `already in a team` | User already joined a team | Each user can only be in one team per hackathon |
+| `401 Unauthorized` | Token missing or expired | Login again and use the new access_token |
+| `SSL Fatal error` on Windows | Windows event loop cleanup | Safe to ignore — only happens in test scripts, not in FastAPI |
+
+---
+
+## Phase Completion
 
 | Phase | What was built | Status |
 |-------|---------------|--------|
-| Phase 1 | FastAPI project setup, folder structure, all 15 empty routers | ✅ Done |
-| Phase 2 | Supabase PostgreSQL connection via asyncpg | ✅ Done |
-| Phase 3 | Abstract BaseModel with id, created_at, updated_at | ✅ Done |
-| Phase 4 | User model, schemas, hashing, JWT, register, login | ✅ Done |
-| Phase 5 | Organization model | 🔜 Next |
-| Phase 6 | Hackathon model | 🔜 Upcoming |
-| Phase 7 | Registration system | 🔜 Upcoming |
-| Phase 8 | Submission system | 🔜 Upcoming |
-| Phase 9 | Judging system | 🔜 Upcoming |
-| Phase 10 | Leaderboard | 🔜 Upcoming |
+| Phase 1 | FastAPI setup, folder structure, all routers skeleton | ✅ Done |
+| Phase 2 | Supabase connection via asyncpg | ✅ Done |
+| Phase 3 | BaseModel with id, created_at, updated_at | ✅ Done |
+| Phase 4 | User model, auth, JWT register + login | ✅ Done |
+| Phase 5 | Organization model + CRUD | ✅ Done |
+| Phase 6 | Hackathon model + publish + website config | ✅ Done |
+| Phase 7 | Registration system with approval workflow | ✅ Done |
+| Phase 8 | Team formation — create, join, leave | ✅ Done |
+| Phase 9 | Submission portal — create, update, submit | ✅ Done |
+| Phase 10 | Judging — invite, rubric builder, scoring | ✅ Done |
+| Phase 11 | Leaderboard with weighted scoring | ✅ Done |
+| Phase 12 | Tracks + website config update endpoint | ✅ Done |
+| Phase 13 | Certificate generation + verification | ✅ Done |
+| Phase 14 | Leave team endpoint | ✅ Done |
+| Phase 15 | Announcements | ✅ Done |
+| Phase 16 | Analytics dashboard | ✅ Done |
 
 ---
 
-## Key Rules for the Team
+## Team Rules
 
-1. **Routers never touch the database directly** — router calls service, service calls DB
-2. **Never store plain text passwords** — always hash before saving
-3. **Never expose `hashed_password` in responses** — use `UserResponse` schema
-4. **Never commit `.env`** — only commit `.env.example`
-5. **Every new model must be imported in `models/__init__.py`** — or Alembic won't see it
-6. **Run migration after every model change** — `alembic revision --autogenerate -m "description"`
-7. **Same error message for wrong email and wrong password** — security best practice
+1. **Routers never touch the database** — router calls service, service calls DB
+2. **Never store plain text passwords** — always hash with `hash_password()` before saving
+3. **Never return `hashed_password`** in any API response — use `UserResponse` schema
+4. **Never commit `.env`** — only commit `.env.example` with empty values
+5. **Import every new model** in `models/__init__.py` or Alembic will not see it
+6. **Run migration after every model change** — never edit the database manually
+7. **Same error for wrong email and wrong password** — never reveal which one is wrong
