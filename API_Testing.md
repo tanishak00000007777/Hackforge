@@ -471,6 +471,237 @@ Response contained:
 
 ---
 
+## 7. Update `website-config`
+
+### Description
+
+Updates the website appearance and branding configuration of a hackathon.
+
+This endpoint allows the organizer to configure:
+
+* Banner Image
+* Logo Image
+* Primary Theme Color
+* Secondary Theme Color
+
+The configuration is stored in the `website_config` JSON field and synchronized with the standalone `banner_url` and `logo_url` database columns.
+
+---
+
+## Authentication
+
+**Required**
+
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+Only the hackathon creator can update the website configuration.
+
+---
+
+## Endpoint
+
+```http
+PATCH /api/v1/hackathons/{hackathon_id}/website-config
+```
+
+---
+
+## Path Parameter
+
+| Parameter      | Type | Description         |
+| -------------- | ---- | ------------------- |
+| `hackathon_id` | UUID | Unique Hackathon ID |
+
+Example:
+
+```
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+---
+
+## Request Body
+
+```json
+{
+    "banner_url": "https://picsum.photos/1200/300",
+    "logo_url": "https://picsum.photos/200",
+    "primary_color": "#2563EB",
+    "secondary_color": "#0F172A"
+}
+```
+
+---
+
+## Expected Response
+
+**Status Code**
+
+```
+200 OK
+```
+
+Example Response
+
+```json
+{
+    "id": "810d9866-f43a-4e4c-bdbc-c274dd9c6540",
+    "organization_id": "3923ba01-b5c9-42cc-ba0b-5fdda3110389",
+    "title": "HackForge Summer Hackathon 2026",
+    "slug": "hackforge-summer-2026",
+    "tagline": "Build. Innovate. Inspire.",
+    "mode": "online",
+    "status": "published",
+    "max_participants": 500,
+    "max_team_size": 4,
+    "min_team_size": 2,
+    "registration_mode": "open",
+    "banner_url": "https://picsum.photos/1200/300",
+    "logo_url": "https://picsum.photos/200",
+    "prize_pool": "₹1,00,000",
+    "created_at": "2026-06-27T05:52:17.058811Z"
+}
+```
+
+---
+
+# Test Cases
+
+## Test Case 1 — Valid Website Configuration Update
+
+### Input
+
+```json
+{
+    "banner_url": "https://picsum.photos/1200/300",
+    "logo_url": "https://picsum.photos/200",
+    "primary_color": "#2563EB",
+    "secondary_color": "#0F172A"
+}
+```
+
+### Expected Result
+
+* Status Code: **200 OK**
+* Website configuration updated successfully.
+* Response contains updated `banner_url`.
+* Response contains updated `logo_url`.
+
+### Actual Result
+
+* Received **200 OK**
+* Configuration updated successfully.
+* Response matched expected output.
+
+**Status:** ✅ Passed
+
+---
+
+## Test Case 2 — Database Verification
+
+### Query
+
+```sql
+SELECT
+    title,
+    website_config,
+    banner_url,
+    logo_url
+FROM hackathons;
+```
+
+### Expected Result
+
+* `website_config` updated.
+* `banner_url` updated.
+* `logo_url` updated.
+
+### Actual Result
+
+Verified successfully in Supabase.
+
+**Status:** ✅ Passed
+
+---
+
+# Bug Found During Testing
+
+### Issue
+
+Initially, the API updated only the `website_config` JSON object.
+
+The standalone database columns:
+
+* `banner_url`
+* `logo_url`
+
+remained `NULL`, causing the API response to return:
+
+```json
+{
+    "banner_url": null,
+    "logo_url": null
+}
+```
+
+even though the JSON configuration contained the correct values.
+
+---
+
+## Root Cause
+
+The backend service only executed:
+
+```python
+hackathon.website_config = config
+```
+
+The standalone columns were never synchronized.
+
+---
+
+## Fix Applied
+
+Updated the backend service:
+
+```python
+hackathon.website_config = config
+
+hackathon.banner_url = config.get("banner_url")
+hackathon.logo_url = config.get("logo_url")
+```
+
+---
+
+## Verification After Fix
+
+Re-tested the endpoint.
+
+Observed:
+
+* `website_config` updated successfully.
+* `banner_url` updated correctly.
+* `logo_url` updated correctly.
+* API response matched database values.
+
+**Status:** ✅ Bug Fixed
+
+---
+
+# Overall Result
+
+| Test                  | Status   |
+| --------------------- | -------- |
+| Functional Testing    | ✅ Passed |
+| Authentication        | ✅ Passed |
+| Database Verification | ✅ Passed |
+| Response Verification | ✅ Passed |
+| Bug Fix Verification  | ✅ Passed |
+
+---
+
 ## Final Status
 
 ✅ **Passed**
