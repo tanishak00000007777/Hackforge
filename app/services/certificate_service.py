@@ -31,6 +31,14 @@ async def issue_certificate(
     if hackathon.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
+    # Verify user exists
+    user = await db.get(User, data.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
     # Check if already issued
     result = await db.execute(
         select(Certificate).where(
@@ -81,7 +89,19 @@ async def get_hackathon_certificates(
     hackathon_id: uuid.UUID,
     db: AsyncSession,
 ) -> list[Certificate]:
+
+    hackathon = await db.get(Hackathon, hackathon_id)
+
+    if not hackathon:
+        raise HTTPException(
+            status_code=404,
+            detail="Hackathon not found"
+        )
+
     result = await db.execute(
-        select(Certificate).where(Certificate.hackathon_id == hackathon_id)
+        select(Certificate).where(
+            Certificate.hackathon_id == hackathon_id
+        )
     )
+
     return list(result.scalars().all())
