@@ -1772,7 +1772,271 @@ The leaderboard service performs the following operations:
 5. Sorts submissions by score.
 6. Assigns leaderboard ranks.
 
-This ensures consistent and transparent project ranking across the hackathon.
+---
+
+# 20. Issue Certificate
+
+## Endpoint
+
+```
+POST /api/v1/certificates/{hackathon_id}/issue
+```
+
+### Description
+
+Issues a certificate to a specific participant, winner, runner-up, or judge for a hackathon.
+
+---
+
+### Path Parameter
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| hackathon_id | UUID | Hackathon ID |
+
+---
+
+### Request Body
+
+```json
+{
+    "user_id": "82dc7121-0ad4-4890-a103-4398a4e97763",
+    "type": "participant"
+}
+```
+
+---
+
+### Successful Response (201 Created)
+
+```json
+{
+    "id": "certificate-id",
+    "hackathon_id": "hackathon-id",
+    "user_id": "user-id",
+    "type": "participant",
+    "verification_id": "generated-verification-token",
+    "created_at": "2026-06-27T10:20:00Z"
+}
+```
+
+---
+
+### Validation Performed
+
+- Verified hackathon exists.
+- Only hackathon creator can issue certificates.
+- Duplicate certificates are prevented.
+- User existence is validated before certificate creation.
+
+---
+
+### Possible Errors
+
+| Status Code | Description |
+|-------------|-------------|
+|201|Certificate issued successfully|
+|400|Certificate already issued|
+|401|Unauthorized|
+|403|Not authorized|
+|404|Hackathon not found|
+|404|User not found|
+
+---
+
+# 21. Get My Certificates
+
+## Endpoint
+
+```
+GET /api/v1/certificates/me
+```
+
+---
+
+### Description
+
+Returns all certificates issued to the currently authenticated user.
+
+---
+
+### Successful Response (200 OK)
+
+```json
+[
+    {
+        "id": "certificate-id",
+        "hackathon_id": "hackathon-id",
+        "user_id": "user-id",
+        "type": "participant",
+        "verification_id": "generated-verification-token",
+        "created_at": "2026-06-27T10:20:00Z"
+    }
+]
+```
+
+---
+
+### Validation Performed
+
+- Returns all certificates belonging to the authenticated user.
+- Returns an empty list if no certificates have been issued.
+
+---
+
+### Possible Errors
+
+| Status Code | Description |
+|-------------|-------------|
+|200|Certificates fetched successfully|
+|401|Unauthorized|
+
+---
+
+# 22. Verify Certificate
+
+## Endpoint
+
+```
+GET /api/v1/certificates/verify/{verification_id}
+```
+
+---
+
+### Description
+
+Verifies the authenticity of a certificate using its verification ID.
+
+This endpoint is public and does not require authentication.
+
+---
+
+### Path Parameter
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| verification_id | String | Certificate verification token |
+
+---
+
+### Successful Response (200 OK)
+
+```json
+{
+    "id": "certificate-id",
+    "hackathon_id": "hackathon-id",
+    "user_id": "user-id",
+    "type": "participant",
+    "verification_id": "generated-verification-token",
+    "created_at": "2026-06-27T10:20:00Z"
+}
+```
+
+---
+
+### Validation Performed
+
+- Valid verification ID returns certificate details.
+- Invalid verification ID returns an error.
+
+---
+
+### Possible Errors
+
+| Status Code | Description |
+|-------------|-------------|
+|200|Certificate verified successfully|
+|404|Certificate not found or invalid|
+
+---
+
+# 23. Get Hackathon Certificates
+
+## Endpoint
+
+```
+GET /api/v1/certificates/{hackathon_id}
+```
+
+---
+
+### Description
+
+Returns all certificates issued for a particular hackathon.
+
+---
+
+### Path Parameter
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| hackathon_id | UUID | Hackathon ID |
+
+---
+
+### Successful Response (200 OK)
+
+```json
+[
+    {
+        "id": "certificate-id",
+        "user_id": "user-id",
+        "type": "participant",
+        "verification_id": "generated-verification-token",
+        "created_at": "2026-06-27T10:20:00Z"
+    }
+]
+```
+
+---
+
+### Validation Performed
+
+- Successfully retrieves all certificates for the hackathon.
+- Returns an empty list if no certificates have been issued.
+- Returns an error if the hackathon does not exist.
+
+---
+
+### Possible Errors
+
+| Status Code | Description |
+|-------------|-------------|
+|200|Certificates fetched successfully|
+|401|Unauthorized|
+|404|Hackathon not found|
+
+---
+
+# Test Cases Executed
+
+| Test Case | Expected Result | Status |
+|------------|----------------|--------|
+|Issue certificate for valid user|Certificate created successfully|✅ Pass|
+|Issue duplicate certificate|Duplicate certificate prevented|✅ Pass|
+|Issue certificate with invalid hackathon|Returns 404|✅ Pass|
+|Issue certificate for invalid user|Returns 404|✅ Pass|
+|Get current user's certificates|Returns issued certificates|✅ Pass|
+|Verify valid certificate|Certificate details returned|✅ Pass|
+|Verify invalid verification ID|Returns 404|✅ Pass|
+|Get hackathon certificates|Returns all certificates for hackathon|✅ Pass|
+|Get certificates for invalid hackathon|Returns 404|✅ Pass|
+
+---
+
+# Backend Improvements Implemented
+
+During API review, the following improvements were added:
+
+- Added validation to ensure the target user exists before issuing a certificate.
+- Added validation to ensure the hackathon exists before listing certificates.
+- Duplicate certificate issuance is prevented.
+- Authorization check ensures only the hackathon creator can issue certificates.
+- Public verification endpoint validates certificate authenticity using the unique verification ID.
+
 ---
 
 
+**Module Status:** ✅ **Passed**
+
+---
