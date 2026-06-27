@@ -15,6 +15,15 @@ async def invite_judge(
     data: JudgeInvite,
     db: AsyncSession,
 ) -> Judge:
+    # Verify user exists
+    user = await db.get(User, data.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    # Check if already invited
     result = await db.execute(
         select(Judge).where(
             Judge.hackathon_id == hackathon_id,
@@ -46,6 +55,12 @@ async def accept_judge_invite(
     if not judge:
         raise HTTPException(status_code=404, detail="Judge invite not found")
 
+    if judge.status == JudgeStatus.accepted:
+        raise HTTPException(
+            status_code=400,
+            detail="Judge has already accepted the invitation"
+        )
+
     judge.status = JudgeStatus.accepted
     await db.flush()
     await db.refresh(judge)
@@ -57,7 +72,25 @@ async def create_rubric_criteria(
     data: RubricCriteriaCreate,
     db: AsyncSession,
 ) -> RubricCriteria:
-    criteria = RubricCriteria(hackathon_id=hackathon_id, **data.model_dump())
+
+    existing = await db.execute(
+        select(RubricCriteria).where(
+            RubricCriteria.hackathon_id == hackathon_id,
+            RubricCriteria.name == data.name,
+        )
+    )
+
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail="Rubric criterion already exists"
+        )
+
+    criteria = RubricCriteria(
+        hackathon_id=hackathon_id,
+        **data.model_dump()
+    )
+
     db.add(criteria)
     await db.flush()
     await db.refresh(criteria)
@@ -82,6 +115,45 @@ async def submit_score(
     current_user: User,
     db: AsyncSession,
 ) -> Score:
+    # Verify current user is an accepted judge
+    judge_result = await db.execute(
+        select(Judge).where(
+            Judge.user_id == current_user.id,
+            Judge.status == JudgeStatus.accepted,
+        )
+    )
+
+    judge = judge_result.scalar_one_or_none()
+
+    if not judge:
+        raise HTTPException(
+            status_code=403,
+            detail="Only accepted judges can submit scores"
+        )
+
+    criteria = await db.get(
+        RubricCriteria,
+        data.criterion_id,
+    )
+
+    if not criteria:
+        raise HTTPException(
+            status_code=404,
+            detail="Rubric criterion not found"
+        )
+
+    if data.score > criteria.max_score:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Maximum score allowed is {criteria.max_score}"
+        )
+
+    if data.score < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Score cannot be negative"
+        )
+
     # Check if score already exists — update if so
     result = await db.execute(
         select(Score).where(
@@ -90,6 +162,7 @@ async def submit_score(
             Score.criterion_id == data.criterion_id,
         )
     )
+
     existing = result.scalar_one_or_none()
 
     if existing:
@@ -106,9 +179,11 @@ async def submit_score(
         score=data.score,
         comment=data.comment,
     )
+
     db.add(score)
     await db.flush()
     await db.refresh(score)
+
     return score
 
 
