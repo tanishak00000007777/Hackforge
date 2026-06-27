@@ -193,3 +193,104 @@ Actual
 ✅ Passed
 
 ---
+
+# 5. Create Hackathon
+
+## Endpoint
+
+**Method:** `POST`
+
+**Route**
+
+```text
+/api/v1/hackathons/{org_id}
+```
+
+---
+
+## Objective
+
+Verify that an authenticated organizer can successfully create a new hackathon under an existing organization.
+
+---
+
+## Authentication
+
+**Required:** ✅ Yes
+
+Authentication Method:
+
+```
+Bearer JWT Token
+```
+
+---
+
+## Path Parameter
+
+| Parameter | Value Used                             |
+| --------- | -------------------------------------- |
+| org_id    | Organization ID created during testing |
+
+---
+
+## Request Body
+
+```json
+{
+  "title": "HackForge Summer Hackathon 2026",
+  "slug": "hackforge-summer-2026",
+  "tagline": "Build. Innovate. Inspire.",
+  "description": "A 48-hour hackathon for developers, designers, and innovators.",
+  "mode": "online",
+  "max_participants": 500,
+  "max_team_size": 4,
+  "min_team_size": 2,
+  "registration_mode": "open",
+  "prize_pool": "₹1,00,000",
+  "contact_email": "gursharen@example.com"
+}
+```
+
+---
+
+## Expected Result
+
+* HTTP Status Code **201 Created**
+* Hackathon record created in PostgreSQL.
+* Organization ID linked correctly.
+* UUID generated automatically.
+* Default status should be **draft**.
+* Response should contain hackathon details.
+
+---
+
+## Actual Result
+
+✅ **Passed**
+
+The API successfully created the hackathon and returned the created object with all expected fields.
+
+---
+
+## Validation Performed
+
+* [x] Authentication verified
+* [x] Organization ID accepted
+* [x] UUID generated
+* [x] Hackathon stored in database
+* [x] Status initialized as `draft`
+* [x] Response schema matched expected output
+
+---
+
+## Edge Cases Tested
+
+| Test Case             | Expected   | Status |
+| --------------------- | ---------- | ------ |
+| Valid organization ID | Success    | ✅      |
+| Valid JWT             | Authorized | ✅      |
+
+---
+
+
