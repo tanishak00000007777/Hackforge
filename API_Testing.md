@@ -702,6 +702,301 @@ Observed:
 
 ---
 
+# 8. Create Track
+
+## Description
+
+Creates a new track for a hackathon.
+
+Tracks represent different competition categories within a hackathon (e.g., AI, Cyber Security, Web Development). Each track contains its own description, prize amount, and display order.
+
+---
+
+## Authentication
+
+**Required**
+
+```text
+Authorization: Bearer <JWT_TOKEN>
+```
+
+Only the hackathon organizer can create tracks.
+
+---
+
+## Endpoint
+
+```http
+POST /api/v1/tracks/{hackathon_id}
+```
+
+---
+
+## Path Parameter
+
+| Parameter      | Type | Description           |
+| -------------- | ---- | --------------------- |
+| `hackathon_id` | UUID | Existing Hackathon ID |
+
+Example
+
+```text
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+---
+
+## Request Bodies Used During Testing
+
+### Track 1
+
+```json
+{
+  "name": "Artificial Intelligence",
+  "description": "AI and Machine Learning based solutions.",
+  "prize": "₹50,000",
+  "sort_order": 1
+}
+```
+
+### Track 2
+
+```json
+{
+  "name": "Cyber Security",
+  "description": "Security, Privacy and Blockchain projects.",
+  "prize": "₹40,000",
+  "sort_order": 2
+}
+```
+
+### Track 3
+
+```json
+{
+  "name": "Web Development",
+  "description": "Full Stack and Cloud based applications.",
+  "prize": "₹30,000",
+  "sort_order": 3
+}
+```
+
+---
+
+## Database Verification
+
+```sql
+SELECT *
+FROM tracks
+WHERE hackathon_id='810d9866-f43a-4e4c-bdbc-c274dd9c6540';
+```
+
+### Expected Result
+
+Three tracks should be present in the database.
+
+### Actual Result
+
+Three tracks were successfully stored in Supabase.
+
+**Status:** ✅ Passed
+
+---
+
+# 9. List Tracks
+
+## Description
+
+Retrieves all tracks associated with a specific hackathon.
+
+---
+
+## Authentication
+
+Not Required
+
+---
+
+## Endpoint
+
+```http
+GET /api/v1/tracks/{hackathon_id}
+```
+
+---
+
+## Path Parameter
+
+| Parameter      | Type |
+| -------------- | ---- |
+| `hackathon_id` | UUID |
+
+Example
+
+```text
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+---
+
+## Test Case
+
+### Expected Result
+
+The API should return all tracks created for the hackathon.
+
+### Actual Result
+
+Returned all three created tracks:
+
+* Artificial Intelligence
+* Cyber Security
+* Web Development
+
+along with
+
+* Track ID
+* Hackathon ID
+* Description
+* Prize
+* Sort Order
+* Created Timestamp
+
+Status Code:
+
+```text
+200 OK
+```
+
+**Status:** ✅ Passed
+
+---
+
+## Response Verification
+
+Verified that:
+
+* Three tracks were returned.
+* Track names matched the created records.
+* Sort order was correct.
+* Hackathon ID matched the requested hackathon.
+
+**Status:** ✅ Passed
+
+---
+
+# 10. Delete Track
+
+## Description
+
+Deletes a track from a hackathon.
+
+---
+
+## Authentication
+
+**Required**
+
+```text
+Authorization: Bearer <JWT_TOKEN>
+```
+
+Only the hackathon organizer can delete tracks.
+
+---
+
+## Endpoint
+
+```http
+DELETE /api/v1/tracks/{track_id}
+```
+
+---
+
+## Path Parameter
+
+| Parameter  | Type |
+| ---------- | ---- |
+| `track_id` | UUID |
+
+Deleted Track
+
+```text
+Cyber Security
+```
+
+Track ID
+
+```text
+298a43db-0704-474f-af2f-63bd7d2a6e2e
+```
+
+---
+
+## Test Case
+
+### Expected Result
+
+The selected track should be deleted successfully.
+
+Status Code
+
+```text
+204 No Content
+```
+
+### Actual Result
+
+Received
+
+```text
+204 No Content
+```
+
+Track was deleted successfully.
+
+**Status:** ✅ Passed
+
+---
+
+## Verification
+
+After deletion, the **List Tracks API** was executed again.
+
+### Expected Result
+
+Only the following tracks should remain:
+
+* Artificial Intelligence
+* Web Development
+
+### Actual Result
+
+The deleted track no longer appeared in the API response.
+
+**Status:** ✅ Passed
+
+---
+
+## Database Verification
+
+```sql
+SELECT *
+FROM tracks
+WHERE hackathon_id='810d9866-f43a-4e4c-bdbc-c274dd9c6540';
+```
+
+### Expected Result
+
+Only two tracks should exist.
+
+### Actual Result
+
+Supabase confirmed that the deleted track was removed successfully.
+
+**Status:** ✅ Passed
+
+
 ## Final Status
 
 ✅ **Passed**
