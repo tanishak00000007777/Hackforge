@@ -3,6 +3,7 @@ import secrets
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 from app.models.team import Team
 from app.models.team_member import TeamMember
 from app.models.hackathon import Hackathon
@@ -27,8 +28,8 @@ async def _get_user_team(
             Team.hackathon_id == hackathon_id,
             TeamMember.user_id == user_id,
         )
+        .options(selectinload(Team.members))
     )
-    return result.scalar_one_or_none()
 
 
 async def create_team(
@@ -77,7 +78,15 @@ async def create_team(
     member = TeamMember(team_id=team.id, user_id=current_user.id)
     db.add(member)
     await db.flush()
-    await db.refresh(team)
+
+    result = await db.execute(
+        select(Team)
+        .where(Team.id == team.id)
+        .options(selectinload(Team.members))
+    )
+
+    team = result.scalar_one()
+
     return team
 
 
@@ -127,10 +136,31 @@ async def join_team(
     if hackathon and member_count >= hackathon.max_team_size:
         raise HTTPException(status_code=400, detail="Team is full")
 
+    existing_member = await db.execute(
+        select(TeamMember).where(
+            TeamMember.team_id == team.id,
+            TeamMember.user_id == current_user.id,
+        )
+    )
+
+    if existing_member.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail="Already a member of this team"
+        )
+
     member = TeamMember(team_id=team.id, user_id=current_user.id)
     db.add(member)
     await db.flush()
-    await db.refresh(team)
+
+    result = await db.execute(
+        select(Team)
+        .where(Team.id == team.id)
+        .options(selectinload(Team.members))
+    )
+
+    team = result.scalar_one()
+
     return team
 
 
@@ -139,9 +169,22 @@ async def get_my_team(
     current_user: User,
     db: AsyncSession,
 ) -> Team:
-    team = await _get_user_team(hackathon_id, current_user.id, db)
+
+    result = await db.execute(
+        select(Team)
+        .join(TeamMember)
+        .where(
+            Team.hackathon_id == hackathon_id,
+            TeamMember.user_id == current_user.id,
+        )
+        .options(selectinload(Team.members))
+    )
+
+    team = result.scalar_one_or_none()
+
     if not team:
         raise HTTPException(status_code=404, detail="Not in a team")
+
     return team
 
 async def leave_team(
