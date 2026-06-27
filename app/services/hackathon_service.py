@@ -68,18 +68,35 @@ async def update_website_config(
     current_user: User,
     db: AsyncSession,
 ) -> Hackathon:
+
     result = await db.execute(
         select(Hackathon).where(Hackathon.id == hackathon_id)
     )
-    hackathon = result.scalar_one_or_none()
-    if not hackathon:
-        raise HTTPException(status_code=404, detail="Hackathon not found")
-    if hackathon.created_by != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
 
+    hackathon = result.scalar_one_or_none()
+
+    if not hackathon:
+        raise HTTPException(
+            status_code=404,
+            detail="Hackathon not found"
+        )
+
+    if hackathon.created_by != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
+        )
+
+    # Update website configuration JSON
     hackathon.website_config = config
+
+    # Keep dedicated columns synchronized
+    hackathon.banner_url = config.get("banner_url")
+    hackathon.logo_url = config.get("logo_url")
+
     await db.flush()
     await db.refresh(hackathon)
+
     return hackathon
 
 
