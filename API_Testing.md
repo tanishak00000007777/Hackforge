@@ -13,10 +13,44 @@
 
 | Module | Endpoint | Status |
 |---------|----------|--------|
-| Register | POST /api/v1/auth/register | ✅ |
-| Login | POST /api/v1/auth/login | ✅ |
-| Create Organization | POST /api/v1/organizations | ✅ |
-| Get My Organizations | GET /api/v1/organizations/me | ✅ |
+| Health | GET /health | ✅ |
+| Authentication | POST /api/v1/auth/register | ✅ |
+| Authentication | POST /api/v1/auth/login | ✅ |
+| Organizations | POST /api/v1/organizations | ✅ |
+| Organizations | GET /api/v1/organizations/me | ✅ |
+| Hackathons | POST /api/v1/hackathons/{organization_id} | ✅ |
+| Hackathons | GET /api/v1/hackathons | ✅ |
+| Hackathons | GET /api/v1/hackathons/{slug} | ✅ |
+| Hackathons | POST /api/v1/hackathons/{hackathon_id}/publish | ✅ |
+| Website Configuration | PATCH /api/v1/hackathons/{hackathon_id}/website-config | ✅ |
+| Tracks | POST /api/v1/tracks/{hackathon_id} | ✅ |
+| Tracks | GET /api/v1/tracks/{hackathon_id} | ✅ |
+| Tracks | DELETE /api/v1/tracks/{track_id} | ✅ |
+| Registrations | POST /api/v1/registrations/{hackathon_id} | ✅ |
+| Registrations | GET /api/v1/registrations/{hackathon_id} | ✅ |
+| Registrations | PATCH /api/v1/registrations/{registration_id}/status | ✅ |
+| Teams | POST /api/v1/teams/{hackathon_id} | ✅ |
+| Teams | POST /api/v1/teams/{hackathon_id}/join | ✅ |
+| Teams | GET /api/v1/teams/{hackathon_id}/my-team | ✅ |
+| Teams | DELETE /api/v1/teams/{hackathon_id}/leave | ✅ |
+| Submissions | POST /api/v1/submissions/{hackathon_id} | ✅ |
+| Submissions | PATCH /api/v1/submissions/{submission_id} | ✅ |
+| Submissions | POST /api/v1/submissions/{submission_id}/submit | ✅ |
+| Submissions | GET /api/v1/submissions/{hackathon_id}/all | ✅ |
+| Judges | POST /api/v1/judges/{hackathon_id}/invite | ✅ |
+| Judges | POST /api/v1/judges/{hackathon_id}/accept | ✅ |
+| Judges | POST /api/v1/judges/{hackathon_id}/rubric | ✅ |
+| Judges | GET /api/v1/judges/{hackathon_id}/rubric | ✅ |
+| Judges | POST /api/v1/judges/scores/{submission_id} | ✅ |
+| Judges | GET /api/v1/judges/scores/{submission_id} | ✅ |
+| Leaderboard | GET /api/v1/leaderboard/{hackathon_id} | ✅ |
+| Certificates | POST /api/v1/certificates/{hackathon_id}/issue | ✅ |
+| Certificates | GET /api/v1/certificates/me | ✅ |
+| Certificates | GET /api/v1/certificates/verify/{verification_id} | ✅ |
+| Certificates | GET /api/v1/certificates/{hackathon_id} | ✅ |
+| Announcements | POST /api/v1/announcements/{hackathon_id} | ✅ |
+| Announcements | GET /api/v1/announcements/{hackathon_id} | ✅ |
+| Analytics | GET /api/v1/analytics/{hackathon_id} | ✅ |
 
 ---
 
@@ -2038,5 +2072,166 @@ During API review, the following improvements were added:
 
 
 **Module Status:** ✅ **Passed**
+
+---
+
+
+# 24. Create Announcement
+
+### Method
+
+POST
+
+### Endpoint
+
+/api/v1/announcements/{hackathon_id}
+
+### Authentication
+
+Bearer Token Required
+
+### Path Parameter
+
+| Parameter | Value |
+|----------|-------|
+| hackathon_id | 810d9866-f43a-4e4c-bdbc-c274dd9c6540 |
+
+### Request Body
+
+```json
+{
+  "title": "Round 1 Results",
+  "content": "Round 1 has been completed successfully. Qualified teams should prepare for Round 2 tomorrow at 10:00 AM."
+}
+```
+
+### Expected Result
+
+- HTTP Status: 201 Created
+- Announcement saved successfully.
+- Response contains announcement ID.
+- Author ID is automatically assigned.
+- Creation timestamp is generated.
+
+### Validation Performed
+
+- Announcement created successfully.
+- Title stored correctly.
+- Content stored correctly.
+- Hackathon ID associated correctly.
+- Author ID generated automatically.
+- Timestamp generated automatically.
+
+### Result
+
+PASS
+
+---
+
+## 25. List Announcements
+
+### Method
+
+GET
+
+### Endpoint
+
+/api/v1/announcements/{hackathon_id}
+
+### Authentication
+
+No authentication required (or as per project configuration).
+
+### Path Parameter
+
+| Parameter | Value |
+|----------|-------|
+| hackathon_id | 810d9866-f43a-4e4c-bdbc-c274dd9c6540 |
+
+### Expected Result
+
+- HTTP Status: 200 OK
+- Returns list of announcements.
+- Latest announcements appear first.
+
+### Validation Performed
+
+- All announcements returned.
+- Data matches database.
+- Sorted by newest first.
+
+### Result
+
+PASS
+
+---
+
+# 26. Analytics
+
+## Endpoint — Hackathon Analytics
+
+### Method
+
+GET
+
+### Endpoint
+
+/api/v1/analytics/{hackathon_id}
+
+### Authentication
+
+Bearer Token Required
+
+### Path Parameter
+
+| Parameter | Value |
+|----------|-------|
+| hackathon_id | 810d9866-f43a-4e4c-bdbc-c274dd9c6540 |
+
+### Expected Result
+
+Returns overall hackathon statistics.
+
+Example Response
+
+```json
+{
+  "registrations": {
+    "total": 8,
+    "approved": 6,
+    "pending": 2
+  },
+  "teams": {
+    "total": 3
+  },
+  "submissions": {
+    "total": 2,
+    "submitted": 1,
+    "draft": 1
+  },
+  "judging": {
+    "total_judges": 2,
+    "accepted_judges": 1,
+    "total_scores_given": 5
+  }
+}
+```
+
+### Validation Performed
+
+- Total registrations calculated correctly.
+- Approved registrations counted correctly.
+- Pending registrations counted correctly.
+- Team count correct.
+- Submission count correct.
+- Draft submission count correct.
+- Submitted submission count correct.
+- Judge count correct.
+- Accepted judge count correct.
+- Total scores calculated correctly.
+
+### Result
+
+PASS
 
 ---
