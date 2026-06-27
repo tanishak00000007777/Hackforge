@@ -1000,3 +1000,151 @@ Supabase confirmed that the deleted track was removed successfully.
 ## Final Status
 
 ✅ **Passed**
+
+---
+---
+
+# 11. Register for Hackathon
+
+## Objective
+Verify that an authenticated participant can successfully register for a hackathon and that duplicate registrations are prevented.
+
+## Authentication
+**Required:** ✅ Yes (Bearer Token)
+
+## Request Details
+
+**Method**
+```http
+POST /api/v1/registrations/{hackathon_id}
+```
+
+**Path Parameter**
+| Parameter | Type | Description |
+|----------|------|-------------|
+| hackathon_id | UUID | ID of the hackathon |
+
+**Request Body**
+```json
+{
+  "form_data": {
+    "college": "Thapar Institute of Engineering and Technology",
+    "year": "3rd",
+    "branch": "Computer Engineering",
+    "phone": "9876543210",
+    "github": "https://github.com/jashan",
+    "experience": "Intermediate"
+  }
+}
+```
+
+---
+
+## Test Case 1 — Successful Registration
+
+### Test Objective
+Verify that an authenticated participant can register for a hackathon.
+
+### Expected Result
+
+- HTTP Status: **201 Created**
+- Registration is created.
+- User ID is automatically obtained from the authenticated JWT.
+- Submitted form data is stored.
+
+### Actual Result
+
+✅ Passed
+
+### Response
+
+```json
+{
+    "id": "23212617-bdd4-4254-909d-e14d91289190",
+    "hackathon_id": "810d9866-f43a-4e4c-bdbc-c274dd9c6540",
+    "user_id": "82dc7121-0ad4-4890-a103-4398a4e97763",
+    "status": "approved",
+    "form_data": {
+        "college": "Thapar Institute of Engineering and Technology",
+        "year": "3rd",
+        "branch": "Computer Engineering",
+        "phone": "9876543210",
+        "github": "https://github.com/jashan",
+        "experience": "Intermediate"
+    },
+    "created_at": "2026-06-27T07:36:25.527623Z"
+}
+```
+
+---
+
+## Test Case 2 — Duplicate Registration Prevention
+
+### Test Objective
+Verify that the same authenticated user cannot register twice for the same hackathon.
+
+### Steps
+
+1. Login as User A.
+2. Register successfully for a hackathon.
+3. Submit another registration request using the **same JWT** but with different form data.
+
+Example:
+
+```json
+{
+  "form_data": {
+    "college": "Thapar Institute of Engineering and Technology",
+    "year": "2nd",
+    "branch": "Electronics Engineering",
+    "phone": "9814062675",
+    "github": "https://github.com/tanya",
+    "experience": "Intermediate"
+  }
+}
+```
+
+### Expected Result
+
+- HTTP Status: **400 Bad Request**
+- API should reject duplicate registration.
+
+Response:
+
+```json
+{
+    "detail": "Already registered"
+}
+```
+
+### Actual Result
+
+✅ Passed
+
+### Observation
+
+Although different registration details were entered, the backend identified the authenticated user from the JWT token rather than the submitted form data.
+
+Duplicate registration is checked using:
+
+```
+current_user.id
++
+hackathon_id
+```
+
+Therefore, changing only the form data does **not** create a new participant or bypass duplicate registration protection.
+
+This confirms that authentication and duplicate registration logic are functioning correctly.
+
+---
+
+## Test Summary
+
+| Test Case | Expected | Actual | Status |
+|-----------|----------|--------|--------|
+| Successful Registration | 201 Created | Registration created successfully | ✅ Passed |
+| Duplicate Registration | 400 Bad Request | "Already registered" returned | ✅ Passed |
+
+---
+
