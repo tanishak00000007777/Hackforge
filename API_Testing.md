@@ -1296,3 +1296,368 @@ API correctly prevents users from leaving a team they are not part of.
 ✅ Negative test passed
 
 ---
+
+---
+
+# 15. Create Submission
+
+## Endpoint
+
+`POST /api/v1/submissions/{hackathon_id}`
+
+## Objective
+
+Creates a draft submission for the logged-in user's team.
+
+---
+
+## Test Data
+
+Hackathon ID
+
+```text
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+Request Body
+
+```json
+{
+  "title": "HackForge AI Assistant",
+  "description": "An AI-powered hackathon management platform built using FastAPI and React.",
+  "github_url": "https://github.com/gursharen/HackForge",
+  "demo_url": "https://hackforge-demo.vercel.app",
+  "video_url": "https://youtu.be/demo123",
+  "deck_url": "https://drive.google.com/file/d/presentation",
+  "ai_usage": "Used ChatGPT for API documentation and code review."
+}
+```
+
+---
+
+## Expected Result
+
+- Submission should be created.
+- Status should be `draft`.
+- Team ID should be linked automatically.
+- Creation timestamp should be generated.
+
+---
+
+## Actual Result
+
+✅ Passed
+
+Response Code
+
+```text
+201 Created
+```
+
+Response contained
+
+- Submission ID
+- Team ID
+- Hackathon ID
+- Status = draft
+- created_at
+- updated_at
+
+---
+
+## Database Verification
+
+Verified that a new record was inserted into the `submissions` table with:
+
+- Correct Hackathon ID
+- Correct Team ID
+- Status = draft
+- Submitted project details
+
+---
+
+## Issues Found
+
+### Issue
+
+Duplicate team memberships caused:
+
+```text
+MultipleResultsFound
+```
+
+during submission creation.
+
+### Root Cause
+
+Duplicate records existed in the `team_members` table.
+
+### Fix
+
+- Removed duplicate team member entry.
+- Added validation to prevent duplicate memberships.
+- Recommended adding a database Unique Constraint on:
+
+```text
+(team_id, user_id)
+```
+
+---
+
+# Test Status
+
+✅ Passed after backend fix.
+
+---
+
+# 16. Update Submission
+
+## Endpoint
+
+`PATCH /api/v1/submissions/{submission_id}`
+
+## Objective
+
+Updates an existing draft submission.
+
+---
+
+## Submission ID
+
+```text
+8355518c-6ec9-4d9f-bc3b-775e6dd172fe
+```
+
+---
+
+## Request Body
+
+```json
+{
+  "title": "HackForge AI Assistant",
+  "description": "An AI-powered hackathon management platform built using FastAPI and React.",
+  "github_url": "https://github.com/gursharen/HackForge",
+  "demo_url": "https://hackforge-demo.vercel.app",
+  "video_url": "https://youtu.be/demo123",
+  "deck_url": "https://drive.google.com/file/d/presentation",
+  "ai_usage": "No."
+}
+```
+
+---
+
+## Expected Result
+
+- Submission details updated.
+- updated_at timestamp changes.
+- Status remains draft.
+
+---
+
+## Actual Result
+
+✅ Passed
+
+Response Code
+
+```text
+200 OK
+```
+
+Verified
+
+- ai_usage updated successfully.
+- updated_at timestamp changed.
+- Status remained draft.
+
+---
+
+## Database Verification
+
+Verified updated fields inside the `submissions` table.
+
+---
+
+# Test Status
+
+✅ Passed
+
+---
+
+# 17. Submit Submission
+
+## Endpoint
+
+`POST /api/v1/submissions/{submission_id}/submit`
+
+## Objective
+
+Marks a draft submission as officially submitted.
+
+---
+
+## Submission ID
+
+```text
+8355518c-6ec9-4d9f-bc3b-775e6dd172fe
+```
+
+---
+
+## Request Body
+
+None
+
+---
+
+## Expected Result
+
+Submission status should change from:
+
+```text
+draft
+```
+
+to
+
+```text
+submitted
+```
+
+---
+
+## Actual Result
+
+✅ Passed
+
+Response Code
+
+```text
+200 OK
+```
+
+Verified
+
+Before
+
+```text
+status = draft
+```
+
+After
+
+```text
+status = submitted
+```
+
+---
+
+## Database Verification
+
+Verified the `status` column changed to:
+
+```text
+submitted
+```
+
+---
+
+# Test Status
+
+✅ Passed
+
+---
+
+# 18. List All Submissions
+
+## Endpoint
+
+`GET /api/v1/submissions/{hackathon_id}/all`
+
+## Objective
+
+Returns every submission associated with a hackathon.
+
+---
+
+## Hackathon ID
+
+```text
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+---
+
+## Expected Result
+
+Returns an array containing all submissions.
+
+---
+
+## Actual Result
+
+✅ Passed
+
+Response Code
+
+```text
+200 OK
+```
+
+Verified response contained
+
+- Submission ID
+- Team ID
+- Hackathon ID
+- Title
+- Description
+- GitHub URL
+- Demo URL
+- Video URL
+- Deck URL
+- AI Usage
+- Status
+- created_at
+- updated_at
+
+---
+
+# Bugs Identified During Testing
+
+### Duplicate Team Membership
+
+**Issue**
+
+Duplicate entries in the `team_members` table caused:
+
+```text
+MultipleResultsFound
+```
+
+during submission creation.
+
+---
+
+### Root Cause
+
+The same user was inserted twice into the same team.
+
+---
+
+### Resolution
+
+- Removed duplicate database entry.
+- Added validation before inserting new team members.
+- Recommended adding a database-level Unique Constraint on `(team_id, user_id)`.
+
+---
+
+# Overall Status
+
+✅ All Submission APIs tested successfully.
+
+No unresolved functional issues remain after backend fixes.
+
+---
+
+
