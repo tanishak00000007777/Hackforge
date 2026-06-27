@@ -1148,3 +1148,151 @@ This confirms that authentication and duplicate registration logic are functioni
 
 ---
 
+# 12. Create Team
+
+### Objective
+Creates a new team for an approved participant in a hackathon.
+
+### Authorization
+Bearer Token (Required)
+
+### Test Data
+
+Hackathon ID
+
+```
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+Request Body
+
+```json
+{
+    "name": "Code Warriors"
+}
+```
+
+### Expected Result
+
+- Creates a new team.
+- Generates an invite code.
+- Adds the creator as the team leader.
+- Adds the creator as the first team member.
+
+### Actual Result ✅
+
+Status Code
+
+```
+201 Created
+```
+
+Response contained
+
+- Team ID
+- Leader ID
+- Invite Code
+- Members array
+- Created Timestamp
+
+### Status
+
+✅ Passed
+
+---
+
+## 13. Join Team
+
+### Objective
+
+Allows an approved participant to join a team using an invite code.
+
+### Authorization
+
+Bearer Token (Required)
+
+### Positive Test
+
+Request
+
+```json
+{
+    "invite_code": "NIVRHJCK"
+}
+```
+
+Expected
+
+```
+200 OK
+```
+
+Returned team information and members list.
+
+### Negative Test
+
+Request
+
+```json
+{
+    "invite_code": "ABC123"
+}
+```
+
+Response
+
+```
+404 Not Found
+```
+
+```json
+{
+    "detail": "Invalid invite code"
+}
+```
+
+### Observation
+
+During testing, duplicate user IDs appeared in the members list after joining. This indicates the join request may have been executed using the same authenticated user instead of a second participant account. Requires verification using a different user token.
+
+### Status
+
+⚠ Functional but requires verification with multiple users.
+
+---
+
+# 14. Leave Team
+
+### Objective
+
+Removes the authenticated user from their current team.
+
+### Authorization
+
+Bearer Token (Required)
+
+### Negative Test
+
+User attempted to leave without belonging to a team.
+
+Response
+
+```
+404 Not Found
+```
+
+```json
+{
+    "detail": "Not in a team"
+}
+```
+
+### Expected Behavior
+
+API correctly prevents users from leaving a team they are not part of.
+
+### Status
+
+✅ Negative test passed
+
+---
