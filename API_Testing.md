@@ -471,6 +471,1193 @@ Response contained:
 
 ---
 
+## 7. Update `website-config`
+
+### Description
+
+Updates the website appearance and branding configuration of a hackathon.
+
+This endpoint allows the organizer to configure:
+
+* Banner Image
+* Logo Image
+* Primary Theme Color
+* Secondary Theme Color
+
+The configuration is stored in the `website_config` JSON field and synchronized with the standalone `banner_url` and `logo_url` database columns.
+
+---
+
+## Authentication
+
+**Required**
+
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+Only the hackathon creator can update the website configuration.
+
+---
+
+## Endpoint
+
+```http
+PATCH /api/v1/hackathons/{hackathon_id}/website-config
+```
+
+---
+
+## Path Parameter
+
+| Parameter      | Type | Description         |
+| -------------- | ---- | ------------------- |
+| `hackathon_id` | UUID | Unique Hackathon ID |
+
+Example:
+
+```
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+---
+
+## Request Body
+
+```json
+{
+    "banner_url": "https://picsum.photos/1200/300",
+    "logo_url": "https://picsum.photos/200",
+    "primary_color": "#2563EB",
+    "secondary_color": "#0F172A"
+}
+```
+
+---
+
+## Expected Response
+
+**Status Code**
+
+```
+200 OK
+```
+
+Example Response
+
+```json
+{
+    "id": "810d9866-f43a-4e4c-bdbc-c274dd9c6540",
+    "organization_id": "3923ba01-b5c9-42cc-ba0b-5fdda3110389",
+    "title": "HackForge Summer Hackathon 2026",
+    "slug": "hackforge-summer-2026",
+    "tagline": "Build. Innovate. Inspire.",
+    "mode": "online",
+    "status": "published",
+    "max_participants": 500,
+    "max_team_size": 4,
+    "min_team_size": 2,
+    "registration_mode": "open",
+    "banner_url": "https://picsum.photos/1200/300",
+    "logo_url": "https://picsum.photos/200",
+    "prize_pool": "₹1,00,000",
+    "created_at": "2026-06-27T05:52:17.058811Z"
+}
+```
+
+---
+
+# Test Cases
+
+## Test Case 1 — Valid Website Configuration Update
+
+### Input
+
+```json
+{
+    "banner_url": "https://picsum.photos/1200/300",
+    "logo_url": "https://picsum.photos/200",
+    "primary_color": "#2563EB",
+    "secondary_color": "#0F172A"
+}
+```
+
+### Expected Result
+
+* Status Code: **200 OK**
+* Website configuration updated successfully.
+* Response contains updated `banner_url`.
+* Response contains updated `logo_url`.
+
+### Actual Result
+
+* Received **200 OK**
+* Configuration updated successfully.
+* Response matched expected output.
+
+**Status:** ✅ Passed
+
+---
+
+## Test Case 2 — Database Verification
+
+### Query
+
+```sql
+SELECT
+    title,
+    website_config,
+    banner_url,
+    logo_url
+FROM hackathons;
+```
+
+### Expected Result
+
+* `website_config` updated.
+* `banner_url` updated.
+* `logo_url` updated.
+
+### Actual Result
+
+Verified successfully in Supabase.
+
+**Status:** ✅ Passed
+
+---
+
+# Bug Found During Testing
+
+### Issue
+
+Initially, the API updated only the `website_config` JSON object.
+
+The standalone database columns:
+
+* `banner_url`
+* `logo_url`
+
+remained `NULL`, causing the API response to return:
+
+```json
+{
+    "banner_url": null,
+    "logo_url": null
+}
+```
+
+even though the JSON configuration contained the correct values.
+
+---
+
+## Root Cause
+
+The backend service only executed:
+
+```python
+hackathon.website_config = config
+```
+
+The standalone columns were never synchronized.
+
+---
+
+## Fix Applied
+
+Updated the backend service:
+
+```python
+hackathon.website_config = config
+
+hackathon.banner_url = config.get("banner_url")
+hackathon.logo_url = config.get("logo_url")
+```
+
+---
+
+## Verification After Fix
+
+Re-tested the endpoint.
+
+Observed:
+
+* `website_config` updated successfully.
+* `banner_url` updated correctly.
+* `logo_url` updated correctly.
+* API response matched database values.
+
+**Status:** ✅ Bug Fixed
+
+---
+
+# Overall Result
+
+| Test                  | Status   |
+| --------------------- | -------- |
+| Functional Testing    | ✅ Passed |
+| Authentication        | ✅ Passed |
+| Database Verification | ✅ Passed |
+| Response Verification | ✅ Passed |
+| Bug Fix Verification  | ✅ Passed |
+
+---
+
+# 8. Create Track
+
+## Description
+
+Creates a new track for a hackathon.
+
+Tracks represent different competition categories within a hackathon (e.g., AI, Cyber Security, Web Development). Each track contains its own description, prize amount, and display order.
+
+---
+
+## Authentication
+
+**Required**
+
+```text
+Authorization: Bearer <JWT_TOKEN>
+```
+
+Only the hackathon organizer can create tracks.
+
+---
+
+## Endpoint
+
+```http
+POST /api/v1/tracks/{hackathon_id}
+```
+
+---
+
+## Path Parameter
+
+| Parameter      | Type | Description           |
+| -------------- | ---- | --------------------- |
+| `hackathon_id` | UUID | Existing Hackathon ID |
+
+Example
+
+```text
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+---
+
+## Request Bodies Used During Testing
+
+### Track 1
+
+```json
+{
+  "name": "Artificial Intelligence",
+  "description": "AI and Machine Learning based solutions.",
+  "prize": "₹50,000",
+  "sort_order": 1
+}
+```
+
+### Track 2
+
+```json
+{
+  "name": "Cyber Security",
+  "description": "Security, Privacy and Blockchain projects.",
+  "prize": "₹40,000",
+  "sort_order": 2
+}
+```
+
+### Track 3
+
+```json
+{
+  "name": "Web Development",
+  "description": "Full Stack and Cloud based applications.",
+  "prize": "₹30,000",
+  "sort_order": 3
+}
+```
+
+---
+
+## Database Verification
+
+```sql
+SELECT *
+FROM tracks
+WHERE hackathon_id='810d9866-f43a-4e4c-bdbc-c274dd9c6540';
+```
+
+### Expected Result
+
+Three tracks should be present in the database.
+
+### Actual Result
+
+Three tracks were successfully stored in Supabase.
+
+**Status:** ✅ Passed
+
+---
+
+# 9. List Tracks
+
+## Description
+
+Retrieves all tracks associated with a specific hackathon.
+
+---
+
+## Authentication
+
+Not Required
+
+---
+
+## Endpoint
+
+```http
+GET /api/v1/tracks/{hackathon_id}
+```
+
+---
+
+## Path Parameter
+
+| Parameter      | Type |
+| -------------- | ---- |
+| `hackathon_id` | UUID |
+
+Example
+
+```text
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+---
+
+## Test Case
+
+### Expected Result
+
+The API should return all tracks created for the hackathon.
+
+### Actual Result
+
+Returned all three created tracks:
+
+* Artificial Intelligence
+* Cyber Security
+* Web Development
+
+along with
+
+* Track ID
+* Hackathon ID
+* Description
+* Prize
+* Sort Order
+* Created Timestamp
+
+Status Code:
+
+```text
+200 OK
+```
+
+**Status:** ✅ Passed
+
+---
+
+## Response Verification
+
+Verified that:
+
+* Three tracks were returned.
+* Track names matched the created records.
+* Sort order was correct.
+* Hackathon ID matched the requested hackathon.
+
+**Status:** ✅ Passed
+
+---
+
+# 10. Delete Track
+
+## Description
+
+Deletes a track from a hackathon.
+
+---
+
+## Authentication
+
+**Required**
+
+```text
+Authorization: Bearer <JWT_TOKEN>
+```
+
+Only the hackathon organizer can delete tracks.
+
+---
+
+## Endpoint
+
+```http
+DELETE /api/v1/tracks/{track_id}
+```
+
+---
+
+## Path Parameter
+
+| Parameter  | Type |
+| ---------- | ---- |
+| `track_id` | UUID |
+
+Deleted Track
+
+```text
+Cyber Security
+```
+
+Track ID
+
+```text
+298a43db-0704-474f-af2f-63bd7d2a6e2e
+```
+
+---
+
+## Test Case
+
+### Expected Result
+
+The selected track should be deleted successfully.
+
+Status Code
+
+```text
+204 No Content
+```
+
+### Actual Result
+
+Received
+
+```text
+204 No Content
+```
+
+Track was deleted successfully.
+
+**Status:** ✅ Passed
+
+---
+
+## Verification
+
+After deletion, the **List Tracks API** was executed again.
+
+### Expected Result
+
+Only the following tracks should remain:
+
+* Artificial Intelligence
+* Web Development
+
+### Actual Result
+
+The deleted track no longer appeared in the API response.
+
+**Status:** ✅ Passed
+
+---
+
+## Database Verification
+
+```sql
+SELECT *
+FROM tracks
+WHERE hackathon_id='810d9866-f43a-4e4c-bdbc-c274dd9c6540';
+```
+
+### Expected Result
+
+Only two tracks should exist.
+
+### Actual Result
+
+Supabase confirmed that the deleted track was removed successfully.
+
+**Status:** ✅ Passed
+
+
 ## Final Status
 
 ✅ **Passed**
+
+---
+---
+
+# 11. Register for Hackathon
+
+## Objective
+Verify that an authenticated participant can successfully register for a hackathon and that duplicate registrations are prevented.
+
+## Authentication
+**Required:** ✅ Yes (Bearer Token)
+
+## Request Details
+
+**Method**
+```http
+POST /api/v1/registrations/{hackathon_id}
+```
+
+**Path Parameter**
+| Parameter | Type | Description |
+|----------|------|-------------|
+| hackathon_id | UUID | ID of the hackathon |
+
+**Request Body**
+```json
+{
+  "form_data": {
+    "college": "Thapar Institute of Engineering and Technology",
+    "year": "3rd",
+    "branch": "Computer Engineering",
+    "phone": "9876543210",
+    "github": "https://github.com/jashan",
+    "experience": "Intermediate"
+  }
+}
+```
+
+---
+
+## Test Case 1 — Successful Registration
+
+### Test Objective
+Verify that an authenticated participant can register for a hackathon.
+
+### Expected Result
+
+- HTTP Status: **201 Created**
+- Registration is created.
+- User ID is automatically obtained from the authenticated JWT.
+- Submitted form data is stored.
+
+### Actual Result
+
+✅ Passed
+
+### Response
+
+```json
+{
+    "id": "23212617-bdd4-4254-909d-e14d91289190",
+    "hackathon_id": "810d9866-f43a-4e4c-bdbc-c274dd9c6540",
+    "user_id": "82dc7121-0ad4-4890-a103-4398a4e97763",
+    "status": "approved",
+    "form_data": {
+        "college": "Thapar Institute of Engineering and Technology",
+        "year": "3rd",
+        "branch": "Computer Engineering",
+        "phone": "9876543210",
+        "github": "https://github.com/jashan",
+        "experience": "Intermediate"
+    },
+    "created_at": "2026-06-27T07:36:25.527623Z"
+}
+```
+
+---
+
+## Test Case 2 — Duplicate Registration Prevention
+
+### Test Objective
+Verify that the same authenticated user cannot register twice for the same hackathon.
+
+### Steps
+
+1. Login as User A.
+2. Register successfully for a hackathon.
+3. Submit another registration request using the **same JWT** but with different form data.
+
+Example:
+
+```json
+{
+  "form_data": {
+    "college": "Thapar Institute of Engineering and Technology",
+    "year": "2nd",
+    "branch": "Electronics Engineering",
+    "phone": "9814062675",
+    "github": "https://github.com/tanya",
+    "experience": "Intermediate"
+  }
+}
+```
+
+### Expected Result
+
+- HTTP Status: **400 Bad Request**
+- API should reject duplicate registration.
+
+Response:
+
+```json
+{
+    "detail": "Already registered"
+}
+```
+
+### Actual Result
+
+✅ Passed
+
+### Observation
+
+Although different registration details were entered, the backend identified the authenticated user from the JWT token rather than the submitted form data.
+
+Duplicate registration is checked using:
+
+```
+current_user.id
++
+hackathon_id
+```
+
+Therefore, changing only the form data does **not** create a new participant or bypass duplicate registration protection.
+
+This confirms that authentication and duplicate registration logic are functioning correctly.
+
+---
+
+## Test Summary
+
+| Test Case | Expected | Actual | Status |
+|-----------|----------|--------|--------|
+| Successful Registration | 201 Created | Registration created successfully | ✅ Passed |
+| Duplicate Registration | 400 Bad Request | "Already registered" returned | ✅ Passed |
+
+---
+
+# 12. Create Team
+
+### Objective
+Creates a new team for an approved participant in a hackathon.
+
+### Authorization
+Bearer Token (Required)
+
+### Test Data
+
+Hackathon ID
+
+```
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+Request Body
+
+```json
+{
+    "name": "Code Warriors"
+}
+```
+
+### Expected Result
+
+- Creates a new team.
+- Generates an invite code.
+- Adds the creator as the team leader.
+- Adds the creator as the first team member.
+
+### Actual Result ✅
+
+Status Code
+
+```
+201 Created
+```
+
+Response contained
+
+- Team ID
+- Leader ID
+- Invite Code
+- Members array
+- Created Timestamp
+
+### Status
+
+✅ Passed
+
+---
+
+## 13. Join Team
+
+### Objective
+
+Allows an approved participant to join a team using an invite code.
+
+### Authorization
+
+Bearer Token (Required)
+
+### Positive Test
+
+Request
+
+```json
+{
+    "invite_code": "NIVRHJCK"
+}
+```
+
+Expected
+
+```
+200 OK
+```
+
+Returned team information and members list.
+
+### Negative Test
+
+Request
+
+```json
+{
+    "invite_code": "ABC123"
+}
+```
+
+Response
+
+```
+404 Not Found
+```
+
+```json
+{
+    "detail": "Invalid invite code"
+}
+```
+
+### Observation
+
+During testing, duplicate user IDs appeared in the members list after joining. This indicates the join request may have been executed using the same authenticated user instead of a second participant account. Requires verification using a different user token.
+
+### Status
+
+⚠ Functional but requires verification with multiple users.
+
+---
+
+# 14. Leave Team
+
+### Objective
+
+Removes the authenticated user from their current team.
+
+### Authorization
+
+Bearer Token (Required)
+
+### Negative Test
+
+User attempted to leave without belonging to a team.
+
+Response
+
+```
+404 Not Found
+```
+
+```json
+{
+    "detail": "Not in a team"
+}
+```
+
+### Expected Behavior
+
+API correctly prevents users from leaving a team they are not part of.
+
+### Status
+
+✅ Negative test passed
+
+---
+
+---
+
+# 15. Create Submission
+
+## Endpoint
+
+`POST /api/v1/submissions/{hackathon_id}`
+
+## Objective
+
+Creates a draft submission for the logged-in user's team.
+
+---
+
+## Test Data
+
+Hackathon ID
+
+```text
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+Request Body
+
+```json
+{
+  "title": "HackForge AI Assistant",
+  "description": "An AI-powered hackathon management platform built using FastAPI and React.",
+  "github_url": "https://github.com/gursharen/HackForge",
+  "demo_url": "https://hackforge-demo.vercel.app",
+  "video_url": "https://youtu.be/demo123",
+  "deck_url": "https://drive.google.com/file/d/presentation",
+  "ai_usage": "Used ChatGPT for API documentation and code review."
+}
+```
+
+---
+
+## Expected Result
+
+- Submission should be created.
+- Status should be `draft`.
+- Team ID should be linked automatically.
+- Creation timestamp should be generated.
+
+---
+
+## Actual Result
+
+✅ Passed
+
+Response Code
+
+```text
+201 Created
+```
+
+Response contained
+
+- Submission ID
+- Team ID
+- Hackathon ID
+- Status = draft
+- created_at
+- updated_at
+
+---
+
+## Database Verification
+
+Verified that a new record was inserted into the `submissions` table with:
+
+- Correct Hackathon ID
+- Correct Team ID
+- Status = draft
+- Submitted project details
+
+---
+
+## Issues Found
+
+### Issue
+
+Duplicate team memberships caused:
+
+```text
+MultipleResultsFound
+```
+
+during submission creation.
+
+### Root Cause
+
+Duplicate records existed in the `team_members` table.
+
+### Fix
+
+- Removed duplicate team member entry.
+- Added validation to prevent duplicate memberships.
+- Recommended adding a database Unique Constraint on:
+
+```text
+(team_id, user_id)
+```
+
+---
+
+# Test Status
+
+✅ Passed after backend fix.
+
+---
+
+# 16. Update Submission
+
+## Endpoint
+
+`PATCH /api/v1/submissions/{submission_id}`
+
+## Objective
+
+Updates an existing draft submission.
+
+---
+
+## Submission ID
+
+```text
+8355518c-6ec9-4d9f-bc3b-775e6dd172fe
+```
+
+---
+
+## Request Body
+
+```json
+{
+  "title": "HackForge AI Assistant",
+  "description": "An AI-powered hackathon management platform built using FastAPI and React.",
+  "github_url": "https://github.com/gursharen/HackForge",
+  "demo_url": "https://hackforge-demo.vercel.app",
+  "video_url": "https://youtu.be/demo123",
+  "deck_url": "https://drive.google.com/file/d/presentation",
+  "ai_usage": "No."
+}
+```
+
+---
+
+## Expected Result
+
+- Submission details updated.
+- updated_at timestamp changes.
+- Status remains draft.
+
+---
+
+## Actual Result
+
+✅ Passed
+
+Response Code
+
+```text
+200 OK
+```
+
+Verified
+
+- ai_usage updated successfully.
+- updated_at timestamp changed.
+- Status remained draft.
+
+---
+
+## Database Verification
+
+Verified updated fields inside the `submissions` table.
+
+---
+
+# Test Status
+
+✅ Passed
+
+---
+
+# 17. Submit Submission
+
+## Endpoint
+
+`POST /api/v1/submissions/{submission_id}/submit`
+
+## Objective
+
+Marks a draft submission as officially submitted.
+
+---
+
+## Submission ID
+
+```text
+8355518c-6ec9-4d9f-bc3b-775e6dd172fe
+```
+
+---
+
+## Request Body
+
+None
+
+---
+
+## Expected Result
+
+Submission status should change from:
+
+```text
+draft
+```
+
+to
+
+```text
+submitted
+```
+
+---
+
+## Actual Result
+
+✅ Passed
+
+Response Code
+
+```text
+200 OK
+```
+
+Verified
+
+Before
+
+```text
+status = draft
+```
+
+After
+
+```text
+status = submitted
+```
+
+---
+
+## Database Verification
+
+Verified the `status` column changed to:
+
+```text
+submitted
+```
+
+---
+
+# Test Status
+
+✅ Passed
+
+---
+
+# 18. List All Submissions
+
+## Endpoint
+
+`GET /api/v1/submissions/{hackathon_id}/all`
+
+## Objective
+
+Returns every submission associated with a hackathon.
+
+---
+
+## Hackathon ID
+
+```text
+810d9866-f43a-4e4c-bdbc-c274dd9c6540
+```
+
+---
+
+## Expected Result
+
+Returns an array containing all submissions.
+
+---
+
+## Actual Result
+
+✅ Passed
+
+Response Code
+
+```text
+200 OK
+```
+
+Verified response contained
+
+- Submission ID
+- Team ID
+- Hackathon ID
+- Title
+- Description
+- GitHub URL
+- Demo URL
+- Video URL
+- Deck URL
+- AI Usage
+- Status
+- created_at
+- updated_at
+
+---
+
+# Bugs Identified During Testing
+
+### Duplicate Team Membership
+
+**Issue**
+
+Duplicate entries in the `team_members` table caused:
+
+```text
+MultipleResultsFound
+```
+
+during submission creation.
+
+---
+
+### Root Cause
+
+The same user was inserted twice into the same team.
+
+---
+
+### Resolution
+
+- Removed duplicate database entry.
+- Added validation before inserting new team members.
+- Recommended adding a database-level Unique Constraint on `(team_id, user_id)`.
+
+---
+
+# Overall Status
+
+✅ All Submission APIs tested successfully.
+
+No unresolved functional issues remain after backend fixes.
+
+---
+
+
