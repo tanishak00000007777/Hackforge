@@ -194,7 +194,7 @@ Actual
 
 ---
 
-# 5. Create Hackathon
+# 4. Create Hackathon
 
 ## Endpoint
 
@@ -293,4 +293,77 @@ The API successfully created the hackathon and returned the created object with 
 
 ---
 
+# 5. Get Hackathon By Slug
+
+## Endpoint
+
+**Method:** `GET`
+
+**Route:**
+
+```text
+/api/v1/hackathons/{slug}
+```
+
+---
+
+## Objective
+
+Verify that a hackathon can be retrieved successfully using its unique slug.
+
+---
+
+## Authentication
+
+**Required:** ❌ No
+
+This endpoint is publicly accessible and does not require a JWT Bearer Token.
+
+---
+
+## Path Parameter
+
+| Parameter | Value Used              |
+| --------- | ----------------------- |
+| slug      | `hackforge-summer-2026` |
+
+---
+
+## Test Cases
+
+### Test Case 1 – Valid Slug
+
+**Request**
+
+```http
+GET /api/v1/hackathons/hackforge-summer-2026
+```
+
+**Expected Result**
+
+* HTTP Status Code **200 OK**
+* Returns the hackathon details matching the provided slug.
+* All fields match the data created during the Create Hackathon API test.
+
+**Actual Result**
+
+✅ **Passed**
+
+The API returned the correct hackathon details.
+
+---
+
+## Validation Performed
+
+* [x] Existing slug successfully retrieves hackathon.
+* [x] Returned object matches the created hackathon.
+* [x] Correct organization association verified.
+* [x] Response schema matches API specification.
+* [x] Public endpoint accessible without authentication.
+
+---
+
+## Final Status
+
+✅ **Passed**
 
