@@ -1661,3 +1661,118 @@ No unresolved functional issues remain after backend fixes.
 ---
 
 
+# 19. Get Leaderboard
+
+## Endpoint
+
+```
+GET /api/v1/leaderboard/{hackathon_id}
+```
+
+---
+
+### Description
+
+Returns the ranked leaderboard for all submitted projects in a hackathon.
+
+Scores are calculated using weighted rubric criteria.
+
+Ranking is automatically generated based on total weighted score.
+
+---
+
+### Path Parameter
+
+| Parameter | Type | Description |
+|----------|------|-------------|
+| hackathon_id | UUID | Hackathon ID |
+
+---
+
+### Expected Response
+
+```json
+[
+  {
+    "rank": 1,
+    "submission_id": "submission-id",
+    "team_id": "team-id",
+    "team_name": "Code Warriors",
+    "submission_title": "HackForge AI Assistant",
+    "total_score": 87.5,
+    "score_count": 12
+  }
+]
+```
+
+---
+
+### Score Calculation
+
+```
+Total Score =
+Σ (Judge Score × Criterion Weight)
+```
+
+Example
+
+```
+Innovation
+Score = 9
+Weight = 3
+
+Contribution = 27
+```
+
+Total score is calculated by summing all weighted criterion scores.
+
+---
+
+### Ranking Logic
+
+- Highest total score receives Rank 1.
+- Entries are sorted in descending order.
+- Only submitted projects appear on the leaderboard.
+
+---
+
+### Validation Tested
+
+- Only submitted submissions are included.
+- Team names are correctly displayed.
+- Weighted scores are calculated.
+- Rankings are sorted correctly.
+
+---
+
+### Possible Errors
+
+| Code | Description |
+|------|-------------|
+|404|Hackathon not found|
+
+---
+
+# Overall Testing Summary
+
+| API | Status |
+|------|--------|
+|Get Leaderboard|Implementation Verified|
+
+---
+
+# Backend Logic
+
+The leaderboard service performs the following operations:
+
+1. Fetches all submitted projects.
+2. Retrieves rubric weights.
+3. Computes weighted scores.
+4. Aggregates scores from all judges.
+5. Sorts submissions by score.
+6. Assigns leaderboard ranks.
+
+This ensures consistent and transparent project ranking across the hackathon.
+---
+
+
