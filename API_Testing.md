@@ -367,3 +367,110 @@ The API returned the correct hackathon details.
 
 ✅ **Passed**
 
+---
+# 6. Publish Hackathon
+
+## Endpoint
+
+**Method:** `POST`
+
+**Route:**
+
+```text
+/api/v1/hackathons/{hackathon_id}/publish
+```
+
+---
+
+## Objective
+
+Verify that an organizer can publish an existing hackathon and change its status from `draft` to `published`.
+
+---
+
+## Authentication
+
+**Required:** ✅ Yes
+
+Bearer JWT Token obtained from the Login API.
+
+---
+
+## Path Parameter
+
+| Parameter | Value Used |
+|----------|------------|
+| hackathon_id | `810d9866-f43a-4e4c-bdbc-c274dd9c6540` |
+
+---
+
+## Test Cases
+
+### Test Case 1 – Invalid Hackathon ID
+
+**Request**
+
+```http
+POST /api/v1/hackathons/3fa85f64-5717-4562-b3fc-2c963f66afa6/publish
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**Expected Result**
+
+- HTTP Status Code **404 Not Found**
+- Returns an appropriate error message indicating that the hackathon does not exist.
+
+**Actual Result**
+
+✅ Passed
+
+```json
+{
+    "detail": "Hackathon not found"
+}
+```
+
+---
+
+### Test Case 2 – Valid Hackathon ID
+
+**Request**
+
+```http
+POST /api/v1/hackathons/810d9866-f43a-4e4c-bdbc-c274dd9c6540/publish
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**Expected Result**
+
+- HTTP Status Code **200 OK**
+- Hackathon status changes from `draft` to `published`.
+- Returns updated hackathon details.
+
+**Actual Result**
+
+✅ Passed
+
+Response contained:
+
+- Correct hackathon ID
+- Correct organization ID
+- Status updated to **published**
+- Existing hackathon information remained unchanged
+
+---
+
+## Validation Performed
+
+- [x] Authentication required.
+- [x] Invalid Hackathon ID returns **404 Not Found**.
+- [x] Existing hackathon published successfully.
+- [x] Status changed from **draft** → **published**.
+- [x] Returned data matches the created hackathon.
+- [x] Response schema matches API specification.
+
+---
+
+## Final Status
+
+✅ **Passed**
