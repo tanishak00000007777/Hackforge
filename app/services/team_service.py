@@ -143,3 +143,40 @@ async def get_my_team(
     if not team:
         raise HTTPException(status_code=404, detail="Not in a team")
     return team
+
+async def leave_team(
+    hackathon_id: uuid.UUID,
+    current_user: User,
+    db: AsyncSession,
+) -> dict:
+    team = await _get_user_team(hackathon_id, current_user.id, db)
+    if not team:
+        raise HTTPException(status_code=404, detail="Not in a team")
+
+    # Delete member record
+    result = await db.execute(
+        select(TeamMember).where(
+            TeamMember.team_id == team.id,
+            TeamMember.user_id == current_user.id,
+        )
+    )
+    member = result.scalar_one_or_none()
+    if member:
+        await db.delete(member)
+        await db.flush()
+
+    # If leader left, reassign or dissolve
+    if team.leader_id == current_user.id:
+        remaining = await db.execute(
+            select(TeamMember).where(TeamMember.team_id == team.id)
+        )
+        remaining_members = remaining.scalars().all()
+        if remaining_members:
+            team.leader_id = remaining_members[0].user_id
+            await db.flush()
+        else:
+            await db.delete(team)
+            await db.flush()
+            return {"detail": "Team dissolved"}
+
+    return {"detail": "Left team successfully"}

@@ -12,9 +12,9 @@ async def check():
             ORDER BY table_name;
         """))
         tables = [row[0] for row in result]
-        print('Tables found:')
+        print(f"Total tables: {len(tables)}")
         for t in tables:
-            print(f'  ✅ {t}')
+            print(f"  ✅ {t}")
 
 
 asyncio.run(check())

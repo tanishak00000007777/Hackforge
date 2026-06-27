@@ -36,3 +36,14 @@ async def my_team(
     db: AsyncSession = Depends(get_db),
 ):
     return await get_my_team(hackathon_id, current_user, db)
+
+
+@router.delete("/{hackathon_id}/leave")
+async def leave(
+    hackathon_id: uuid.UUID,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.services.team_service import leave_team
+    return await leave_team(hackathon_id, current_user, db)
+

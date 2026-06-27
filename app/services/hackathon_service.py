@@ -60,3 +60,31 @@ async def publish_hackathon(
     await db.flush()
     await db.refresh(hackathon)
     return hackathon
+
+
+async def update_website_config(
+    hackathon_id: uuid.UUID,
+    config: dict,
+    current_user: User,
+    db: AsyncSession,
+) -> Hackathon:
+    result = await db.execute(
+        select(Hackathon).where(Hackathon.id == hackathon_id)
+    )
+    hackathon = result.scalar_one_or_none()
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+    if hackathon.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    hackathon.website_config = config
+    await db.flush()
+    await db.refresh(hackathon)
+    return hackathon
+
+
+async def get_all_hackathons(db: AsyncSession) -> list[Hackathon]:
+    result = await db.execute(
+        select(Hackathon).where(Hackathon.status == HackathonStatus.published)
+    )
+    return list(result.scalars().all())
