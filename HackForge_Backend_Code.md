@@ -44,7 +44,8 @@ passlib[bcrypt]==1.7.4
 bcrypt==3.2.2
 python-multipart==0.0.9
 httpx==0.27.0
-supabase==2.5.0
+# PostgreSQL driver for async SQLAlchemy
+asyncpg==0.29.0
 ```
 
 > `asyncpg` not `psycopg2` — we use async SQLAlchemy, psycopg2 is sync and will break it
@@ -72,9 +73,9 @@ APP_VERSION=0.1.0
 DEBUG=True
 SECRET_KEY=your-super-secret-key-change-this-in-production
 
-# From Supabase → Connect button → URI tab
-# Change postgresql:// to postgresql+asyncpg://
-DATABASE_URL=postgresql+asyncpg://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+# PostgreSQL connection string (local or production)
+# Format: postgresql+asyncpg://user:password@host:5432/dbname
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/hackforge
 
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
@@ -82,8 +83,7 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 
-SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+# No provider-specific database keys are required
 ```
 
 ---
@@ -148,7 +148,7 @@ from app.config.settings import get_settings
 
 settings = get_settings()
 
-# Creates the connection pool to Supabase
+# Creates the connection pool to PostgreSQL
 engine = create_async_engine(
     settings.database_url,
     echo=True,           # logs every SQL query — set False in production
@@ -296,7 +296,7 @@ async def get_current_user(
 ---
 
 ## 4. MODELS
-> SQLAlchemy ORM classes — each one maps to a table in Supabase
+> SQLAlchemy ORM classes — each one maps to a PostgreSQL table
 
 ---
 

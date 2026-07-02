@@ -10,10 +10,6 @@ class Settings(BaseSettings):
     secret_key: str
     database_url: str
 
-    # Supabase
-    supabase_url: str
-    supabase_service_role_key: str
-
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
