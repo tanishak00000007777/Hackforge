@@ -36,14 +36,13 @@ This repository contains the **backend API only**. The frontend is a separate Re
 
 ### Prerequisites
 - Python 3.10+
-- Supabase account and project
 
 ### Setup
 
 ```bash
 # Clone the repository
 git clone https://github.com/tanishak00000007777/Hackforge.git
-cd Hackforge/backend
+cd Hackforge
 
 # Create virtual environment
 python -m venv venv
