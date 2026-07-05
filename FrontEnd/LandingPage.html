@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>HackForge | Build Exceptional Hackathons</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Jetbrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"on-primary-fixed": "#251337", "inverse-on-surface": "#f0efff", "inverse-primary": "#d6bdeb", "on-tertiary-fixed": "#001355", "on-error": "#ffffff", secondary: "#824889", "primary-fixed-dim": "#d6bdeb", "on-tertiary": "#ffffff", "surface-variant": "#dee0ff", error: "#ba1a1a", "surface-bright": "#fbf8ff", tertiary: "#00062d", "on-primary": "#ffffff", "secondary-fixed": "#ffd6fe", "on-secondary-container": "#794080", "on-primary-container": "#9680ab", "secondary-fixed-dim": "#f4aff8", "on-error-container": "#93000a", "surface-container-high": "#e5e6ff", "on-surface-variant": "#4a454d", "outline-variant": "#ccc4ce", "primary-container": "#2b193d", outline: "#7b757e", "surface-container": "#edecff", "on-secondary-fixed-variant": "#683170", "on-background": "#0e1647", primary: "#130225", "inverse-surface": "#242c5d", "surface-container-low": "#f4f2ff", "tertiary-fixed": "#dde1ff", "secondary-container": "#f9b5fe", "surface-dim": "#d4d7ff", "surface-container-highest": "#dee0ff", "primary-fixed": "#f0dbff", "on-primary-fixed-variant": "#523f65", surface: "#fbf8ff", "tertiary-container": "#001864", "on-secondary": "#ffffff", "surface-tint": "#6b567e", "surface-container-lowest": "#ffffff", "error-container": "#ffdad6", "on-secondary-fixed": "#35003f", "on-tertiary-fixed-variant": "#1339b2", background: "#fbf8ff", "on-surface": "#0e1647", "tertiary-fixed-dim": "#b8c3ff", "on-tertiary-container": "#6480f8"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {sm: "16px", "margin-safe": "32px", md: "24px", lg: "48px", xs: "8px", xl: "80px", base: "4px", gutter: "24px"}, fontFamily: {"label-sm": ["JetBrains Mono"], "display-lg": ["Inter"], "headline-md": ["Inter"], "body-md": ["Inter"], "display-lg-mobile": ["Inter"], "body-lg": ["Inter"], headline: ["Inter"], display: ["Inter"], body: ["Inter"], label: ["Jetbrains Mono"]}, fontSize: {"label-sm": ["12px", {lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "500"}], "display-lg": ["48px", {lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700"}], "headline-md": ["24px", {lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600"}], "body-md": ["16px", {lineHeight: "24px", fontWeight: "400"}], "display-lg-mobile": ["36px", {lineHeight: "42px", letterSpacing: "-0.02em", fontWeight: "700"}], "body-lg": ["18px", {lineHeight: "28px", fontWeight: "400"}]}}}};</script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(43, 25, 61, 0.05);
+            box-shadow: 0 10px 30px -10px rgba(43, 25, 61, 0.08);
+        }
+        .glass-edge {
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% -20%, #f0dbff 0%, #fbf8ff 60%);
+        }
+        .floating {
+            animation: floating 6s ease-in-out infinite;
+        }
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-surface/60 backdrop-blur-xl border-b border-on-surface/5 shadow-sm h-16 flex items-center justify-between px-margin-safe max-w-[1440px] mx-auto left-0 right-0">
+<div class="flex items-center gap-8">
+<span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">HackForge</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors font-semibold border-b-2 border-on-tertiary-container py-1" href="#">Features</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Pricing</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Resources</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-all active:scale-95 px-4 py-2">Login</button>
+<button class="bg-primary text-on-primary font-body-md text-body-md px-6 py-2.5 rounded-lg shadow-lg hover:bg-secondary transition-all active:scale-95">Create Hackathon</button>
+</div>
+</nav>
+<!-- Hero Section -->
+<main class="relative pt-32 pb-24 hero-gradient overflow-hidden">
+<div class="max-w-[1440px] mx-auto px-margin-safe grid grid-cols-1 lg:grid-cols-12 gap-xl items-center">
+<!-- Left Side: Content -->
+<div class="lg:col-span-5 flex flex-col gap-md z-10">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-container/30 text-on-secondary-container w-fit mb-2">
+<span class="font-label-sm text-label-sm uppercase tracking-wider">v2.0 Now Live</span>
+</div>
+<h1 class="font-display-lg text-display-lg lg:text-display-lg text-display-lg-mobile text-primary-container leading-tight">
+                    Build Exceptional <br/> <span class="text-on-primary-container">Hackathons</span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">
+                    Launch branded hackathons, manage participants, evaluate projects and celebrate innovation from one powerful platform. Designed for modern tech communities.
+                </p>
+<div class="flex flex-wrap gap-4 mt-4">
+<button class="bg-primary-container text-white px-8 py-4 rounded-xl font-body-md font-semibold shadow-2xl shadow-primary-container/20 hover:translate-y-[-2px] transition-all flex items-center gap-2">
+                        Create Your Hackathon
+                        <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<button class="border border-outline-variant bg-white/50 backdrop-blur-sm text-primary-container px-8 py-4 rounded-xl font-body-md font-semibold hover:bg-white transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">play_circle</span>
+                        Watch Demo
+                    </button>
+</div>
+<div class="flex items-center gap-4 mt-8 opacity-60">
+<span class="font-label-sm text-label-sm">Trusted by 500+ Organizations</span>
+</div>
+</div>
+<!-- Right Side: Product Showcase -->
+<div class="lg:col-span-7 relative h-[600px] flex items-center justify-center">
+<!-- Decorative element -->
+<div class="absolute w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl"></div>
+<!-- Main Dashboard Card -->
+<div class="relative w-full max-w-xl glass-card rounded-2xl overflow-hidden glass-edge shadow-2xl z-20">
+<div class="h-8 bg-surface-container/50 flex items-center px-4 gap-1.5 border-b border-on-surface/5">
+<div class="w-2.5 h-2.5 rounded-full bg-red-400/50"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-yellow-400/50"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-green-400/50"></div>
+</div>
+<img alt="Main Platform UI" class="w-full grayscale-[0.2] contrast-[1.05]" data-alt="A clean, high-fidelity software dashboard interface showing a complex hackathon management system with analytics graphs, participant lists, and a sleek navigation sidebar. The UI is modern with deep indigo and soft white tones, featuring soft shadows and sharp typography consistent with a premium SaaS tool. The lighting is soft and studio-like, highlighting the glassmorphism effects of the interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxxkasEnFrqSTq1qJVmRplRoYgOg7R1ZZgey9ppHZN5uwqCW2yM7EhGdVV5cysUvg06tqpqpmJVpzKd-DwIQGtnIT6aLEhARdk47co0DBZLeR4Dj4skFXmoLFlRw-vUEZPJthhU6fDBAPM7WaFfqfTnCkGRkPwTTTz2cPCA0cHUAdyF5wcOJqZaounD2-qDO_QcYw3XzYyR_KAzYXLNblRJzk7idFI5h7d9Jzo0rCbYwHEhi9p8TKkC_Qr1fQUXbTyka-fW5lZNA"/>
+</div>
+<!-- Floating Cards -->
+<!-- Website Builder -->
+<div class="absolute top-10 right-0 w-56 glass-card p-4 rounded-xl floating z-30 flex flex-col gap-2" style="animation-delay: -1s;">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-primary-container text-white rounded-lg">
+<span class="material-symbols-outlined text-[20px]">web</span>
+</div>
+<span class="font-label-sm font-bold text-primary">Website Builder</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-on-tertiary-container w-3/4"></div>
+</div>
+</div>
+<!-- Analytics Card -->
+<div class="absolute bottom-12 right-12 w-64 glass-card p-5 rounded-xl floating z-30" style="animation-delay: -3s;">
+<span class="font-label-sm text-on-surface-variant">Live Registrations</span>
+<div class="flex items-end gap-2 mt-2">
+<span class="text-headline-md font-bold text-primary">2,481</span>
+<span class="text-green-500 font-label-sm mb-1.5 flex items-center">+12%</span>
+</div>
+<div class="mt-3 flex items-center gap-1">
+<div class="h-8 flex-1 bg-primary/10 rounded-sm"></div>
+<div class="h-12 flex-1 bg-primary/20 rounded-sm"></div>
+<div class="h-10 flex-1 bg-primary/15 rounded-sm"></div>
+<div class="h-16 flex-1 bg-on-tertiary-container/40 rounded-sm"></div>
+<div class="h-14 flex-1 bg-primary/25 rounded-sm"></div>
+</div>
+</div>
+<!-- Judge Workspace -->
+<div class="absolute top-24 -left-8 w-48 glass-card p-4 rounded-xl floating z-30" style="animation-delay: -4.5s;">
+<div class="flex items-center gap-2 mb-3">
+<div class="w-2 h-2 rounded-full bg-on-tertiary-container"></div>
+<span class="font-label-sm font-bold">Judging Active</span>
+</div>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-variant"></div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-primary-fixed"></div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-secondary-fixed"></div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bento Feature Grid -->
+<section class="py-xl bg-surface">
+<div class="max-w-[1440px] mx-auto px-margin-safe">
+<div class="text-center max-w-2xl mx-auto mb-16">
+<h2 class="font-headline-md text-headline-md text-primary mb-4">Powerful tools for Every Stage</h2>
+<p class="text-on-surface-variant font-body-md">From registration to final judging, HackForge provides a seamless infrastructure to scale your innovation events.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Feature 1: Website Builder -->
+<div class="md:col-span-2 glass-card p-8 rounded-2xl group hover:shadow-xl transition-all">
+<div class="flex flex-col md:flex-row gap-8 items-center">
+<div class="flex-1">
+<span class="material-symbols-outlined text-on-tertiary-container text-[40px] mb-4">web</span>
+<h3 class="font-headline-md text-headline-md text-primary mb-2">Drag &amp; Drop Builder</h3>
+<p class="text-on-surface-variant font-body-md mb-6">Create stunning landing pages for your hackathons with no code. Custom domains, SSL, and mobile responsive by default.</p>
+<ul class="flex flex-col gap-2">
+<li class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface">
+<span class="material-symbols-outlined text-green-500 text-[18px]">check_circle</span>
+                                    PRE-BUILT COMPONENT LIBRARY
+                                </li>
+<li class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface">
+<span class="material-symbols-outlined text-green-500 text-[18px]">check_circle</span>
+                                    CUSTOM CSS &amp; THEMING
+                                </li>
+</ul>
+</div>
+<div class="flex-1 w-full bg-surface-container rounded-xl overflow-hidden glass-edge shadow-inner">
+<img alt="Website Builder UI" class="w-full opacity-90 group-hover:scale-105 transition-transform duration-500" data-alt="A sophisticated no-code website builder interface specifically designed for tech events. It features a sidebar with UI components like registration forms, countdown timers, and sponsor grids. The central canvas shows a beautiful, dark-themed hackathon landing page being edited. The aesthetic is clean and professional, with a focus on ease of use and modern layout patterns." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCR-QX31-2c4SmXQn3ecPE0GuFJtsLSGzARBzMVh-OAUHeykIBOvWnStHfXCFVb3X8D2mjs8uuFBOO52-SWvFA1TNivXf8IaJ40k3QOkj960DPVdtGrcrqV6Rh2vIlt7YLpI8fLs5RH1_w_qPhJ04t7ZjHOy57VuZ7I-oOh1wX-aLML67EmcgQXaMm389DJHZxSfmH88ppHOByGZZ-lp2nPKJhQJ9Y1hxGSNnX8EX6437KHhVLiwn8buRKpYLFMD_2jA0ji3_bGUA"/>
+</div>
+</div>
+</div>
+<!-- Feature 2: Judging -->
+<div class="glass-card p-8 rounded-2xl flex flex-col justify-between hover:shadow-xl transition-all">
+<div>
+<span class="material-symbols-outlined text-on-tertiary-container text-[40px] mb-4">gavel</span>
+<h3 class="font-headline-md text-headline-md text-primary mb-2">Automated Judging</h3>
+<p class="text-on-surface-variant font-body-md">Streamline evaluations with weighted rubrics and blind scoring systems.</p>
+</div>
+<div class="mt-8 pt-8 border-t border-on-surface/5">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant">SCORING PROGRESS</span>
+<span class="text-primary font-bold">84%</span>
+</div>
+<div class="mt-2 h-2 w-full bg-surface-container rounded-full">
+<div class="h-full bg-on-tertiary-container w-[84%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Feature 3: Team Management -->
+<div class="glass-card p-8 rounded-2xl flex flex-col hover:shadow-xl transition-all">
+<span class="material-symbols-outlined text-on-tertiary-container text-[40px] mb-4">groups</span>
+<h3 class="font-headline-md text-headline-md text-primary mb-2">Team Formation</h3>
+<p class="text-on-surface-variant font-body-md mb-6">AI-powered teammate matching based on skills and interests to ensure every participant finds a home.</p>
+<div class="mt-auto flex -space-x-3 overflow-hidden">
+<img alt="Team member" class="w-10 h-10 rounded-full border-2 border-white" data-alt="Close up professional headshot of a diverse tech professional with a warm smile, set against a soft blurred studio background, high-end photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdovXukKwkwItACWyaBbU1b8rVwwiM9gq8NIdrSNxyGbcPRah7hIeeUW_rhKo7FuAi_8wRhHcr4NaI01mKap0QaBzT4SvNDIyqKA8urWiYZXblpk8LLE_5rozZGVSenLXr7eE_WaIZgG4cZpFvy0Ghi6F7zSpelih-BK8d9rZBhSeQHUowCQCx9uZO7s3_oLLImckq4uy46nz6tDgUTFxrQR9ncTb8PGY-b0JrdpuG6d2UHpsOzk4452JUEk39yfvdSrP4bN1MXA"/>
+<img alt="Team member" class="w-10 h-10 rounded-full border-2 border-white" data-alt="Close up professional headshot of a creative professional woman with a calm expression, soft cinematic lighting, premium minimalist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0qR9QGhwevWPVlADOd3qQN0lyWDq4vfbEXxp9EpO2pxRFRXft4ddQJyB4TNZrHV5YNt8iCahtDFhi2utPKvZuTVrGAX3ePUiJ_T2xMYPykwVb7lCCQETGE5RmGNM1Za7lMOmIwgbIdkSrDGYmg1ulJWOaVVy28VP0cp0oywRcPNiEciRVPs_PzcK62oYX3BMZxNBu31uh_Hew4PAt5DqbTnXMVWQNqkU36xXQyqilPVNTgOKMmpQSoSkIqhkdODLmEhBzt-3x1Q"/>
+<img alt="Team member" class="w-10 h-10 rounded-full border-2 border-white" data-alt="Close up professional headshot of a software engineer, looking thoughtfully into the camera, natural lighting, high-quality portrait photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCL-jDXcde8PphBwBzs3ipWcDHN3lw92k3vwdFdsvRqRACfp2xgXdyhBi236Pf8eTiIlMhxcxhtbdHFUJWOn9bEF4B9zVRNyr_y2KrvRGNu3Zvej6wrYKgFkKSscqwazQefxOzxmxdFnAJxzoIu4dxL5zXmNT69NPBrbqIoJdKc7XJOa9ms8zS0Dfp37Rz4l9tYkke-OkqHwflFMDJcJsaYSiqmzxKLHNIXFNjiUqUKcJCvC7jSQ54qweCUlSwihYZYMHgjWcuvTQ"/>
+<div class="w-10 h-10 rounded-full border-2 border-white bg-primary-fixed flex items-center justify-center font-label-sm">+42</div>
+</div>
+</div>
+<!-- Feature 4: Certificates -->
+<div class="glass-card p-8 rounded-2xl flex flex-col hover:shadow-xl transition-all">
+<span class="material-symbols-outlined text-on-tertiary-container text-[40px] mb-4">verified</span>
+<h3 class="font-headline-md text-headline-md text-primary mb-2">Digital Credentials</h3>
+<p class="text-on-surface-variant font-body-md">Issue blockchain-verified certificates and NFTs to winners and participants automatically.</p>
+<div class="mt-6 p-4 border border-dashed border-outline rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container">description</span>
+<span class="font-label-sm text-label-sm">CERTIFICATE_TEMPLATE.PDF</span>
+</div>
+</div>
+</div>
+<!-- Feature 5: Sponsors -->
+<div class="glass-card p-8 rounded-2xl flex flex-col hover:shadow-xl transition-all">
+<span class="material-symbols-outlined text-on-tertiary-container text-[40px] mb-4">account_balance</span>
+<h3 class="font-headline-md text-headline-md text-primary mb-2">Sponsor Portal</h3>
+<p class="text-on-surface-variant font-body-md mb-6">Give your partners dedicated dashboards to review resumes, host workshops, and track ROI.</p>
+<div class="grid grid-cols-3 gap-2 opacity-50">
+<div class="h-8 bg-surface-variant rounded"></div>
+<div class="h-8 bg-surface-variant rounded"></div>
+<div class="h-8 bg-surface-variant rounded"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive CTA Section -->
+<section class="py-xl relative">
+<div class="max-w-[1440px] mx-auto px-margin-safe">
+<div class="relative bg-primary-container rounded-[2rem] p-12 lg:p-24 overflow-hidden text-center flex flex-col items-center">
+<!-- Background Decoration -->
+<div class="absolute top-0 left-0 w-full h-full opacity-10">
+<div class="absolute top-0 right-0 w-96 h-96 bg-white blur-[120px]"></div>
+<div class="absolute bottom-0 left-0 w-96 h-96 bg-secondary blur-[120px]"></div>
+</div>
+<h2 class="relative z-10 font-display-lg text-display-lg text-white mb-6">Ready to forge the future?</h2>
+<p class="relative z-10 text-on-primary-container font-body-lg max-w-xl mb-10">
+                    Join the world's most innovative companies and universities. Start your first hackathon in minutes.
+                </p>
+<div class="relative z-10 flex flex-wrap justify-center gap-4">
+<button class="bg-white text-primary-container px-10 py-5 rounded-xl font-bold hover:scale-105 transition-transform">Get Started for Free</button>
+<button class="bg-white/10 backdrop-blur-md text-white border border-white/20 px-10 py-5 rounded-xl font-bold hover:bg-white/20 transition-all">Talk to Sales</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full relative mt-auto border-t border-on-surface/5 bg-surface">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-safe py-lg max-w-[1440px] mx-auto gap-8">
+<div class="flex flex-col items-center md:items-start gap-4">
+<span class="font-headline-md text-headline-md text-primary font-bold">HackForge</span>
+<p class="text-on-surface-variant font-label-sm text-label-sm max-w-[300px] text-center md:text-left">
+                    The end-to-end infrastructure for professional innovation events.
+                </p>
+</div>
+<div class="flex flex-col items-center md:items-end gap-6">
+<div class="flex gap-8">
+<a class="text-on-surface-variant hover:text-on-tertiary-container transition-colors duration-200" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-on-tertiary-container transition-colors duration-200" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-on-tertiary-container transition-colors duration-200" href="#">Contact</a>
+</div>
+<p class="text-on-surface-variant font-label-sm text-label-sm opacity-60">
+                    © 2024 HackForge Infrastructure. All rights reserved.
+                </p>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions and atmospheric parallax
+        document.addEventListener('mousemove', (e) => {
+            const cards = document.querySelectorAll('.floating');
+            const mouseX = (e.clientX / window.innerWidth) - 0.5;
+            const mouseY = (e.clientY / window.innerHeight) - 0.5;
+
+            cards.forEach((card, index) => {
+                const depth = (index + 1) * 20;
+                const moveX = mouseX * depth;
+                const moveY = mouseY * depth;
+                // Preserve the existing animation while adding mouse displacement
+                card.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            });
+        });
+
+        // Simple scroll reveal
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-8');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-8');
+            observer.observe(card);
+        });
+    </script>
+</body></html>

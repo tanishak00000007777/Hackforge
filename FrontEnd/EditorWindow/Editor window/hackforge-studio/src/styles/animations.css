@@ -1,0 +1,39 @@
+*{
+
+transition:
+
+background-color .2s,
+
+color .2s,
+
+border-color .2s;
+
+}
+
+.scale-click:active{
+
+transform:scale(.97);
+
+}
+
+.fade{
+
+animation:fade .25s ease;
+
+}
+
+@keyframes fade{
+
+from{
+
+opacity:0;
+
+}
+
+to{
+
+opacity:1;
+
+}
+
+}
