@@ -34,15 +34,18 @@ class HackathonResponse(BaseModel):
     title: str
     slug: str
     tagline: str | None
+    description: str | None = None
     mode: HackathonMode
     status: HackathonStatus
     max_participants: int
     max_team_size: int
     min_team_size: int
     registration_mode: RegistrationMode
+    website_config: dict | None = None
     banner_url: str | None
     logo_url: str | None
     prize_pool: str | None
+    contact_email: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

@@ -14,7 +14,12 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
 
-    allowed_origins: str = "http://localhost:5173"
+    allowed_origins: str = "http://localhost:5173,http://localhost:5175"
+
+    @property
+    def cors_origins(self) -> list[str]:
+        """Parse comma-separated ALLOWED_ORIGINS into a list for CORSMiddleware."""
+        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
 
     model_config = SettingsConfigDict(
         env_file=".env",

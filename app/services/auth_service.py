@@ -1,11 +1,12 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from jose import JWTError
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, TokenResponse
 from app.utils.hashing import hash_password, verify_password
-from app.core.security import create_access_token, create_refresh_token
+from app.core.security import create_access_token, create_refresh_token, decode_token
 
 
 async def register_user(user_data: UserCreate, db: AsyncSession) -> User:
@@ -53,6 +54,43 @@ async def login_user(login_data: UserLogin, db: AsyncSession) -> TokenResponse:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is deactivated",
         )
+
+    return TokenResponse(
+        access_token=create_access_token(str(user.id)),
+        refresh_token=create_refresh_token(str(user.id)),
+    )
+
+
+async def refresh_access_token(refresh_token: str, db: AsyncSession) -> TokenResponse:
+    """Validate a refresh token and return a new access + refresh token pair."""
+    try:
+        payload = decode_token(refresh_token)
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token is invalid or expired",
+        )
+
+    if payload.get("type") != "refresh":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token is not a refresh token",
+        )
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Account is deactivated")
 
     return TokenResponse(
         access_token=create_access_token(str(user.id)),
