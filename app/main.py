@@ -1,5 +1,9 @@
+from pathlib import Path
 from fastapi import FastAPI
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import SQLAlchemyError
 from app.config.settings import get_settings
 
 from app.routers import (
@@ -26,6 +30,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.exception_handler(SQLAlchemyError)
+@app.exception_handler(TimeoutError)
+async def database_error_handler(request, exc):
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database temporarily unavailable. Please try again shortly."},
+    )
+
 API_PREFIX = "/api/v1"
 
 app.include_router(auth.router,          prefix=API_PREFIX)
@@ -48,3 +61,20 @@ app.include_router(analytics.router,     prefix=API_PREFIX)
 @app.get("/health", tags=["Health"])
 async def health_check():
     return {"status": "ok", "version": settings.app_version}
+
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "FrontEnd"
+STUDIO_DIR = FRONTEND_DIR / "EditorWindow" / "Editor window" / "hackforge-studio" / "dist"
+PAGES = {"/": "LandingPage.html", "/login": "Login.html", "/organizer": "OrganizerDashboard.html", "/participant": "Participantdashboard.html", "/judge": "JudgesDashboard.html", "/templates": "TemplateGallery.html"}
+
+for path, filename in PAGES.items():
+    async def page(file=filename):
+        return FileResponse(FRONTEND_DIR / file)
+    app.add_api_route(path, page, include_in_schema=False)
+
+@app.get("/dashboard", include_in_schema=False)
+async def dashboard():
+    return RedirectResponse("/login")
+
+app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
+app.mount("/studio", StaticFiles(directory=STUDIO_DIR, html=True), name="studio")

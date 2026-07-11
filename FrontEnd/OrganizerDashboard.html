@@ -69,6 +69,9 @@
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
         }
+        html { scroll-behavior: smooth; }
+        [id] { scroll-margin-top: 2rem; }
+        .sidebar-link.active { background: rgba(245, 204, 255, .65); color: #4f3354; border-right: 4px solid #7c70ee; }
     </style>
 </head>
 <body class="flex min-h-screen">
@@ -80,35 +83,35 @@
 </div>
 <nav class="flex-1 space-y-1">
 <!-- Active Link: Dashboard -->
-<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container/50 text-on-secondary-container rounded-lg border-r-4 border-on-tertiary-container transition-all" href="#">
+<a aria-current="page" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="#organizer-dashboard">
 <span class="material-symbols-outlined text-[20px]" data-icon="dashboard" style="font-variation-settings: 'FILL' 1;">dashboard</span>
 <span class="font-label-sm text-label-sm">Dashboard</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#hackathons">
 <span class="material-symbols-outlined text-[20px]" data-icon="event">event</span>
 <span class="font-label-sm text-label-sm">Hackathons</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="/studio/">
 <span class="material-symbols-outlined text-[20px]" data-icon="web">web</span>
 <span class="font-label-sm text-label-sm">Website Builder</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#registrations">
 <span class="material-symbols-outlined text-[20px]" data-icon="group_add">group_add</span>
 <span class="font-label-sm text-label-sm">Registrations</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#teams">
 <span class="material-symbols-outlined text-[20px]" data-icon="groups">groups</span>
 <span class="font-label-sm text-label-sm">Teams</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#submissions">
 <span class="material-symbols-outlined text-[20px]" data-icon="send">send</span>
 <span class="font-label-sm text-label-sm">Submissions</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#judges">
 <span class="material-symbols-outlined text-[20px]" data-icon="gavel">gavel</span>
 <span class="font-label-sm text-label-sm">Judges</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all group" href="#analytics">
 <span class="material-symbols-outlined text-[20px]" data-icon="analytics">analytics</span>
 <span class="font-label-sm text-label-sm">Analytics</span>
 </a>
@@ -142,7 +145,7 @@
 <!-- Atmospheric Background Element -->
 <div class="relative z-10 p-margin-safe max-w-[1440px] mx-auto">
 <!-- Top App Bar Content (Inline version) -->
-<header class="flex justify-between items-center mb-lg">
+<header class="flex justify-between items-center mb-lg" id="organizer-dashboard">
 <div class="flex items-center gap-2">
 <span class="font-label-sm text-label-sm text-on-surface-variant opacity-60">ADMIN</span>
 <span class="text-outline-variant">/</span>
@@ -160,7 +163,7 @@
 </div>
 </header>
 <!-- Welcome Banner & Stats -->
-<section class="grid grid-cols-1 lg:grid-cols-4 gap-gutter mb-lg">
+<section class="grid grid-cols-1 lg:grid-cols-4 gap-gutter mb-lg" id="hackathons">
 <div class="lg:col-span-4 bg-primary-container p-lg rounded-xl relative overflow-hidden flex flex-col justify-end min-h-[240px] group shadow-xl">
 <div class="absolute inset-0 overflow-hidden">
 <img alt="Futuristic data center" class="w-full h-full object-cover opacity-30 mix-blend-overlay transition-transform duration-700 group-hover:scale-105" data-alt="A high-tech, futuristic data center aisle with glowing servers and blue fiber optic cabling. The perspective is a deep vanishing point, creating a sense of immense scale and technical complexity. Soft violet and deep primary-container purple tones dominate the lighting, giving it a premium SaaS dashboard aesthetic. The mood is silent, powerful, and highly organized." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfZMyfjmaKlM7KKvNlVeB7e2NspP0_kcKPIQaaxV0yYqp1m7O9QWhMJjeW4azxDPQW4_e0zst79TgQxDY8JjwY_tT5dmzniKGByhaJqFpaROKFEWe19lFrH3Ktw7MNJDNCHrdxVRIs3AwNmiQG-Ix-XZXBBieHTM1WyKtgIrltE9WojSM4L8uYLcVYvfxRhdQ3GeB59jZ_xJc7trouHwj14le3kHNGE8NosVaoiQOLScCVsXgww3htTWFXP7zILGAnWwJ4Jv85-g"/>
@@ -187,7 +190,7 @@
 <p class="text-[10px] text-on-tertiary-container font-semibold">+2 this month</p>
 </div>
 </div>
-<div class="floating-card p-6 rounded-xl flex flex-col justify-between h-32">
+<div class="floating-card p-6 rounded-xl flex flex-col justify-between h-32" id="teams">
 <div class="flex justify-between items-start">
 <span class="font-label-sm text-on-surface-variant">Total Participants</span>
 <span class="material-symbols-outlined text-on-primary-container" data-icon="person">person</span>
@@ -197,7 +200,7 @@
 <p class="text-[10px] text-on-tertiary-container font-semibold">4.2% growth</p>
 </div>
 </div>
-<div class="floating-card p-6 rounded-xl flex flex-col justify-between h-32">
+<div class="floating-card p-6 rounded-xl flex flex-col justify-between h-32" id="submissions">
 <div class="flex justify-between items-start">
 <span class="font-label-sm text-on-surface-variant">Submissions</span>
 <span class="material-symbols-outlined text-on-primary-container" data-icon="folder_zip">folder_zip</span>
@@ -207,7 +210,7 @@
 <p class="text-[10px] text-on-tertiary-container font-semibold">92% verified</p>
 </div>
 </div>
-<div class="floating-card p-6 rounded-xl flex flex-col justify-between h-32">
+<div class="floating-card p-6 rounded-xl flex flex-col justify-between h-32" id="judges">
 <div class="flex justify-between items-start">
 <span class="font-label-sm text-on-surface-variant">Verified Judges</span>
 <span class="material-symbols-outlined text-on-primary-container" data-icon="verified">verified</span>
@@ -219,7 +222,7 @@
 </div>
 </section>
 <!-- Middle Section: Analytics & Funnel -->
-<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-lg">
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-gutter mb-lg" id="analytics">
 <!-- Registration Funnel (Bento Style) -->
 <div class="lg:col-span-8 floating-card p-lg rounded-xl flex flex-col">
 <div class="flex justify-between items-center mb-md">
@@ -319,7 +322,7 @@
 </div>
 </section>
 <!-- Bottom Section: Detailed Table/List -->
-<section class="grid grid-cols-1 lg:grid-cols-1 gap-gutter">
+<section class="grid grid-cols-1 lg:grid-cols-1 gap-gutter" id="registrations">
 <div class="floating-card rounded-xl overflow-hidden">
 <div class="p-md border-b border-on-surface/5 flex justify-between items-center">
 <div>
@@ -421,7 +424,14 @@
 <footer class="hidden">
         © 2024 HackForge Infrastructure. All rights reserved.
     </footer>
+<script src="/frontend/app.js"></script>
 <script>
+        HackForge.requireAuth('organizer');
+        document.querySelectorAll('.sidebar-link').forEach(link => link.addEventListener('click', () => {
+            document.querySelectorAll('.sidebar-link').forEach(item => { item.classList.remove('active'); item.removeAttribute('aria-current'); });
+            link.classList.add('active');
+            link.setAttribute('aria-current', 'page');
+        }));
         // Micro-interaction for hover states and dashboard reactivity
         document.querySelectorAll('.floating-card').forEach(card => {
             card.addEventListener('mouseenter', () => {

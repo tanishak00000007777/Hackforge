@@ -7,6 +7,7 @@ import PublishModal from "@/components/studio/Publish/PublishModal";
 
 export default function PublishControls() {
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [saved, setSaved] = useState(false);
   const components = useEditorStore((state) => state.components);
   const globalTheme = useEditorStore((state) => state.globalTheme);
   const loadProjectTemplate = useEditorStore((state) => state.loadProjectTemplate);
@@ -55,6 +56,12 @@ export default function PublishControls() {
     }
   };
 
+  const handleSave = () => {
+    localStorage.setItem("hackforge-studio-project", JSON.stringify({ components, globalTheme }));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  };
+
   return (
     <div className="flex items-center gap-2">
       <button
@@ -73,9 +80,9 @@ export default function PublishControls() {
         <Download size={16} />
       </button>
 
-      <button className="flex items-center gap-2 rounded-xl border border-[#D8DAE5] bg-white px-3 py-2 text-sm font-medium text-[#383547] transition hover:bg-[#F8F8FC]">
+      <button onClick={handleSave} className="flex items-center gap-2 rounded-xl border border-[#D8DAE5] bg-white px-3 py-2 text-sm font-medium text-[#383547] transition hover:bg-[#F8F8FC]">
         <Save size={16} />
-        Save
+        {saved ? "Saved" : "Save"}
       </button>
 
       <button 
@@ -83,7 +90,7 @@ export default function PublishControls() {
         className="flex items-center gap-2 rounded-xl bg-[#130225] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#261045]"
       >
         <Eye size={16} />
-        Publish
+        Export
       </button>
 
       <PublishModal 

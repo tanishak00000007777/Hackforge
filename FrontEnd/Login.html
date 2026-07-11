@@ -122,11 +122,11 @@
 </div>
 <span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">HackForge</span>
 </div>
-<h1 class="font-display-lg text-headline-md text-on-surface mb-xs">Welcome Back</h1>
-<p class="font-body-md text-body-md text-on-surface-variant">Continue building the future.</p>
+<h1 class="font-display-lg text-headline-md text-on-surface mb-xs" id="mode-title">Welcome Back</h1>
+<p class="font-body-md text-body-md text-on-surface-variant" id="mode-subtitle">Continue building the future.</p>
 </div>
 <!-- Login Form -->
-<form action="#" class="w-full space-y-md" method="POST" onsubmit="return false">
+<form action="/api/v1/auth/login" class="w-full space-y-md" id="login-form" method="POST">
 <!-- Google Login -->
 <button class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-outline/20 rounded-xl bg-surface hover:bg-surface-container-low transition-all duration-200 active:scale-[0.98] group" type="button">
 <svg class="w-5 h-5" viewbox="0 0 24 24">
@@ -144,11 +144,38 @@
 </div>
 <!-- Input Fields -->
 <div class="space-y-sm">
+<div class="hidden space-y-sm" id="register-fields">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1.5 ml-1" for="full-name">Full Name</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant text-[20px]">person</span>
+<input autocomplete="name" class="w-full pl-12 pr-4 py-3 bg-white border border-outline/10 rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-body-md text-on-surface placeholder:text-outline-variant" id="full-name" placeholder="Your name" type="text"/>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1.5 ml-1" for="role">Account Type</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant text-[20px]">badge</span>
+<select class="w-full pl-12 pr-4 py-3 bg-white border border-outline/10 rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-body-md text-on-surface" id="role">
+<option value="participant">Participant</option>
+<option value="organizer">Organizer</option>
+<option value="judge">Judge</option>
+</select>
+</div>
+</div>
+<div class="hidden" id="org-name-wrapper">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1.5 ml-1" for="org-name">Organization Name</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant text-[20px]">business</span>
+<input autocomplete="organization" class="w-full pl-12 pr-4 py-3 bg-white border border-outline/10 rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-body-md text-on-surface placeholder:text-outline-variant" id="org-name" placeholder="Organization or college" type="text"/>
+</div>
+</div>
+</div>
 <div>
 <label class="block font-label-sm text-label-sm text-on-surface-variant mb-1.5 ml-1" for="email">Email Address</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant text-[20px]">mail</span>
-<input class="w-full pl-12 pr-4 py-3 bg-white border border-outline/10 rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-body-md text-on-surface placeholder:text-outline-variant" id="email" placeholder="name@company.com" type="email"/>
+<input autocomplete="email" class="w-full pl-12 pr-4 py-3 bg-white border border-outline/10 rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-body-md text-on-surface placeholder:text-outline-variant" id="email" placeholder="name@company.com" required type="email"/>
 </div>
 </div>
 <div>
@@ -159,7 +186,7 @@
 <div class="relative">
 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant text-[20px]">lock</span>
 <input class="w-full pl-12 pr-12 py-3 bg-white border border-outline/10 rounded-xl focus:ring-4 focus:ring-secondary/10 focus:border-secondary outline-none transition-all font-body-md text-on-surface placeholder:text-outline-variant" id="password" placeholder="••••••••" type="password"/>
-<button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant hover:text-on-surface transition-colors" type="button">
+<button aria-label="Show password" class="absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant hover:text-on-surface transition-colors" id="password-toggle" type="button">
 <span class="material-symbols-outlined text-[20px]">visibility</span>
 </button>
 </div>
@@ -172,8 +199,8 @@
 </form>
 <!-- Footer Links -->
 <p class="mt-lg font-body-md text-body-md text-on-surface-variant">
-                Don't have an account? 
-                <a class="text-primary font-semibold hover:underline decoration-on-tertiary-container decoration-2 underline-offset-4" href="#">Create Account</a>
+                <span id="mode-copy">Don't have an account?</span>
+                <a class="text-primary font-semibold hover:underline decoration-on-tertiary-container decoration-2 underline-offset-4" href="#" id="mode-toggle">Create Account</a>
 </p>
 <!-- Trust Footer -->
 <div class="mt-xl pt-lg border-t border-outline/5 w-full text-center">
@@ -196,6 +223,7 @@
 </main>
 <!-- Custom Cursor Effect -->
 <div class="fixed pointer-events-none w-[600px] h-[600px] bg-secondary-container/10 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2 z-[-1] transition-opacity duration-300 opacity-0 lg:block hidden" id="cursor-glow"></div>
+<script src="/frontend/app.js"></script>
 <script>
         // Micro-interactions
         document.addEventListener('mousemove', (e) => {
@@ -205,14 +233,81 @@
             glow.style.opacity = '1';
         });
 
-        // Simple button state logic
+        // Real backend auth.
+        const form = document.getElementById('login-form');
         const loginBtn = document.querySelector('button[type="submit"]');
-        loginBtn.addEventListener('click', (e) => {
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const passwordToggle = document.getElementById('password-toggle');
+        const registerFields = document.getElementById('register-fields');
+        const fullNameInput = document.getElementById('full-name');
+        const roleInput = document.getElementById('role');
+        const orgNameInput = document.getElementById('org-name');
+        const orgNameWrapper = document.getElementById('org-name-wrapper');
+        const modeTitle = document.getElementById('mode-title');
+        const modeSubtitle = document.getElementById('mode-subtitle');
+        const modeCopy = document.getElementById('mode-copy');
+        const modeToggle = document.getElementById('mode-toggle');
+        let isRegisterMode = false;
+
+        function setAuthMode(register) {
+            isRegisterMode = register;
+            registerFields.classList.toggle('hidden', !register);
+            fullNameInput.required = register;
+            loginBtn.innerText = register ? 'Create Account' : 'Login to Forge';
+            modeTitle.innerText = register ? 'Create Account' : 'Welcome Back';
+            modeSubtitle.innerText = register ? 'Start with a real HackForge account.' : 'Continue building the future.';
+            modeCopy.innerText = register ? 'Already have an account?' : "Don't have an account?";
+            modeToggle.innerText = register ? 'Sign In' : 'Create Account';
+        }
+
+        roleInput.addEventListener('change', () => {
+            orgNameWrapper.classList.toggle('hidden', roleInput.value !== 'organizer');
+        });
+
+        modeToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            setAuthMode(!isRegisterMode);
+        });
+
+        passwordToggle.addEventListener('click', () => {
+            const show = passwordInput.type === 'password';
+            passwordInput.type = show ? 'text' : 'password';
+            passwordToggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            passwordToggle.querySelector('span').textContent = show ? 'visibility_off' : 'visibility';
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
             const originalText = loginBtn.innerText;
             loginBtn.innerHTML = `<span class="inline-block animate-spin material-symbols-outlined">progress_activity</span>`;
-            setTimeout(() => {
+            loginBtn.disabled = true;
+            try {
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                if (!email || !password) throw new Error('Email and password are required');
+                if (isRegisterMode) {
+                    await HackForge.api.request('/auth/register', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            email,
+                            password,
+                            full_name: fullNameInput.value.trim(),
+                            role: roleInput.value,
+                            org_name: roleInput.value === 'organizer' ? orgNameInput.value.trim() || null : null,
+                        }),
+                    });
+                }
+                const tokens = await HackForge.api.request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+                localStorage.setItem('access_token', tokens.access_token);
+                localStorage.setItem('refresh_token', tokens.refresh_token);
+                const user = await HackForge.api.me();
+                location.href = HackForge.roleRoutes[user.role] || '/';
+            } catch (error) {
+                alert(error.message);
                 loginBtn.innerText = originalText;
-            }, 1500);
+                loginBtn.disabled = false;
+            }
         });
 
         // Focus ring effect enhancement

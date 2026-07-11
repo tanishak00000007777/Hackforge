@@ -16,6 +16,9 @@
             box-shadow: 0 10px 30px -10px rgba(43, 25, 61, 0.08);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+        html { scroll-behavior: smooth; }
+        [id] { scroll-margin-top: 6rem; }
+        .sidebar-link.active { background: rgba(245, 204, 255, .65); color: #4f3354; border-right: 4px solid #7c70ee; }
         .glass-card:hover {
             box-shadow: 0 15px 35px -10px rgba(43, 25, 61, 0.12);
         }
@@ -48,24 +51,24 @@
 <p class="font-label-sm text-label-sm text-on-surface-variant">Global Hackathon 2024</p>
 </div>
 <nav class="flex-1 space-y-1">
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all active:translate-x-1" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all active:translate-x-1" href="#judge-dashboard">
 <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
 <span class="font-label-sm text-label-sm">Dashboard</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all active:translate-x-1" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all active:translate-x-1" href="#assignments">
 <span class="material-symbols-outlined" data-icon="event">event</span>
 <span class="font-label-sm text-label-sm">Hackathons</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container/50 text-on-secondary-container rounded-lg border-r-4 border-on-tertiary-container transition-all active:translate-x-1" href="#">
+<a aria-current="page" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg transition-all active:translate-x-1" href="#evaluation">
 <span class="material-symbols-outlined" data-icon="gavel">gavel</span>
 <span class="font-label-sm text-label-sm">Judges</span>
 <div class="ml-auto active-dot"></div>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all active:translate-x-1" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all active:translate-x-1" href="#project-details">
 <span class="material-symbols-outlined" data-icon="groups">groups</span>
 <span class="font-label-sm text-label-sm">Teams</span>
 </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all active:translate-x-1" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all active:translate-x-1" href="#scorecard">
 <span class="material-symbols-outlined" data-icon="analytics">analytics</span>
 <span class="font-label-sm text-label-sm">Analytics</span>
 </a>
@@ -89,7 +92,7 @@
 <!-- Main Content Area -->
 <main class="md:ml-64 min-h-screen flex flex-col">
 <!-- Top Navigation -->
-<header class="sticky top-0 w-full z-30 bg-surface/60 backdrop-blur-xl border-b border-on-surface/5 px-margin-safe py-4 flex items-center justify-between">
+<header class="sticky top-0 w-full z-30 bg-surface/60 backdrop-blur-xl border-b border-on-surface/5 px-margin-safe py-4 flex items-center justify-between" id="judge-dashboard">
 <div class="flex items-center gap-4">
 <nav class="flex items-center gap-2 font-label-sm text-label-sm text-outline">
 <span>HackForge</span>
@@ -111,7 +114,7 @@
 <!-- Dashboard Content -->
 <div class="p-margin-safe max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-gutter">
 <!-- Left Column: Assignments List -->
-<div class="lg:col-span-4 space-y-md">
+<div class="lg:col-span-4 space-y-md" id="assignments">
 <div class="flex items-center justify-between mb-sm">
 <h2 class="font-headline-md text-headline-md text-primary">Your Assignments</h2>
 <span class="px-3 py-1 bg-secondary-container/50 text-on-secondary-container rounded-full font-label-sm text-[10px] font-bold">4 / 12 COMPLETE</span>
@@ -181,9 +184,9 @@
 </div>
 </div>
 <!-- Right Column: Detail & Evaluation View -->
-<div class="lg:col-span-8 space-y-md">
+<div class="lg:col-span-8 space-y-md" id="evaluation">
 <!-- Project Details Section -->
-<section class="glass-card rounded-2xl overflow-hidden flex flex-col">
+<section class="glass-card rounded-2xl overflow-hidden flex flex-col" id="project-details">
 <!-- Hero/Header -->
 <div class="p-md bg-white border-b border-on-surface/5">
 <div class="flex justify-between items-center mb-md">
@@ -221,7 +224,7 @@
 </div>
 </div>
 <!-- Evaluation Rubric -->
-<div class="p-md grid grid-cols-1 md:grid-cols-2 gap-lg">
+<div class="p-md grid grid-cols-1 md:grid-cols-2 gap-lg" id="scorecard">
 <!-- Scoring Columns -->
 <div class="space-y-md">
 <h3 class="font-headline-md text-[18px] text-primary flex items-center gap-2">
@@ -358,7 +361,14 @@
 <span class="text-[10px] font-bold">ME</span>
 </button>
 </nav>
+<script src="/frontend/app.js"></script>
 <script>
+        HackForge.requireAuth('judge');
+        document.querySelectorAll('.sidebar-link').forEach(link => link.addEventListener('click', () => {
+            document.querySelectorAll('.sidebar-link').forEach(item => { item.classList.remove('active'); item.removeAttribute('aria-current'); });
+            link.classList.add('active');
+            link.setAttribute('aria-current', 'page');
+        }));
         // Micro-interactions for range inputs to update score visual
         const sliders = document.querySelectorAll('input[type="range"]');
         sliders.forEach(slider => {

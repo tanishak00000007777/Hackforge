@@ -46,9 +46,9 @@
 <div class="flex items-center gap-8">
 <span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">HackForge</span>
 <div class="hidden md:flex items-center gap-6">
-<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors font-semibold border-b-2 border-on-tertiary-container py-1" href="#">Features</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors font-semibold border-b-2 border-on-tertiary-container py-1" href="#features">Features</a>
 <a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Pricing</a>
-<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Resources</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="/templates">Resources</a>
 </div>
 </div>
 <div class="flex items-center gap-4">
@@ -75,7 +75,7 @@
                         Create Your Hackathon
                         <span class="material-symbols-outlined">arrow_forward</span>
 </button>
-<button class="border border-outline-variant bg-white/50 backdrop-blur-sm text-primary-container px-8 py-4 rounded-xl font-body-md font-semibold hover:bg-white transition-all flex items-center gap-2">
+<button class="border border-outline-variant bg-white/50 backdrop-blur-sm text-primary-container px-8 py-4 rounded-xl font-body-md font-semibold hover:bg-white transition-all flex items-center gap-2" id="watch-demo">
 <span class="material-symbols-outlined">play_circle</span>
                         Watch Demo
                     </button>
@@ -141,7 +141,7 @@
 </div>
 </main>
 <!-- Bento Feature Grid -->
-<section class="py-xl bg-surface">
+<section class="py-xl bg-surface" id="features">
 <div class="max-w-[1440px] mx-auto px-margin-safe">
 <div class="text-center max-w-2xl mx-auto mb-16">
 <h2 class="font-headline-md text-headline-md text-primary mb-4">Powerful tools for Every Stage</h2>
@@ -240,7 +240,7 @@
                     Join the world's most innovative companies and universities. Start your first hackathon in minutes.
                 </p>
 <div class="relative z-10 flex flex-wrap justify-center gap-4">
-<button class="bg-white text-primary-container px-10 py-5 rounded-xl font-bold hover:scale-105 transition-transform">Get Started for Free</button>
+<button class="bg-white text-primary-container px-10 py-5 rounded-xl font-bold hover:scale-105 transition-transform" id="get-started">Get Started for Free</button>
 <button class="bg-white/10 backdrop-blur-md text-white border border-white/20 px-10 py-5 rounded-xl font-bold hover:bg-white/20 transition-all">Talk to Sales</button>
 </div>
 </div>
@@ -301,5 +301,11 @@
             card.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-8');
             observer.observe(card);
         });
+        const navButtons = document.querySelectorAll('nav button');
+        navButtons[0].addEventListener('click', () => location.href = '/login');
+        navButtons[1].addEventListener('click', () => location.href = '/login');
+        document.querySelector('main button').addEventListener('click', () => location.href = '/login');
+        document.getElementById('watch-demo').addEventListener('click', () => location.href = '/studio/');
+        document.getElementById('get-started').addEventListener('click', () => location.href = '/login');
     </script>
 </body></html>

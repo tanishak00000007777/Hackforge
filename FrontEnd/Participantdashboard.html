@@ -40,6 +40,13 @@
         .glow-border {
             box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
         }
+        html { scroll-behavior: smooth; }
+        [id] { scroll-margin-top: 2rem; }
+        .sidebar-link.active {
+            background: rgba(245, 204, 255, 0.65);
+            color: #4f3354;
+            border-right: 4px solid #7c70ee;
+        }
     </style>
 </head>
 <body class="font-body-md text-on-surface">
@@ -49,47 +56,67 @@
 <span class="font-headline-md text-headline-md text-primary font-bold tracking-tight">HackForge</span>
 </div>
 <nav class="flex-grow space-y-1">
-<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container/50 text-on-secondary-container rounded-lg border-r-4 border-on-tertiary-container font-label-sm text-label-sm active:translate-x-1 transition-transform" href="#">
+<a aria-current="page" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm active:translate-x-1 transition-transform" href="#dashboard">
 <span class="material-symbols-outlined">dashboard</span>
                 Dashboard
             </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg font-label-sm text-label-sm hover:bg-surface-variant/50 transition-all active:translate-x-1 transition-transform" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg font-label-sm text-label-sm hover:bg-surface-variant/50 transition-all active:translate-x-1 transition-transform" href="#hackathons">
 <span class="material-symbols-outlined">event</span>
                 Hackathons
             </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg font-label-sm text-label-sm hover:bg-surface-variant/50 transition-all active:translate-x-1 transition-transform" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg font-label-sm text-label-sm hover:bg-surface-variant/50 transition-all active:translate-x-1 transition-transform" href="#teams">
 <span class="material-symbols-outlined">groups</span>
                 Teams
             </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg font-label-sm text-label-sm hover:bg-surface-variant/50 transition-all active:translate-x-1 transition-transform" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg font-label-sm text-label-sm hover:bg-surface-variant/50 transition-all active:translate-x-1 transition-transform" href="#submissions">
 <span class="material-symbols-outlined">send</span>
                 Submissions
             </a>
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg font-label-sm text-label-sm hover:bg-surface-variant/50 transition-all active:translate-x-1 transition-transform" href="#">
+<a class="sidebar-link flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg font-label-sm text-label-sm hover:bg-surface-variant/50 transition-all active:translate-x-1 transition-transform" href="#analytics">
 <span class="material-symbols-outlined">analytics</span>
                 Analytics
             </a>
 </nav>
 <div class="mt-auto space-y-1">
-<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg font-label-sm text-label-sm" href="#">
+<button class="w-full flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg font-label-sm text-label-sm" id="settings-open" type="button">
 <span class="material-symbols-outlined">settings</span>
                 Settings
-            </a>
+            </button>
 <div class="pt-4 mt-4 border-t border-on-surface/5">
-<div class="flex items-center gap-3 px-2">
-<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-bold">JD</div>
+<button class="w-full flex items-center gap-3 px-2 py-2 rounded-lg text-left hover:bg-surface-variant/30 transition-colors" id="profile-open" type="button">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-bold" id="profile-avatar">JD</div>
 <div>
-<p class="font-label-sm text-label-sm text-on-surface font-bold">Jane Doe</p>
-<p class="text-[10px] text-on-surface-variant">Participant</p>
+<p class="font-label-sm text-label-sm text-on-surface font-bold" id="profile-name">Jane Doe</p>
+<p class="text-[10px] text-on-surface-variant" id="profile-role">Participant</p>
 </div>
-</div>
+</button>
 </div>
 </div>
 </aside>
+<dialog class="w-[min(92vw,440px)] rounded-2xl bg-white p-0 shadow-2xl backdrop:bg-primary-container/40" id="account-dialog">
+<div class="p-6">
+<div class="mb-6 flex items-center justify-between">
+<div>
+<h2 class="text-xl font-bold text-primary">Account Settings</h2>
+<p class="text-sm text-on-surface-variant">Your HackForge participant profile</p>
+</div>
+<form method="dialog"><button aria-label="Close settings" class="rounded-full p-2 hover:bg-surface-container" type="submit"><span class="material-symbols-outlined">close</span></button></form>
+</div>
+<div class="flex items-center gap-4 rounded-xl bg-surface-container-low p-4">
+<div class="flex h-14 w-14 items-center justify-center rounded-full bg-primary-container font-bold text-white" id="settings-avatar">JD</div>
+<div class="min-w-0">
+<p class="font-bold text-primary" id="settings-name">Jane Doe</p>
+<p class="truncate text-sm text-on-surface-variant" id="settings-email">participant@hackforge.local</p>
+<p class="mt-1 text-xs font-semibold uppercase tracking-wide text-on-tertiary-container" id="settings-role">Participant</p>
+</div>
+</div>
+<button class="mt-6 w-full rounded-lg border border-error/30 px-4 py-3 font-semibold text-error hover:bg-error/5" id="logout-button" type="button">Sign Out</button>
+</div>
+</dialog>
 <!-- Main Content Area -->
 <main class="ml-64 min-h-screen p-margin-safe max-w-[1440px] mx-auto">
 <!-- Header Banner -->
-<header class="relative overflow-hidden rounded-xl bg-primary-container text-on-primary p-lg mb-lg shadow-2xl">
+<header class="relative overflow-hidden rounded-xl bg-primary-container text-on-primary p-lg mb-lg shadow-2xl" id="dashboard">
 <div class="relative z-10 flex flex-col md:flex-row justify-between items-end md:items-center gap-md">
 <div>
 <h1 class="font-display-lg text-display-lg-mobile md:text-display-lg mb-xs">Welcome back.</h1>
@@ -104,7 +131,7 @@
 <!-- Bento Grid Layout -->
 <div class="grid grid-cols-12 gap-gutter">
 <!-- Active Events (Hero Section) -->
-<section class="col-span-12 lg:col-span-8">
+<section class="col-span-12 lg:col-span-8" id="hackathons">
 <div class="flex items-center justify-between mb-sm">
 <h2 class="font-headline-md text-headline-md text-primary">Active Events</h2>
 <a class="text-on-secondary-container font-label-sm text-label-sm hover:underline" href="#">See all hackathons</a>
@@ -146,7 +173,7 @@
 </div>
 </section>
 <!-- My Team Collaboration -->
-<section class="col-span-12 lg:col-span-4 flex flex-col gap-sm">
+<section class="col-span-12 lg:col-span-4 flex flex-col gap-sm" id="teams">
 <h2 class="font-headline-md text-headline-md text-primary">My Team</h2>
 <div class="glass-card rounded-xl p-sm flex-grow">
 <div class="flex items-center justify-between mb-sm">
@@ -189,7 +216,7 @@
 </div>
 </section>
 <!-- Project Progress & Deadlines -->
-<section class="col-span-12 md:col-span-6 lg:col-span-4">
+<section class="col-span-12 md:col-span-6 lg:col-span-4" id="analytics">
 <div class="glass-card rounded-xl p-md h-full">
 <h3 class="font-headline-md text-headline-md text-primary mb-md">Project Progress</h3>
 <div class="space-y-lg">
@@ -227,7 +254,7 @@
 </div>
 </section>
 <!-- Submission Status & Announcements -->
-<section class="col-span-12 md:col-span-6 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<section class="col-span-12 md:col-span-6 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-gutter" id="submissions">
 <div class="glass-card rounded-xl p-md">
 <h3 class="font-headline-md text-headline-md text-primary mb-md">Submission Status</h3>
 <div class="flex flex-col items-center justify-center py-md text-center">
@@ -275,7 +302,29 @@
 <button class="fixed bottom-margin-safe right-margin-safe w-14 h-14 bg-primary text-on-primary rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-50">
 <span class="material-symbols-outlined text-2xl">chat</span>
 </button>
+<script src="/frontend/app.js"></script>
 <script>
+        const accountDialog = document.getElementById('account-dialog');
+        ['settings-open', 'profile-open'].forEach(id => document.getElementById(id).addEventListener('click', () => accountDialog.showModal()));
+        document.getElementById('logout-button').addEventListener('click', () => HackForge.api.logout());
+
+        HackForge.requireAuth('participant').then(user => {
+            if (!user) return;
+            const name = user.full_name || user.email;
+            const initials = name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
+            ['profile-name', 'settings-name'].forEach(id => document.getElementById(id).textContent = name);
+            ['profile-avatar', 'settings-avatar'].forEach(id => document.getElementById(id).textContent = initials);
+            ['profile-role', 'settings-role'].forEach(id => document.getElementById(id).textContent = user.role);
+            document.getElementById('settings-email').textContent = user.email;
+        });
+        document.querySelectorAll('.sidebar-link').forEach(link => link.addEventListener('click', () => {
+            document.querySelectorAll('.sidebar-link').forEach(item => {
+                item.classList.remove('active');
+                item.removeAttribute('aria-current');
+            });
+            link.classList.add('active');
+            link.setAttribute('aria-current', 'page');
+        }));
         // Micro-interaction: Active state navigation determination
         // Since we're on the dashboard, Dashboard nav item should be active
         // This is handled via static classes in this template, but logic would be here for SPA

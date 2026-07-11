@@ -156,7 +156,7 @@
 <div class="flex items-center gap-6">
 <span class="font-headline-md text-headline-md font-bold tracking-tight text-primary">HackForge</span>
 <div class="hidden md:flex gap-4">
-<a class="text-on-surface-variant hover:text-on-tertiary-container transition-colors font-label-sm text-label-sm builder-breadcrumb" href="#">STUDIO / TEMPLATES</a>
+<a class="text-on-surface-variant hover:text-on-tertiary-container transition-colors font-label-sm text-label-sm builder-breadcrumb" href="/">STUDIO / TEMPLATES</a>
 </div>
 </div>
 <div class="flex-1 max-w-md mx-8 relative hidden md:block">
@@ -164,8 +164,8 @@
 <input class="w-full bg-white/50 border border-outline/20 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-on-tertiary-fixed-variant/20 focus:border-on-tertiary-fixed-variant transition-all outline-none text-body-md" placeholder="Search templates..." type="text">
 </div>
 <div class="flex items-center gap-4">
-<button class="px-4 py-2 text-on-surface-variant hover:text-primary transition-colors font-semibold">Login</button>
-<button class="px-6 py-2 bg-primary-container text-on-primary-container rounded-lg font-semibold active:scale-95 transition-transform">Create Hackathon</button>
+<button class="px-4 py-2 text-on-surface-variant hover:text-primary transition-colors font-semibold" data-action="login">Login</button>
+<button class="px-6 py-2 bg-primary-container text-on-primary-container rounded-lg font-semibold active:scale-95 transition-transform" data-action="create">Create Hackathon</button>
 </div>
 </div>
 </nav>
@@ -178,16 +178,16 @@
 </header>
 <!-- Template Filter Chips (Micro-interaction layer) -->
 <div class="flex gap-3 mb-12 overflow-x-auto pb-4 no-scrollbar">
-<button class="px-6 py-2 bg-primary-container text-white rounded-full text-label-sm font-label-sm transition-all shadow-md">All Templates</button>
-<button class="px-6 py-2 bg-white/60 hover:bg-white text-on-surface-variant rounded-full text-label-sm font-label-sm transition-all border border-outline/10">Technology</button>
-<button class="px-6 py-2 bg-white/60 hover:bg-white text-on-surface-variant rounded-full text-label-sm font-label-sm transition-all border border-outline/10">Web3</button>
-<button class="px-6 py-2 bg-white/60 hover:bg-white text-on-surface-variant rounded-full text-label-sm font-label-sm transition-all border border-outline/10">Academic</button>
-<button class="px-6 py-2 bg-white/60 hover:bg-white text-on-surface-variant rounded-full text-label-sm font-label-sm transition-all border border-outline/10">Design</button>
+<button class="px-6 py-2 bg-primary-container text-white rounded-full text-label-sm font-label-sm transition-all shadow-md" data-filter="all">All Templates</button>
+<button class="px-6 py-2 bg-white/60 hover:bg-white text-on-surface-variant rounded-full text-label-sm font-label-sm transition-all border border-outline/10" data-filter="technology">Technology</button>
+<button class="px-6 py-2 bg-white/60 hover:bg-white text-on-surface-variant rounded-full text-label-sm font-label-sm transition-all border border-outline/10" data-filter="web3">Web3</button>
+<button class="px-6 py-2 bg-white/60 hover:bg-white text-on-surface-variant rounded-full text-label-sm font-label-sm transition-all border border-outline/10" data-filter="academic">Academic</button>
+<button class="px-6 py-2 bg-white/60 hover:bg-white text-on-surface-variant rounded-full text-label-sm font-label-sm transition-all border border-outline/10" data-filter="design">Design</button>
 </div>
 <!-- Template Bento Grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
 <!-- AI Innovation Hackathon -->
-<div class="template-card flex flex-col bg-white rounded-xl overflow-hidden border border-on-surface/5 group">
+<div class="template-card flex flex-col bg-white rounded-xl overflow-hidden border border-on-surface/5 group" data-category="technology">
 <div class="h-64 overflow-hidden relative">
 <img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A futuristic, high-tech hackathon website landing page showing abstract glowing neural network patterns in deep purples and neon blues. The UI is clean, feature-rich, and high-contrast, representing a cutting-edge artificial intelligence event. Professional photography style with sharp edges and premium tech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKKiesQW6FFIBwIQDFXbEoCrQuYzGL49wZX4JeUPdmY-JPfDtfGhvFSpnGn84zUXkaBESAXbei_fHQeIXwyBBWo1M5kZlFl6JmgtZE-2KMRwbX-KOSNnUg42mbn6niyW5L171MLN6KrGSa3eVyDmJrIzHId29z6QOiiO0-a7YmU-T-q4chbMAzM9Z1_lrgDsg3KlFnwniQB5YEYDIBtbE1hzRCx6Oab5Bv5pLIRi6IXv7fFIv_fNEcG8_MxicAH6xaB0cWwM0ZBw">
 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
@@ -213,7 +213,7 @@
 </div>
 </div>
 <!-- Web3 Builder Challenge -->
-<div class="template-card flex flex-col bg-white rounded-xl overflow-hidden border border-on-surface/5 group">
+<div class="template-card flex flex-col bg-white rounded-xl overflow-hidden border border-on-surface/5 group" data-category="web3">
 <div class="h-64 overflow-hidden relative">
 <img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A futuristic Web3 hackathon website dashboard featuring glassmorphism elements, frosted glass cards, and translucent layers over a soft gradient of cosmic teals and pinks. The design looks expensive and highly digital, including wallet connection buttons and crypto-inspired iconography. Soft ambient lighting and elegant shadows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaNNkyzgoTubjGXv0FclfvHjpHRTTado3Kr9ydEQMeeKKZseCKOA_5PGOBiRhObbs4LBuV-siU9PAK_Vjd7X40Da1REGJEbAHc5GWyrl2S2Oy5ihbn6dq0ds-sx1NcI9Fc_RSP6iZsG9VJmidc7iFvxxi0JaYK1rd00R4lWTnNIWmmD6o68taej1uSX0HkAEDj12PDMpcQ-wgBUCwf5Czi8YK6nTMHNOwGukvHSGvmMCQfEz18Z3sbIVFVrON8w932Irr77z_dEQ">
 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
@@ -237,7 +237,7 @@
 </div>
 </div>
 <!-- Startup Weekend -->
-<div class="template-card flex flex-col bg-white rounded-xl overflow-hidden border border-on-surface/5 group">
+<div class="template-card flex flex-col bg-white rounded-xl overflow-hidden border border-on-surface/5 group" data-category="technology design">
 <div class="h-64 overflow-hidden relative">
 <img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A bold and energetic startup event website with high-contrast typography, vibrant safety orange and deep black color scheme. Dynamic photography of people collaborating and brainstorming. The layout is punchy, using large font sizes and loud call-to-action buttons. Minimalist but impactful graphic design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5Km69BuQBetHre0S_ZQkLHckmUH-MXz5Efg4RMiU_Ga3roPuwmFvB_I0X__EEMtt12cGSn5JeYOxwXlZg4z41UCod8iP8hCJ3AHl_3jAQA4eocnLypteak-WWUoyA7KEl7PePiM6Hh1NTw-ELmCrIP8WsahjcmwWOWRRXoTqKR7kZpQUHKNEaz12vrmqgfXDZ4JYMf1YKHegSsQtFGWQdTdDq4QHlyeu6VgEB37mHSdlCdgKSdXDrV5Q4alA6EMTdCavGwdIDIg">
 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
@@ -261,7 +261,7 @@
 </div>
 </div>
 <!-- University Hackathon -->
-<div class="template-card flex flex-col bg-white rounded-xl overflow-hidden border border-on-surface/5 group">
+<div class="template-card flex flex-col bg-white rounded-xl overflow-hidden border border-on-surface/5 group" data-category="academic">
 <div class="h-64 overflow-hidden relative">
 <img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A clean university hackathon website with a welcoming and approachable feel. Uses academic blues and bright whites. Layout focuses on schedules, maps, and mentorship sections. Photography shows diverse students laughing and working together in a well-lit campus hall. Flat design with rounded corners." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDe2-i-h25FkLUkw_wh6X4kiqdVBDPw8BbEXMtHJQBDqbFg3ms33uAWn27uAJK1J-atwgv0eZAovl6rzXB1BOBRqcnNIy6G3dL34L4igctEyqsVI-g1MliJdFjQIG_2KyNemRjaHD2Q9lSfXvGhrTaqwGjMJEGeKRlPIZp-t152rk01iNxINW0g-Ub_NLPecBHglUPYS78GdKQePWXrPizopwA5tER7qXpe_U1B5XB6O5piNyz4a5m1WZC4yGpA2QHVXHP8Bgfcrg">
 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
@@ -285,7 +285,7 @@
 </div>
 </div>
 <!-- Research Innovation Summit -->
-<div class="template-card flex flex-col bg-white rounded-xl overflow-hidden border border-on-surface/5 group">
+<div class="template-card flex flex-col bg-white rounded-xl overflow-hidden border border-on-surface/5 group" data-category="academic">
 <div class="h-64 overflow-hidden relative">
 <img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="A minimalist research summit website with immense whitespace, thin serif fonts, and high-end editorial photography. The color palette is grayscale with a single subtle accent color. The layout is asymmetric and professional, suitable for prestigious academic or scientific gatherings. Focus on clarity and data visualization." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpPX82arA4YR3dS5dCK4fs1uDsS1h1wPCwVkodqdG-L3JC0IONbNlsfAEiaqd6DyIekeB2WO3wHSdSBYhih0jdrpf8tPc1lkXJdegu6MI4yRa4WskwIMNFfey9huk4b9YJfasftuuggEUdAUWJRfRWq_dUQ44hrOzK-T8mkY6q66rn1ZVrj9x-gKK2Wy1_c2Zb1oMfyGjlZUTwWEBTg3obmDoC7C0exY8nqA0pniO2K0ZPYh-xWX42FIHliXeHfq-fuI9gFS4Yjw">
 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
@@ -309,7 +309,7 @@
 </div>
 </div>
 <!-- Blank Canvas -->
-<div class="template-card flex flex-col glass-panel rounded-xl overflow-hidden border-2 border-dashed border-outline/30 group cursor-pointer hover:border-primary transition-all">
+<div class="template-card flex flex-col glass-panel rounded-xl overflow-hidden border-2 border-dashed border-outline/30 group cursor-pointer hover:border-primary transition-all" data-category="design">
 <div class="flex-grow flex flex-col items-center justify-center p-12 text-center">
 <div class="w-20 h-20 rounded-full bg-primary-fixed-dim flex items-center justify-center mb-6 transition-transform group-hover:rotate-90 duration-500">
 <span class="material-symbols-outlined text-4xl text-primary">add</span>
@@ -381,7 +381,8 @@
 </footer>
 <!-- Simple Hover Micro-interaction Script -->
 <script>
-        document.querySelectorAll('.template-card').forEach(card => {
+        const cards = [...document.querySelectorAll('.template-card')];
+        cards.forEach(card => {
             card.addEventListener('mouseenter', () => {
                 // Potential for adding sound effects or specific light follows
             });
@@ -395,5 +396,25 @@
         searchInput.addEventListener('blur', () => {
             searchInput.parentElement.classList.remove('scale-[1.02]');
         });
+
+        let activeFilter = 'all';
+        function filterTemplates() {
+            const query = searchInput.value.trim().toLowerCase();
+            cards.forEach(card => {
+                const matchesText = card.textContent.toLowerCase().includes(query);
+                const matchesCategory = activeFilter === 'all' || card.dataset.category.split(' ').includes(activeFilter);
+                card.classList.toggle('hidden', !matchesText || !matchesCategory);
+            });
+        }
+
+        searchInput.addEventListener('input', filterTemplates);
+        document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => {
+            activeFilter = button.dataset.filter;
+            document.querySelectorAll('[data-filter]').forEach(item => item.classList.remove('bg-primary-container', 'text-white', 'shadow-md'));
+            button.classList.add('bg-primary-container', 'text-white', 'shadow-md');
+            filterTemplates();
+        }));
+        document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => location.href = '/login'));
+        document.querySelectorAll('.template-card button').forEach(button => button.addEventListener('click', () => location.href = '/studio/'));
     </script>
 </body></html>
