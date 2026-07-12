@@ -159,6 +159,14 @@ export default function ParticipantDashboard() {
   const userName = user?.full_name || 'Participant';
   const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
+  const handleNavClick = (key) => {
+    setActiveNav(key);
+    const element = document.getElementById(key);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div style={{ background: 'var(--color-surface)', minHeight: '100vh', backgroundImage: 'radial-gradient(at 0% 0%, rgba(195,205,254,0.15) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(214,189,235,0.15) 0px, transparent 50%)' }}>
       {/* Sidebar */}
@@ -170,7 +178,7 @@ export default function ParticipantDashboard() {
           {navItems.map(item => (
             <button
               key={item.key}
-              onClick={() => setActiveNav(item.key)}
+              onClick={() => handleNavClick(item.key)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'none', width: '100%', textAlign: 'left', transition: 'all 0.15s',
                 ...(activeNav === item.key
@@ -208,7 +216,7 @@ export default function ParticipantDashboard() {
       {/* Main Content */}
       <main style={{ marginLeft: 256, minHeight: '100vh', padding: 'var(--spacing-margin-safe)', maxWidth: 1440, margin: '0 auto 0 256px' }}>
         {/* Header Banner */}
-        <header style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, background: 'var(--color-primary-container)', color: '#fff', padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)', boxShadow: '0 20px 40px -10px rgba(43,25,61,0.3)' }}>
+        <header id="dashboard" style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, background: 'var(--color-primary-container)', color: '#fff', padding: 'var(--spacing-lg)', marginBottom: 'var(--spacing-lg)', boxShadow: '0 20px 40px -10px rgba(43,25,61,0.3)' }}>
           <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24 }}>
             <div>
               <h1 style={{ fontSize: 48, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 8 }}>Welcome back, {userName.split(' ')[0]}.</h1>
@@ -235,7 +243,7 @@ export default function ParticipantDashboard() {
         {/* Bento Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 24 }}>
           {/* Active Events */}
-          <section style={{ gridColumn: 'span 8' }}>
+          <section id="hackathons" style={{ gridColumn: 'span 8' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h2 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)' }}>Active Events</h2>
             </div>
@@ -303,7 +311,7 @@ export default function ParticipantDashboard() {
           </section>
 
           {/* My Team */}
-          <section style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <section id="teams" style={{ gridColumn: 'span 4', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <h2 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)' }}>My Team</h2>
             <div className="glass-card" style={{ borderRadius: 12, padding: 16, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
@@ -365,7 +373,7 @@ export default function ParticipantDashboard() {
           </section>
 
           {/* Project Progress */}
-          <section style={{ gridColumn: 'span 4' }}>
+          <section id="analytics" style={{ gridColumn: 'span 4' }}>
             <div className="glass-card" style={{ borderRadius: 12, padding: 'var(--spacing-md)', height: '100%' }}>
               <h3 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)', marginBottom: 'var(--spacing-md)' }}>Project Progress</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
@@ -400,7 +408,7 @@ export default function ParticipantDashboard() {
           </section>
 
           {/* Submission Status */}
-          <section style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          <section id="submissions" style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
             <div className="glass-card" style={{ borderRadius: 12, padding: 'var(--spacing-md)' }}>
               <h3 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)', marginBottom: 'var(--spacing-md)' }}>Submission Status</h3>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'var(--spacing-md) 0', textAlign: 'center' }}>

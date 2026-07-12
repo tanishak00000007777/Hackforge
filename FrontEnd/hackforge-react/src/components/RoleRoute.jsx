@@ -5,7 +5,7 @@ import ProtectedRoute from './ProtectedRoute.jsx';
 const ROLE_DASHBOARD_MAP = {
   organizer: '/organizer',
   participant: '/participant',
-  judge: '/judges',
+  judge: '/judge',
   admin: '/organizer',
 };
 

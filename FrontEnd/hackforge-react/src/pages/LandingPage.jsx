@@ -76,7 +76,7 @@ export default function LandingPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
             <a href="#features" style={{ color: 'var(--color-on-surface-variant)', fontWeight: 600, textDecoration: 'none', fontSize: 16, borderBottom: '2px solid var(--color-on-tertiary-container)', paddingBottom: 2 }}>Features</a>
             <a href="#pricing" style={{ color: 'var(--color-on-surface-variant)', textDecoration: 'none', fontSize: 16 }}>Pricing</a>
-            <a href="#resources" style={{ color: 'var(--color-on-surface-variant)', textDecoration: 'none', fontSize: 16 }}>Resources</a>
+            <a href="/templates" onClick={(e) => { e.preventDefault(); navigate('/templates'); }} style={{ color: 'var(--color-on-surface-variant)', textDecoration: 'none', fontSize: 16 }}>Resources</a>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -87,7 +87,7 @@ export default function LandingPage() {
                   const roleRoutes = {
                     organizer: '/organizer',
                     participant: '/participant',
-                    judge: '/judges',
+                    judge: '/judge',
                     admin: '/organizer',
                   };
                   navigate(roleRoutes[user?.role] || '/');
@@ -166,7 +166,7 @@ export default function LandingPage() {
                 style={{ background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(8px)', border: '1px solid var(--color-outline-variant)', borderRadius: 12, padding: '16px 32px', fontSize: 16, fontWeight: 600, color: 'var(--color-primary-container)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'background 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#fff'}
                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.5)'}
-                onClick={() => alert('Demo video coming soon!')}
+                onClick={() => window.location.href = '/studio/'}
               >
                 <span className="material-symbols-outlined">play_circle</span>
                 Watch Demo

@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/authStore.js';
 const ROLE_ROUTES = {
   organizer: '/organizer',
   participant: '/participant',
-  judge: '/judges',
+  judge: '/judge',
   admin: '/organizer',
 };
 

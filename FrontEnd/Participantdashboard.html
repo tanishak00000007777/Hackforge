@@ -53,7 +53,7 @@
 <!-- Sidebar Navigation -->
 <aside class="h-screen w-64 fixed left-0 top-0 bg-surface/60 backdrop-blur-xl border-r border-on-surface/5 flex flex-col h-full p-4 z-50">
 <div class="mb-xl px-2">
-<span class="font-headline-md text-headline-md text-primary font-bold tracking-tight">HackForge</span>
+<a href="/" class="font-headline-md text-headline-md text-primary font-bold tracking-tight hover:opacity-85 transition-opacity">HackForge</a>
 </div>
 <nav class="flex-grow space-y-1">
 <a aria-current="page" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm active:translate-x-1 transition-transform" href="#dashboard">
@@ -205,10 +205,10 @@
 <div class="mt-lg pt-lg border-t border-on-surface/5">
 <p class="font-label-sm text-label-sm mb-sm text-primary">Quick Links</p>
 <div class="grid grid-cols-2 gap-xs">
-<button class="flex items-center gap-2 p-2 bg-surface-container rounded text-xs text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<button id="quick-link-docs" class="flex items-center gap-2 p-2 bg-surface-container rounded text-xs text-on-surface-variant hover:bg-surface-container-high transition-colors">
 <span class="material-symbols-outlined text-sm">description</span> Docs
                             </button>
-<button class="flex items-center gap-2 p-2 bg-surface-container rounded text-xs text-on-surface-variant hover:bg-surface-container-high transition-colors">
+<button id="quick-link-repo" class="flex items-center gap-2 p-2 bg-surface-container rounded text-xs text-on-surface-variant hover:bg-surface-container-high transition-colors">
 <span class="material-symbols-outlined text-sm">code</span> Repository
                             </button>
 </div>
@@ -263,7 +263,7 @@
 </div>
 <p class="font-bold text-primary mb-xs">Awaiting Final Review</p>
 <p class="text-sm text-on-surface-variant max-w-[200px]">You have completed 3 of 4 required submission steps.</p>
-<button class="mt-md bg-primary-container text-white px-md py-xs rounded-lg text-sm hover:opacity-90 transition-opacity">Resume Draft</button>
+<button id="resume-draft-btn" class="mt-md bg-primary-container text-white px-md py-xs rounded-lg text-sm hover:opacity-90 transition-opacity">Resume Draft</button>
 </div>
 </div>
 <div class="glass-card rounded-xl p-md">
@@ -299,7 +299,7 @@
 </footer>
 </main>
 <!-- Contextual FAB -->
-<button class="fixed bottom-margin-safe right-margin-safe w-14 h-14 bg-primary text-on-primary rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-50">
+<button id="chat-fab" class="fixed bottom-margin-safe right-margin-safe w-14 h-14 bg-primary text-on-primary rounded-full shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-50">
 <span class="material-symbols-outlined text-2xl">chat</span>
 </button>
 <script src="/frontend/app.js"></script>
@@ -307,6 +307,19 @@
         const accountDialog = document.getElementById('account-dialog');
         ['settings-open', 'profile-open'].forEach(id => document.getElementById(id).addEventListener('click', () => accountDialog.showModal()));
         document.getElementById('logout-button').addEventListener('click', () => HackForge.api.logout());
+
+        // Header view project
+        const viewProjectBtn = document.querySelector('header button');
+        if (viewProjectBtn) {
+            viewProjectBtn.addEventListener('click', () => alert('Project dashboard for team coming soon!'));
+        }
+        // Quick links docs / repo
+        document.getElementById('quick-link-docs').addEventListener('click', () => alert('Opening documentation...'));
+        document.getElementById('quick-link-repo').addEventListener('click', () => alert('Opening code repository...'));
+        // Resume draft
+        document.getElementById('resume-draft-btn').addEventListener('click', () => alert('Opening submission draft editor...'));
+        // Chat FAB
+        document.getElementById('chat-fab').addEventListener('click', () => alert('Opening team chat...'));
 
         HackForge.requireAuth('participant').then(user => {
             if (!user) return;

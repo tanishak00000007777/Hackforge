@@ -37,8 +37,8 @@ export default function App() {
             <ParticipantDashboard />
           </RoleRoute>
         } />
-        <Route path="/judges" element={
-          <RoleRoute allowedRoles={['judge']}>
+        <Route path="/judge" element={
+          <RoleRoute allowedRoles={['judge', 'organizer', 'admin']}>
             <JudgesDashboard />
           </RoleRoute>
         } />

@@ -47,7 +47,7 @@
 <!-- Sidebar Navigation -->
 <aside class="h-screen w-64 fixed left-0 top-0 bg-surface/60 backdrop-blur-xl border-r border-on-surface/5 shadow-lg flex flex-col p-4 z-40 hidden md:flex">
 <div class="mb-lg px-2">
-<h1 class="font-headline-md text-headline-md text-primary font-bold tracking-tight">HackForge Admin</h1>
+<a href="/" class="font-headline-md text-headline-md text-primary font-bold tracking-tight hover:opacity-85 transition-opacity">HackForge Admin</a>
 <p class="font-label-sm text-label-sm text-on-surface-variant">Global Hackathon 2024</p>
 </div>
 <nav class="flex-1 space-y-1">
@@ -103,10 +103,10 @@
 </nav>
 </div>
 <div class="flex items-center gap-sm">
-<button class="px-4 py-2 rounded-lg border border-outline/20 text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-variant/20 transition-all active:scale-95">
+<button id="view-guidelines-btn" class="px-4 py-2 rounded-lg border border-outline/20 text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-variant/20 transition-all active:scale-95">
                     View Guidelines
                 </button>
-<button class="px-4 py-2 rounded-lg bg-primary text-white font-label-sm text-label-sm hover:bg-secondary transition-all active:scale-95 shadow-sm">
+<button id="submit-batch-btn" class="px-4 py-2 rounded-lg bg-primary text-white font-label-sm text-label-sm hover:bg-secondary transition-all active:scale-95 shadow-sm">
                     Submit Batch
                 </button>
 </div>
@@ -291,10 +291,10 @@
 </div>
 </div>
 <div class="flex gap-sm">
-<button class="px-6 py-2.5 rounded-lg border border-outline/30 text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-variant/30 transition-all">
+<button id="save-draft-btn" class="px-6 py-2.5 rounded-lg border border-outline/30 text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-variant/30 transition-all">
                                 Save Draft
                             </button>
-<button class="px-8 py-2.5 rounded-lg bg-primary text-white font-label-sm text-label-sm font-bold hover:bg-secondary transition-all active:scale-95 shadow-md">
+<button id="submit-score-btn" class="px-8 py-2.5 rounded-lg bg-primary text-white font-label-sm text-label-sm font-bold hover:bg-secondary transition-all active:scale-95 shadow-sm">
                                 Submit Score
                             </button>
 </div>
@@ -363,7 +363,56 @@
 </nav>
 <script src="/frontend/app.js"></script>
 <script>
-        HackForge.requireAuth('judge');
+        HackForge.requireAuth(['judge', 'organizer']).then(user => {
+            if (user && (user.role === 'organizer' || user.role === 'admin')) {
+                // Update profile info at bottom of sidebar
+                const profileName = document.querySelector('aside .font-semibold');
+                if (profileName) profileName.textContent = user.full_name;
+                const profileRole = document.querySelector('aside .text-[10px]');
+                if (profileRole) profileRole.textContent = 'Organizer';
+                
+                // Rebuild/update sidebar links
+                const nav = document.querySelector('aside nav');
+                if (nav) {
+                    nav.innerHTML = `
+                        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="/organizer#dashboard">
+                            <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                            <span class="font-label-sm text-label-sm">Dashboard</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="/organizer#hackathons">
+                            <span class="material-symbols-outlined" data-icon="event">event</span>
+                            <span class="font-label-sm text-label-sm">Hackathons</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="/templates">
+                            <span class="material-symbols-outlined" data-icon="web">web</span>
+                            <span class="font-label-sm text-label-sm">Website Builder</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="/organizer#registrations">
+                            <span class="material-symbols-outlined" data-icon="group_add">group_add</span>
+                            <span class="font-label-sm text-label-sm">Registrations</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="/organizer#teams">
+                            <span class="material-symbols-outlined" data-icon="groups">groups</span>
+                            <span class="font-label-sm text-label-sm">Teams</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="/organizer#submissions">
+                            <span class="material-symbols-outlined" data-icon="send">send</span>
+                            <span class="font-label-sm text-label-sm">Submissions</span>
+                        </a>
+                        <a aria-current="page" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg transition-all" href="/judge">
+                            <span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+                            <span class="font-label-sm text-label-sm">Judges</span>
+                            <div class="ml-auto active-dot"></div>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg transition-all" href="/organizer#analytics">
+                            <span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+                            <span class="font-label-sm text-label-sm">Analytics</span>
+                        </a>
+                    `;
+                }
+            }
+        });
+        
         document.querySelectorAll('.sidebar-link').forEach(link => link.addEventListener('click', () => {
             document.querySelectorAll('.sidebar-link').forEach(item => { item.classList.remove('active'); item.removeAttribute('aria-current'); });
             link.classList.add('active');
@@ -390,7 +439,13 @@
             }
         }
 
-        // Simulating project card selection
+        // Simulating project card selection and updating details view
+        const projectData = {
+            'EcoTrack AI': 'Real-time carbon footprint analysis for supply chain logistics using computer vision.',
+            'NeuralLens': 'A browser extension that summarizes legal documents into layman terms using LLMs.',
+            'DecentraHealth': 'Patient-owned medical records on a private blockchain with zero-knowledge proofs.',
+            'SmartGrip AR': 'Wearable sensors for physical therapy tracked through an augmented reality interface.'
+        };
         const projectCards = document.querySelectorAll('.glass-card.cursor-pointer');
         projectCards.forEach(card => {
             card.addEventListener('click', () => {
@@ -401,7 +456,27 @@
                 card.classList.add('border-2', 'border-primary/10', 'bg-white', 'ring-2', 'ring-primary-container/5');
                 card.classList.remove('opacity-80');
                 
-                // In a real app, this would trigger a content refresh for the right column
+                const title = card.querySelector('h3').textContent.trim();
+                const desc = projectData[title] || card.querySelector('p').textContent.trim();
+                
+                document.querySelector('#project-details h1').textContent = title;
+                document.querySelector('#project-details p').textContent = desc;
+            });
+        });
+
+        // Wire up dashboard action event listeners
+        document.getElementById('view-guidelines-btn').addEventListener('click', () => alert('Viewing judging guidelines...'));
+        document.getElementById('submit-batch-btn').addEventListener('click', () => alert('Submitting evaluation batch...'));
+        document.getElementById('save-draft-btn').addEventListener('click', () => alert('Draft saved locally!'));
+        document.getElementById('submit-score-btn').addEventListener('click', () => alert('Evaluation submitted successfully!'));
+
+        // Project links placeholders
+        document.querySelectorAll('#project-details a').forEach(a => {
+            a.addEventListener('click', (e) => {
+                if (a.getAttribute('href') === '#') {
+                    e.preventDefault();
+                    alert(`Opening placeholder asset for: ${a.textContent.trim()}`);
+                }
             });
         });
     </script>

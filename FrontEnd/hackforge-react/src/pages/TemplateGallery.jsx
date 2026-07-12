@@ -79,8 +79,8 @@ export default function TemplateGallery() {
     return matchesFilter && matchesSearch;
   });
 
-  const handlePreview = (name) => alert(`Opening live preview for: ${name}`);
-  const handleStartBuilding = () => navigate('/organizer');
+  const handlePreview = (name) => window.location.href = '/studio/';
+  const handleStartBuilding = () => window.location.href = '/studio/';
   const handleCreateHackathon = () => navigate('/organizer');
 
   return (

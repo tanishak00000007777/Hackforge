@@ -65,7 +65,7 @@ async def health_check():
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "FrontEnd"
 STUDIO_DIR = FRONTEND_DIR / "EditorWindow" / "Editor window" / "hackforge-studio" / "dist"
-PAGES = {"/": "LandingPage.html", "/login": "Login.html", "/organizer": "OrganizerDashboard.html", "/participant": "Participantdashboard.html", "/judge": "JudgesDashboard.html", "/templates": "TemplateGallery.html"}
+PAGES = {"/": "LandingPage.html", "/login": "Login.html", "/organizer": "OrganizerDashboard.html", "/participant": "Participantdashboard.html", "/judge": "JudgesDashboard.html", "/judges": "JudgesDashboard.html", "/templates": "TemplateGallery.html"}
 
 for path, filename in PAGES.items():
     async def page(file=filename):

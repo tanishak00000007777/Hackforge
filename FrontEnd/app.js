@@ -19,7 +19,12 @@ async function requireAuth(role) {
   if (!api.token()) return location.replace("/login");
   try {
     const user = await api.me();
-    if (role && user.role !== role && user.role !== "admin") location.replace(roleRoutes[user.role] || "/login");
+    if (role) {
+      const roles = Array.isArray(role) ? role : [role];
+      if (!roles.includes(user.role) && user.role !== "admin") {
+        location.replace(roleRoutes[user.role] || "/login");
+      }
+    }
     return user;
   } catch { api.logout(); }
 }

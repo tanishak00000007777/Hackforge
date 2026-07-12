@@ -116,7 +116,7 @@
 <div class="glass-card rounded-3xl p-xl flex flex-col items-center">
 <!-- Logo & Heading -->
 <div class="text-center mb-lg w-full">
-<div class="inline-flex items-center gap-2 mb-sm group cursor-pointer">
+<div id="logo-btn" class="inline-flex items-center gap-2 mb-sm group cursor-pointer">
 <div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-on-primary group-hover:scale-110 transition-transform duration-300">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">terminal</span>
 </div>
@@ -128,7 +128,7 @@
 <!-- Login Form -->
 <form action="/api/v1/auth/login" class="w-full space-y-md" id="login-form" method="POST">
 <!-- Google Login -->
-<button class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-outline/20 rounded-xl bg-surface hover:bg-surface-container-low transition-all duration-200 active:scale-[0.98] group" type="button">
+<button id="google-login-btn" class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-outline/20 rounded-xl bg-surface hover:bg-surface-container-low transition-all duration-200 active:scale-[0.98] group" type="button">
 <svg class="w-5 h-5" viewbox="0 0 24 24">
 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
@@ -226,6 +226,10 @@
 <script src="/frontend/app.js"></script>
 <script>
         // Micro-interactions
+        // Mode routing and placeholder actions
+        document.getElementById('logo-btn').addEventListener('click', () => location.href = '/');
+        document.getElementById('google-login-btn').addEventListener('click', () => alert('Google login is not available yet.'));
+
         document.addEventListener('mousemove', (e) => {
             const glow = document.getElementById('cursor-glow');
             glow.style.left = e.clientX + 'px';

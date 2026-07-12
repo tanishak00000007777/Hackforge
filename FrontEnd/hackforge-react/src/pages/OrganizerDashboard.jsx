@@ -13,7 +13,7 @@ const navItems = [
   { icon: 'group_add', label: 'Registrations', key: 'registrations' },
   { icon: 'groups', label: 'Teams', key: 'teams' },
   { icon: 'send', label: 'Submissions', key: 'submissions' },
-  { icon: 'gavel', label: 'Judges', key: 'judges', path: '/judges' },
+  { icon: 'gavel', label: 'Judges', key: 'judges', path: '/judge' },
   { icon: 'analytics', label: 'Analytics', key: 'analytics' },
 ];
 
@@ -49,6 +49,21 @@ export default function OrganizerDashboard() {
       .catch(() => {});
   }, []);
 
+  // Scroll to hash section on mount
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      const id = hash.replace('#', '');
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          setActiveNav(id);
+        }, 100);
+      }
+    }
+  }, []);
+
   // Load registrations when hackathon is selected
   useEffect(() => {
     if (!selectedHackathon) return;
@@ -64,7 +79,14 @@ export default function OrganizerDashboard() {
 
   const handleNavClick = (item) => {
     setActiveNav(item.key);
-    if (item.path) navigate(item.path);
+    if (item.path) {
+      navigate(item.path);
+    } else {
+      const element = document.getElementById(item.key);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
   };
 
   const handleNewEvent = () => {
@@ -176,7 +198,7 @@ export default function OrganizerDashboard() {
       <main style={{ marginLeft: 256, flex: 1, minHeight: '100vh', position: 'relative', overflow: 'hidden', background: '#fbf8ff' }}>
         <div style={{ position: 'relative', zIndex: 10, padding: 'var(--spacing-margin-safe)', maxWidth: 1440, margin: '0 auto' }}>
           {/* Header */}
-          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+          <header id="dashboard" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-on-surface-variant)', opacity: 0.6 }}>ADMIN</span>
               <span style={{ color: 'var(--color-outline-variant)' }}>/</span>
@@ -204,7 +226,7 @@ export default function OrganizerDashboard() {
           </header>
 
           {/* Welcome Banner + Stats */}
-          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 'var(--spacing-lg)' }}>
+          <section id="hackathons" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 'var(--spacing-lg)' }}>
             {/* Welcome Banner */}
             <div style={{ gridColumn: 'span 4', background: 'var(--color-primary-container)', padding: 'var(--spacing-lg)', borderRadius: 12, position: 'relative', overflow: 'hidden', minHeight: 240, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', boxShadow: '0 20px 40px -10px rgba(43,25,61,0.3)' }}>
               <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
@@ -224,12 +246,12 @@ export default function OrganizerDashboard() {
 
             {/* Stats */}
             {[
-              { label: 'Active Hackathons', value: '12', sub: '+2 this month', icon: 'rocket_launch' },
-              { label: 'Total Participants', value: '8,432', sub: '4.2% growth', icon: 'person' },
-              { label: 'Submissions', value: '1,209', sub: '92% verified', icon: 'folder_zip' },
-              { label: 'Verified Judges', value: '45', sub: 'Global network', icon: 'verified' },
+              { label: 'Active Hackathons', value: '12', sub: '+2 this month', icon: 'rocket_launch', id: 'hackathons_stat' },
+              { label: 'Total Participants', value: '8,432', sub: '4.2% growth', icon: 'person', id: 'teams' },
+              { label: 'Submissions', value: '1,209', sub: '92% verified', icon: 'folder_zip', id: 'submissions' },
+              { label: 'Verified Judges', value: '45', sub: 'Global network', icon: 'verified', id: 'judges' },
             ].map(stat => (
-              <div key={stat.label} className="floating-card" style={{ padding: 24, borderRadius: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 128 }}>
+              <div key={stat.label} id={stat.id} className="floating-card" style={{ padding: 24, borderRadius: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 128 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-on-surface-variant)' }}>{stat.label}</span>
                   <span className="material-symbols-outlined" style={{ color: 'var(--color-on-primary-container)' }}>{stat.icon}</span>
@@ -245,7 +267,7 @@ export default function OrganizerDashboard() {
           {/* Analytics + Widgets */}
           <section style={{ display: 'grid', gridTemplateColumns: '8fr 4fr', gap: 24, marginBottom: 'var(--spacing-lg)' }}>
             {/* Funnel */}
-            <div className="floating-card" style={{ padding: 'var(--spacing-lg)', borderRadius: 12, display: 'flex', flexDirection: 'column' }}>
+            <div id="analytics" className="floating-card" style={{ padding: 'var(--spacing-lg)', borderRadius: 12, display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
                 <h3 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)' }}>Registration Funnel</h3>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, padding: '4px 12px', background: 'var(--color-surface-container)', borderRadius: 4, color: 'var(--color-on-surface-variant)' }}>Last 30 Days</span>
@@ -324,7 +346,7 @@ export default function OrganizerDashboard() {
 
           {/* Registrations Table */}
           <section style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24 }}>
-            <div className="floating-card" style={{ borderRadius: 12, overflow: 'hidden' }}>
+            <div id="registrations" className="floating-card" style={{ borderRadius: 12, overflow: 'hidden' }}>
               <div style={{ padding: 'var(--spacing-md)', borderBottom: '1px solid rgba(14,22,71,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <h3 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)' }}>Recent Registrations</h3>

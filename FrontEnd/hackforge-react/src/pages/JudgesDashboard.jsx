@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const projects = [
@@ -193,16 +193,50 @@ export default function JudgesDashboard() {
     navigate('/login', { replace: true });
   };
 
-  const navItems = [
-    { icon: 'dashboard', label: 'Dashboard', key: 'dashboard' },
-    { icon: 'event', label: 'Hackathons', key: 'hackathons' },
-    { icon: 'gavel', label: 'Judges', key: 'judges', active: true },
-    { icon: 'groups', label: 'Teams', key: 'teams' },
-    { icon: 'analytics', label: 'Analytics', key: 'analytics' },
-  ];
+  const isOrganizer = user?.role === 'organizer' || user?.role === 'admin';
+
+  const navItems = isOrganizer
+    ? [
+        { icon: 'dashboard', label: 'Dashboard', key: 'dashboard', path: '/organizer' },
+        { icon: 'event', label: 'Hackathons', key: 'hackathons', path: '/organizer' },
+        { icon: 'web', label: 'Website Builder', key: 'builder', path: '/templates' },
+        { icon: 'group_add', label: 'Registrations', key: 'registrations', path: '/organizer' },
+        { icon: 'groups', label: 'Teams', key: 'teams', path: '/organizer' },
+        { icon: 'send', label: 'Submissions', key: 'submissions', path: '/organizer' },
+        { icon: 'gavel', label: 'Judges', key: 'judges', path: '/judge', active: true },
+        { icon: 'analytics', label: 'Analytics', key: 'analytics', path: '/organizer' },
+      ]
+    : [
+        { icon: 'dashboard', label: 'Dashboard', key: 'dashboard' },
+        { icon: 'event', label: 'Hackathons', key: 'hackathons' },
+        { icon: 'gavel', label: 'Judges', key: 'judges', active: true },
+        { icon: 'groups', label: 'Teams', key: 'teams' },
+        { icon: 'analytics', label: 'Analytics', key: 'analytics' },
+      ];
 
   const userName = user?.full_name || 'Sarah Jenkins';
   const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+  const handleNavClick = (key) => {
+    setNavActive(key);
+    const item = navItems.find(i => i.key === key);
+    if (item?.path) {
+      navigate(item.path + (key !== 'builder' && key !== 'judges' ? `#${key}` : ''));
+      return;
+    }
+    const keyToId = {
+      dashboard: 'judge-dashboard',
+      hackathons: 'assignments',
+      judges: 'evaluation',
+      teams: 'project-details',
+      analytics: 'scorecard'
+    };
+    const id = keyToId[key];
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <div style={{ background: 'linear-gradient(135deg, #fbf8ff 0%, #ececff 100%)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -216,7 +250,7 @@ export default function JudgesDashboard() {
         </div>
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {navItems.map(item => (
-            <button key={item.key} onClick={() => setNavActive(item.key)}
+            <button key={item.key} onClick={() => handleNavClick(item.key)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'none', width: '100%', textAlign: 'left', transition: 'all 0.15s',
                 ...(navActive === item.key
@@ -254,7 +288,7 @@ export default function JudgesDashboard() {
       {/* Main Content */}
       <main style={{ marginLeft: 256, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         {/* Top Header */}
-        <header style={{ position: 'sticky', top: 0, zIndex: 30, background: 'rgba(251,248,255,0.6)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(14,22,71,0.05)', padding: '16px var(--spacing-margin-safe)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <header id="judge-dashboard" style={{ position: 'sticky', top: 0, zIndex: 30, background: 'rgba(251,248,255,0.6)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(14,22,71,0.05)', padding: '16px var(--spacing-margin-safe)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <nav style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-outline)' }}>
               <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>HackForge</span>
@@ -305,7 +339,7 @@ export default function JudgesDashboard() {
         {/* Dashboard Content */}
         <div style={{ padding: 'var(--spacing-margin-safe)', maxWidth: 1440, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '4fr 8fr', gap: 24 }}>
           {/* Left: Assignments */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div id="assignments" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h2 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)' }}>Your Assignments</h2>
               <span style={{ padding: '4px 12px', background: 'rgba(249,181,254,0.5)', color: 'var(--color-on-secondary-container)', borderRadius: 9999, fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700 }}>
@@ -352,9 +386,9 @@ export default function JudgesDashboard() {
           {/* Right: Evaluation View */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {activeProject ? (
-              <section style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(43,25,61,0.05)', boxShadow: '0 10px 30px -10px rgba(43,25,61,0.08)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <section id="evaluation" style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(43,25,61,0.05)', boxShadow: '0 10px 30px -10px rgba(43,25,61,0.08)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 {/* Hero */}
-                <div style={{ padding: 'var(--spacing-md)', background: '#fff', borderBottom: '1px solid rgba(14,22,71,0.05)' }}>
+                <div id="project-details" style={{ padding: 'var(--spacing-md)', background: '#fff', borderBottom: '1px solid rgba(14,22,71,0.05)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                     <div>
                       <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--color-primary)', marginBottom: 4 }}>{activeProject.title}</h1>
@@ -382,7 +416,7 @@ export default function JudgesDashboard() {
                 </div>
 
                 {/* Rubric + Feedback */}
-                <div style={{ padding: 'var(--spacing-md)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-lg)' }}>
+                <div id="scorecard" style={{ padding: 'var(--spacing-md)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-lg)' }}>
                   {/* Rubric */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                     <h3 style={{ fontSize: 18, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
