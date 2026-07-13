@@ -14,7 +14,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
 
-    allowed_origins: str = "http://localhost:5173,http://localhost:5175"
+    allowed_origins: str = "http://localhost:4174,http://localhost:5173"
+    frontend_url: str = "http://localhost:4174"
 
     @property
     def cors_origins(self) -> list[str]:

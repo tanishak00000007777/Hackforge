@@ -1,6 +1,6 @@
 from pathlib import Path
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
@@ -65,16 +65,23 @@ async def health_check():
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "FrontEnd"
 STUDIO_DIR = FRONTEND_DIR / "EditorWindow" / "Editor window" / "hackforge-studio" / "dist"
-PAGES = {"/": "LandingPage.html", "/login": "Login.html", "/organizer": "OrganizerDashboard.html", "/participant": "Participantdashboard.html", "/judge": "JudgesDashboard.html", "/judges": "JudgesDashboard.html", "/templates": "TemplateGallery.html"}
+REACT_ROUTES = {
+    "/": "/",
+    "/login": "/login",
+    "/organizer": "/organizer",
+    "/participant": "/participant",
+    "/judge": "/judge",
+    "/judges": "/judge",
+    "/templates": "/templates",
+}
 
-for path, filename in PAGES.items():
-    async def page(file=filename):
-        return FileResponse(FRONTEND_DIR / file)
+for path, react_path in REACT_ROUTES.items():
+    async def page(route=react_path):
+        return RedirectResponse(f"{settings.frontend_url.rstrip('/')}{route}")
     app.add_api_route(path, page, include_in_schema=False)
 
 @app.get("/dashboard", include_in_schema=False)
 async def dashboard():
-    return RedirectResponse("/login")
+    return RedirectResponse(f"{settings.frontend_url.rstrip('/')}/login")
 
-app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
 app.mount("/studio", StaticFiles(directory=STUDIO_DIR, html=True), name="studio")

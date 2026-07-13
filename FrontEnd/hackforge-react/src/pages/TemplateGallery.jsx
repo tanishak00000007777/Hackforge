@@ -81,7 +81,7 @@ export default function TemplateGallery() {
 
   const handlePreview = (name) => window.location.href = '/studio/';
   const handleStartBuilding = () => window.location.href = '/studio/';
-  const handleCreateHackathon = () => navigate('/organizer');
+  const handleCreateHackathon = () => window.location.href = '/studio/';
 
   return (
     <div style={{ background: 'var(--color-surface)', color: 'var(--color-on-surface)', overflowX: 'hidden', fontFamily: 'var(--font-inter)' }}>

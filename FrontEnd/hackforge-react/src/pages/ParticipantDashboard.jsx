@@ -180,9 +180,9 @@ export default function ParticipantDashboard() {
               key={item.key}
               onClick={() => handleNavClick(item.key)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'none', width: '100%', textAlign: 'left', transition: 'all 0.15s',
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, borderWidth: 0, borderStyle: 'solid', borderColor: 'transparent', cursor: 'pointer', background: 'none', width: '100%', textAlign: 'left', transition: 'all 0.15s',
                 ...(activeNav === item.key
-                  ? { background: 'rgba(249,181,254,0.5)', color: 'var(--color-on-secondary-container)', borderRight: '4px solid var(--color-on-tertiary-container)' }
+                  ? { background: 'rgba(249,181,254,0.5)', color: 'var(--color-on-secondary-container)', borderRightWidth: 4, borderRightStyle: 'solid', borderRightColor: 'var(--color-on-tertiary-container)' }
                   : { color: 'var(--color-on-surface-variant)' })
               }}
               onMouseEnter={e => { if (activeNav !== item.key) e.currentTarget.style.background = 'rgba(222,224,255,0.5)'; }}

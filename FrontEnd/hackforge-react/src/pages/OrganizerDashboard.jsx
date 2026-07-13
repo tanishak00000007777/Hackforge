@@ -148,9 +148,9 @@ export default function OrganizerDashboard() {
               key={item.key}
               onClick={() => handleNavClick(item)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'none', transition: 'all 0.15s', width: '100%', textAlign: 'left',
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, borderWidth: 0, borderStyle: 'solid', borderColor: 'transparent', cursor: 'pointer', background: 'none', transition: 'all 0.15s', width: '100%', textAlign: 'left',
                 ...(activeNav === item.key
-                  ? { background: 'rgba(249,181,254,0.5)', color: 'var(--color-on-secondary-container)', borderRight: '4px solid var(--color-on-tertiary-container)' }
+                  ? { background: 'rgba(249,181,254,0.5)', color: 'var(--color-on-secondary-container)', borderRightWidth: 4, borderRightStyle: 'solid', borderRightColor: 'var(--color-on-tertiary-container)' }
                   : { color: 'var(--color-on-surface-variant)' }
                 )
               }}
