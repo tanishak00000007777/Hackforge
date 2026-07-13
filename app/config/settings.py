@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,10 +18,14 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://localhost:4174,http://localhost:5173"
     frontend_url: str = "http://localhost:4174"
 
-    @property
-    def cors_origins(self) -> list[str]:
-        """Parse comma-separated ALLOWED_ORIGINS into a list for CORSMiddleware."""
-        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def use_async_postgres_driver(cls, value: str) -> str:
+        if value.startswith("postgres://"):
+            return value.replace("postgres://", "postgresql+asyncpg://", 1)
+        if value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return value
 
     @property
     def cors_origins(self) -> list[str]:

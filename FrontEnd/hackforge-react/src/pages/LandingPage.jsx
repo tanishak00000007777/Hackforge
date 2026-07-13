@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore.js';
 import * as hackathonApi from '../services/hackathonApi.js';
 
+const STUDIO_URL = import.meta.env.VITE_STUDIO_URL || '/studio/';
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const floatingRefs = useRef([]);
@@ -166,7 +168,7 @@ export default function LandingPage() {
                 style={{ background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(8px)', border: '1px solid var(--color-outline-variant)', borderRadius: 12, padding: '16px 32px', fontSize: 16, fontWeight: 600, color: 'var(--color-primary-container)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'background 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.background = '#fff'}
                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.5)'}
-                onClick={() => window.location.href = '/studio/'}
+                onClick={() => window.location.href = STUDIO_URL}
               >
                 <span className="material-symbols-outlined">play_circle</span>
                 Watch Demo
