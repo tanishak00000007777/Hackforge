@@ -80,7 +80,6 @@ APP_VERSION=0.1.0
 DEBUG=True
 SECRET_KEY=your-super-secret-key-change-this-in-production
 
-# From Supabase → Connect button → URI tab
 # IMPORTANT: change postgresql:// to postgresql+asyncpg://
 DATABASE_URL=postgresql+asyncpg://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
 
@@ -89,9 +88,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES=60
 REFRESH_TOKEN_EXPIRE_DAYS=7
 
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+FRONTEND_URL=http://localhost:4174
 
-SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 ```
 
 > ⚠️ Never commit `.env` to GitHub. Only commit `.env.example`.
