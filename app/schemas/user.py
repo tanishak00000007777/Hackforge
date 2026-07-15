@@ -41,3 +41,9 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str
+    role: UserRole | None = None
+    org_name: str | None = None

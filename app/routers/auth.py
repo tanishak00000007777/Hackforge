@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse
-from app.services.auth_service import register_user, login_user, refresh_access_token
+from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse, GoogleLoginRequest
+from app.services.auth_service import register_user, login_user, refresh_access_token, login_google_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -43,3 +43,13 @@ async def refresh(
 ):
     """Exchange a valid refresh token for a new access + refresh token pair."""
     return await refresh_access_token(data.refresh_token, db)
+
+
+@router.post("/google", response_model=TokenResponse)
+async def login_google(
+    data: GoogleLoginRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Exchange a Google ID Token for a HackForge token response."""
+    return await login_google_user(data, db)
+

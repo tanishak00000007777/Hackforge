@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     secret_key: str
     database_url: str
+    google_client_id: str = ""
 
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
@@ -34,6 +35,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,
+        extra="ignore",
     )
 
 
