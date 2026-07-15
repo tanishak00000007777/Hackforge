@@ -10,6 +10,12 @@ import OrganizerDashboard from './pages/OrganizerDashboard';
 import ParticipantDashboard from './pages/ParticipantDashboard';
 import JudgesDashboard from './pages/JudgesDashboard';
 import TemplateGallery from './pages/TemplateGallery';
+import FormsDashboard from './pages/FormsDashboard';
+import FormBuilderPage from './pages/FormBuilderPage';
+import PublicFormPage from './pages/PublicFormPage';
+import CertificatesDashboard from './pages/CertificatesDashboard';
+import MyCertificatesPage from './pages/MyCertificatesPage';
+import CertificateVerifyPage from './pages/CertificateVerifyPage';
 
 export default function App() {
   const restoreSession = useAuthStore((s) => s.restoreSession);
@@ -25,6 +31,8 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forms/:slug" element={<PublicFormPage />} />
+        <Route path="/certificates/verify/:verificationId" element={<CertificateVerifyPage />} />
 
         {/* Role-protected dashboards */}
         <Route path="/organizer" element={
@@ -32,11 +40,15 @@ export default function App() {
             <OrganizerDashboard />
           </RoleRoute>
         } />
+        <Route path="/organizer/forms" element={<RoleRoute allowedRoles={['organizer', 'admin']}><FormsDashboard /></RoleRoute>} />
+        <Route path="/organizer/forms/:formId" element={<RoleRoute allowedRoles={['organizer', 'admin']}><FormBuilderPage /></RoleRoute>} />
+        <Route path="/organizer/certificates" element={<RoleRoute allowedRoles={['organizer', 'admin']}><CertificatesDashboard /></RoleRoute>} />
         <Route path="/participant" element={
           <RoleRoute allowedRoles={['participant']}>
             <ParticipantDashboard />
           </RoleRoute>
         } />
+        <Route path="/participant/certificates" element={<RoleRoute allowedRoles={['participant']}><MyCertificatesPage /></RoleRoute>} />
         <Route path="/judge" element={
           <RoleRoute allowedRoles={['judge', 'organizer', 'admin']}>
             <JudgesDashboard />

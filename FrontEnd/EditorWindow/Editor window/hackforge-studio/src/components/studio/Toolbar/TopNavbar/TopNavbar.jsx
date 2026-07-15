@@ -29,16 +29,16 @@ export default function TopNavbar() {
       border-b
       border-[#E7E8F4]/60
       bg-[#FCFBFE]/90
-      px-6
+      px-4
       backdrop-blur-md
     "
     >
-      <div className="flex items-center gap-10">
+      <div className="flex items-center gap-6">
         <Logo />
         <Navigation />
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <SectionManager />
         
         <HistoryControls 
@@ -55,15 +55,15 @@ export default function TopNavbar() {
         <button 
           onClick={() => setCopilotOpen(!isCopilotOpen)}
           className={`
-            flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-semibold transition-all border
+            flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-semibold transition-all border
             ${isCopilotOpen 
               ? "bg-violet-50 text-violet-600 border-violet-200 shadow-inner" 
               : "bg-white text-slate-700 border-[#D8DAE5] hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200"
             }
           `}
         >
-          <Sparkles size={12} className={isCopilotOpen ? "text-violet-600" : "text-violet-500"} />
-          ForgeAI Assistant
+          <Sparkles size={15} className={isCopilotOpen ? "text-violet-600" : "text-violet-500"} />
+          <span className="hidden 2xl:inline">ForgeAI</span>
         </button>
 
         <UserProfile />

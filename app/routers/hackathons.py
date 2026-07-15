@@ -9,6 +9,12 @@ from app.services.hackathon_service import create_hackathon, get_hackathon_by_sl
 router = APIRouter(prefix="/hackathons", tags=["Hackathons"])
 
 
+@router.get("/mine/owned", response_model=list[HackathonResponse])
+async def list_owned(current_user=Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    from app.services.hackathon_service import get_owned_hackathons
+    return await get_owned_hackathons(current_user, db)
+
+
 @router.post("/{org_id}", response_model=HackathonResponse, status_code=201)
 async def create(
     org_id: uuid.UUID,

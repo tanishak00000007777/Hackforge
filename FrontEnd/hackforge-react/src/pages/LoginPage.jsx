@@ -30,7 +30,9 @@ export default function LoginPage() {
   // If already authenticated, redirect to dashboard
   useEffect(() => {
     if (isAuthenticated && user) {
-      navigate(ROLE_ROUTES[user.role] || '/', { replace: true });
+      const returnPath = sessionStorage.getItem('hackforge_return_path');
+      if (returnPath) sessionStorage.removeItem('hackforge_return_path');
+      navigate(returnPath || ROLE_ROUTES[user.role] || '/', { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 
@@ -88,7 +90,9 @@ export default function LoginPage() {
       // 3. Persist in store
       setAuth(tokens, user);
       // 4. Route by role
-      navigate(ROLE_ROUTES[user.role] || '/', { replace: true });
+      const returnPath = sessionStorage.getItem('hackforge_return_path');
+      if (returnPath) sessionStorage.removeItem('hackforge_return_path');
+      navigate(returnPath || ROLE_ROUTES[user.role] || '/', { replace: true });
     } catch (err) {
       setError(err.detail || 'Login failed. Please try again.');
     } finally {

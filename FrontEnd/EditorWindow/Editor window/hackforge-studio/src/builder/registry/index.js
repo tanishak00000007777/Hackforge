@@ -6,6 +6,7 @@ import { sponsorsSection } from "../sections/sponsors";
 import { judgesSection } from "../sections/judges";
 import { faqSection } from "../sections/faq";
 import { footerSection } from "../sections/footer";
+import { formEmbedSection } from "../sections/formEmbed";
 
 import { headingElement } from "@/components/studio/elements/Heading";
 import { paragraphElement } from "@/components/studio/elements/Paragraph";
@@ -35,6 +36,7 @@ export const componentRegistry = {
   [judgesSection.type]: judgesSection,
   [faqSection.type]: faqSection,
   [footerSection.type]: footerSection,
+  [formEmbedSection.type]: formEmbedSection,
 };
 
 export const elementRegistry = {

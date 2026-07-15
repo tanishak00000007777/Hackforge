@@ -26,18 +26,18 @@ export default function SectionManager() {
             items-center
             gap-2
             cursor-pointer
-            rounded-xl
+            rounded-lg
             bg-[#2B0A5A]
             text-white
-            px-5
-            py-3
+            px-3
+            py-2
             font-semibold
             select-none
             whitespace-nowrap
           "
         >
-          <Plus size={18}/>
-          Add Section
+          <Plus size={17}/>
+          <span className="hidden xl:inline">Add Section</span>
         </summary>
         <div
           className="

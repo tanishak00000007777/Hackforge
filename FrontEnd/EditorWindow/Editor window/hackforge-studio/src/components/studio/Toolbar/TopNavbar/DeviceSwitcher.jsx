@@ -27,13 +27,12 @@ export default function DeviceSwitcher() {
         className="
           inline-flex
           items-center
-          gap-2
-          rounded-2xl
+          gap-0.5
+          rounded-xl
           border
           border-slate-200
           bg-white
-          p-1.5
-          shadow-sm
+          p-1
         "
       >
         {devices.map(({ id, icon: Icon }) => {
@@ -47,9 +46,9 @@ export default function DeviceSwitcher() {
                 flex
                 items-center
                 justify-center
-                h-11
-                w-11
-                rounded-xl
+                h-8
+                w-8
+                rounded-lg
                 transition-all
                 duration-200
 
@@ -60,7 +59,7 @@ export default function DeviceSwitcher() {
                 }
               `}
             >
-              <Icon size={20} strokeWidth={2} />
+              <Icon size={16} strokeWidth={2} />
             </button>
           );
         })}

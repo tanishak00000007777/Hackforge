@@ -50,20 +50,20 @@ export default function ComponentLibrary() {
 
   if (Object.keys(groupedComponents).length === 0) {
     return (
-      <div className="px-5 text-sm text-slate-500 text-center py-10">
+      <div className="px-4 text-sm text-slate-500 text-center py-10">
         No components found.
       </div>
     );
   }
 
   return (
-    <div className="px-5 pb-10 space-y-8">
+    <div className="px-4 pb-6 space-y-6">
       {Object.entries(groupedComponents).map(([category, items]) => (
         <div key={category}>
-          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">
+          <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">
             {category}
           </h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {items.map((item) => (
               <ComponentCard
                 key={item.type}

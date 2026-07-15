@@ -85,6 +85,12 @@ export function generateJSX(components) {
     const propsList = [];
     const props = node.props || {};
 
+    if (node.type === "formEmbed") {
+      const src = String(props.formUrl || "").replace(/"/g, "&quot;");
+      const height = Number(props.height) || 720;
+      return `${indent}<iframe src="${src}" title="HackForge form" style={{ width: '100%', height: '${height}px', border: 0 }} />`;
+    }
+
     if (tag === "img" && props.src) {
       propsList.push(`src="${props.src}"`);
     }

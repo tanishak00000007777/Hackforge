@@ -1,15 +1,15 @@
 export default function SidebarHeader() {
   return (
-    <div className="flex items-center justify-between mb-10">
+    <div className="px-4 mb-4">
 
       <div>
 
-        <h2 className="text-3xl font-black text-[#17154D]">
+        <h2 className="text-xl font-bold text-[#17154D]">
           Elements
         </h2>
 
-        <p className="text-sm text-slate-500 mt-2">
-          Drag and drop components to build your page.
+        <p className="text-xs text-slate-500 mt-1">
+          Drag components onto the canvas.
         </p>
 
       </div>

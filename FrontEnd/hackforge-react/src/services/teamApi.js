@@ -12,6 +12,10 @@ export function getMyTeam(hackathonId) {
   return apiGet(`/teams/${hackathonId}/my-team`);
 }
 
+export function getHackathonTeams(hackathonId) {
+  return apiGet(`/teams/${hackathonId}/all`);
+}
+
 export function leaveTeam(hackathonId) {
   return apiDelete(`/teams/${hackathonId}/leave`);
 }

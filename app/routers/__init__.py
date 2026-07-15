@@ -14,4 +14,6 @@ from app.routers import (
     announcements,
     sponsors,
     analytics,
+    features,
+    forms,
 )

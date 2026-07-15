@@ -12,6 +12,7 @@ const navItems = [
   { icon: 'event', label: 'Hackathons', key: 'hackathons' },
   { icon: 'groups', label: 'Teams', key: 'teams' },
   { icon: 'send', label: 'Submissions', key: 'submissions' },
+  { icon: 'workspace_premium', label: 'Certificates', key: 'certificates', path: '/participant/certificates' },
   { icon: 'analytics', label: 'Analytics', key: 'analytics' },
 ];
 
@@ -159,9 +160,10 @@ export default function ParticipantDashboard() {
   const userName = user?.full_name || 'Participant';
   const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-  const handleNavClick = (key) => {
-    setActiveNav(key);
-    const element = document.getElementById(key);
+  const handleNavClick = (item) => {
+    if (item.path) { navigate(item.path); return; }
+    setActiveNav(item.key);
+    const element = document.getElementById(item.key);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -178,7 +180,7 @@ export default function ParticipantDashboard() {
           {navItems.map(item => (
             <button
               key={item.key}
-              onClick={() => handleNavClick(item.key)}
+              onClick={() => handleNavClick(item)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, borderWidth: 0, borderStyle: 'solid', borderColor: 'transparent', cursor: 'pointer', background: 'none', width: '100%', textAlign: 'left', transition: 'all 0.15s',
                 ...(activeNav === item.key

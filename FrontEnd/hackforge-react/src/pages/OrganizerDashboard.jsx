@@ -6,10 +6,14 @@ import * as hackathonApi from '../services/hackathonApi.js';
 import * as registrationApi from '../services/registrationApi.js';
 import * as analyticsApi from '../services/analyticsApi.js';
 
+const STUDIO_URL = import.meta.env.VITE_STUDIO_URL || (import.meta.env.DEV ? 'http://localhost:4175/studio/' : '/studio/');
+
 const navItems = [
   { icon: 'dashboard', label: 'Dashboard', key: 'dashboard' },
   { icon: 'event', label: 'Hackathons', key: 'hackathons' },
   { icon: 'web', label: 'Website Builder', key: 'builder', path: '/templates' },
+  { icon: 'description', label: 'Forms', key: 'forms', path: '/organizer/forms' },
+  { icon: 'workspace_premium', label: 'Certificates', key: 'certificates', path: '/organizer/certificates' },
   { icon: 'group_add', label: 'Registrations', key: 'registrations' },
   { icon: 'groups', label: 'Teams', key: 'teams' },
   { icon: 'send', label: 'Submissions', key: 'submissions' },
@@ -90,7 +94,7 @@ export default function OrganizerDashboard() {
   };
 
   const handleNewEvent = () => {
-    alert('Creating a new hackathon event...');
+    window.location.href = STUDIO_URL;
   };
 
   const handleReview = async (reg) => {

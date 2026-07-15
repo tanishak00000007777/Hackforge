@@ -10,27 +10,15 @@ const ITEMS = [
     id: "preview",
     label: "Preview",
   },
-  {
-    id: "layers",
-    label: "Layers",
-  },
-  {
-    id: "history",
-    label: "History",
-  },
 ];
 
 export default function Navigation() {
   const setTemplatesModalOpen = useEditorStore((state) => state.setTemplatesModalOpen);
   const isPreviewMode = useEditorStore((state) => state.isPreviewMode);
   const setPreviewMode = useEditorStore((state) => state.setPreviewMode);
-  const sidebarTab = useEditorStore((state) => state.sidebarTab);
-  const setSidebarTab = useEditorStore((state) => state.setSidebarTab);
 
   const getActive = () => {
     if (isPreviewMode) return "preview";
-    if (sidebarTab === "Layers") return "layers";
-    if (sidebarTab === "History") return "history";
     return "";
   };
 
@@ -41,17 +29,11 @@ export default function Navigation() {
       setTemplatesModalOpen(true);
     } else if (id === "preview") {
       setPreviewMode(!isPreviewMode);
-    } else if (id === "layers") {
-      setPreviewMode(false);
-      setSidebarTab("Layers");
-    } else if (id === "history") {
-      setPreviewMode(false);
-      setSidebarTab("History");
     }
   };
 
   return (
-    <nav className="hidden lg:flex items-center gap-8 mr-8">
+    <nav className="hidden xl:flex items-center gap-4">
       {ITEMS.map((item) => (
         <button
           key={item.id}

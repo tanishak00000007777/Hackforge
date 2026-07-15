@@ -22,16 +22,12 @@ export default function StudioLayout() {
       <main
         className="
           flex
-          h-[calc(100vh-76px)]
+          h-[calc(100vh-64px)]
           overflow-hidden
           bg-[#FCFAFF]
         "
       >
-        {!isPreviewMode && (
-          <aside className="w-[340px] min-w-[340px] border-r border-[#E7E8F4]/60 bg-[#FCFBFE] overflow-y-auto transition-all">
-            <LeftSidebar />
-          </aside>
-        )}
+        {!isPreviewMode && <LeftSidebar />}
 
         <Canvas />
 

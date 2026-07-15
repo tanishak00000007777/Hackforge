@@ -109,3 +109,10 @@ async def get_all_hackathons(db: AsyncSession) -> list[Hackathon]:
         select(Hackathon).where(Hackathon.status == HackathonStatus.published)
     )
     return list(result.scalars().all())
+
+
+async def get_owned_hackathons(current_user: User, db: AsyncSession) -> list[Hackathon]:
+    result = await db.execute(
+        select(Hackathon).where(Hackathon.created_by == current_user.id).order_by(Hackathon.created_at.desc())
+    )
+    return list(result.scalars().all())

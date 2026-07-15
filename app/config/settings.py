@@ -18,6 +18,9 @@ class Settings(BaseSettings):
 
     allowed_origins: str = "http://localhost:4174,http://localhost:5173"
     frontend_url: str = "http://localhost:4174"
+    cloudinary_cloud_name: str = ""
+    cloudinary_api_key: str = ""
+    cloudinary_api_secret: str = ""
 
     @field_validator("database_url", mode="before")
     @classmethod
@@ -26,6 +29,13 @@ class Settings(BaseSettings):
             return value.replace("postgres://", "postgresql+asyncpg://", 1)
         if value.startswith("postgresql://"):
             return value.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return value
+
+    @field_validator("debug", mode="before")
+    @classmethod
+    def normalize_debug(cls, value):
+        if isinstance(value, str) and value.lower() in {"release", "production", "prod"}:
+            return False
         return value
 
     @property

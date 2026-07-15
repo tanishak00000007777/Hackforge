@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_feature
 from app.schemas.team import TeamCreate, TeamJoin, TeamResponse
-from app.services.team_service import create_team, join_team, get_my_team
+from app.services.team_service import create_team, join_team, get_my_team, get_hackathon_teams
 
 
 
@@ -41,6 +41,15 @@ async def my_team(
     db: AsyncSession = Depends(get_db),
 ):
     return await get_my_team(hackathon_id, current_user, db)
+
+
+@router.get("/{hackathon_id}/all", response_model=list[TeamResponse])
+async def all_teams(
+    hackathon_id: uuid.UUID,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await get_hackathon_teams(hackathon_id, current_user, db)
 
 
 @router.delete("/{hackathon_id}/leave")

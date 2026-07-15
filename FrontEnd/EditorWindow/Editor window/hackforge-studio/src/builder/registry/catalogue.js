@@ -1,7 +1,7 @@
 import {
   LayoutGrid, Info, GitBranch, Boxes, Trophy, Users, Timer, CircleHelp,
   Type, AlignLeft, Square, Image as ImageIcon, Box, Rows, Columns,
-  Grid as GridIcon, Minus, Badge, CreditCard, Video, List, Folder, CheckSquare, AlignJustify, Map
+  Grid as GridIcon, Minus, Badge, CreditCard, Video, List, Folder, CheckSquare, AlignJustify, Map, FileText
 } from "lucide-react";
 
 export const catalogueMetadata = {
@@ -14,6 +14,7 @@ export const catalogueMetadata = {
   judges: { category: "Sections", icon: Users, description: "Event judges and speakers.", tags: ["people", "team"] },
   faq: { category: "Sections", icon: CircleHelp, description: "Frequently asked questions.", tags: ["questions", "answers"] },
   footer: { category: "Sections", icon: Box, description: "Page footer with links.", tags: ["bottom", "links"] },
+  formEmbed: { category: "Sections", icon: FileText, description: "Embed a published HackForge form.", tags: ["form", "quiz", "submission"] },
 
   // Elements (Typography)
   heading: { category: "Typography", icon: Type, description: "Large title text.", tags: ["text", "title", "h1"] },

@@ -3,7 +3,6 @@ import { useEditorStore } from "@/store/editorStore";
 import { Trash2 } from "lucide-react";
 import Inspector from "./Inspector";
 import ThemeInspector from "./ThemeInspector";
-import PremiumCard from "./PremiumCard";
 import FooterStatus from "./FooterStatus";
 
 export default function RightPanel() {
@@ -18,11 +17,11 @@ export default function RightPanel() {
   const selected = components.find((component) => component.id === selectedId);
 
   return (
-    <aside className="w-[380px] shrink-0 border-l border-[#E7E8F4]/60 bg-[#FCFBFE] flex flex-col">
+    <aside className="w-[310px] shrink-0 border-l border-[#E7E8F4]/60 bg-[#FCFBFE] flex flex-col">
       {/* ======================================
           HEADER
       ======================================= */}
-      <div className="px-6 py-5 border-b border-[#E7E8F4]/60">
+      <div className="px-4 py-3 border-b border-[#E7E8F4]/60">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-bold">Inspector</h2>
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
@@ -74,15 +73,14 @@ export default function RightPanel() {
       {/* ======================================
           INSPECTOR
       ======================================= */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4">
         {activeTab === "component" ? <Inspector /> : <ThemeInspector />}
       </div>
 
       {/* ======================================
           FOOTER
       ======================================= */}
-      <div className="border-t border-[#E7E8F4]/60 p-5 space-y-4">
-        <PremiumCard />
+      <div className="border-t border-[#E7E8F4]/60 px-4 py-3">
         <FooterStatus />
       </div>
     </aside>

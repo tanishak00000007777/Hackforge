@@ -3,7 +3,6 @@ import SidebarSearch from "./SidebarSearch";
 import SidebarTabs from "./SidebarTabs";
 import ComponentLibrary from "./ComponentLibrary";
 import AssetLibrary from "./AssetLibrary";
-import SidebarFooter from "./SidebarFooter";
 import LayersPanel from "./Layers/LayersPanel";
 import HistoryPanel from "./History/HistoryPanel";
 import { useEditorStore } from "@/store/editorStore";
@@ -14,7 +13,7 @@ export default function LeftSidebar() {
   return (
     <aside
       className="
-      w-[300px]
+      w-[280px]
       shrink-0
       bg-[#FCFBFE]
       border-r
@@ -22,8 +21,7 @@ export default function LeftSidebar() {
       flex
       flex-col
       overflow-y-auto
-      px-5
-      py-6
+      py-4
       "
     >
       <SidebarHeader />
@@ -41,8 +39,6 @@ export default function LeftSidebar() {
       ) : (
         <ComponentLibrary />
       )}
-
-      <SidebarFooter />
     </aside>
   );
 }

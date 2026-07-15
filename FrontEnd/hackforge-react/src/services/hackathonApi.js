@@ -4,6 +4,10 @@ export function listPublishedHackathons() {
   return apiGet('/hackathons/');
 }
 
+export function listOwnedHackathons() {
+  return apiGet('/hackathons/mine/owned');
+}
+
 export function getHackathonBySlug(slug) {
   return apiGet(`/hackathons/${slug}`);
 }

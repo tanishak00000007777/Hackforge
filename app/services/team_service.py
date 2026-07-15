@@ -187,6 +187,25 @@ async def get_my_team(
 
     return team
 
+
+async def get_hackathon_teams(
+    hackathon_id: uuid.UUID,
+    current_user: User,
+    db: AsyncSession,
+) -> list[Team]:
+    hackathon = await db.get(Hackathon, hackathon_id)
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+    if hackathon.created_by != current_user.id and current_user.role.value != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    result = await db.execute(
+        select(Team)
+        .where(Team.hackathon_id == hackathon_id)
+        .options(selectinload(Team.members))
+        .order_by(Team.name)
+    )
+    return list(result.scalars().all())
+
 async def leave_team(
     hackathon_id: uuid.UUID,
     current_user: User,

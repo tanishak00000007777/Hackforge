@@ -46,16 +46,16 @@ export default function ComponentCard({
         onDragStart={(e) => e.preventDefault()}
         title={description}
         className="
-          flex flex-col items-center justify-center gap-2
-          p-4 rounded-xl border border-slate-200 bg-white
+          flex flex-col items-center justify-center gap-1.5
+          p-3 rounded-lg border border-slate-200 bg-white
           cursor-grab transition-all duration-200
-          hover:-translate-y-1 hover:shadow-lg hover:border-violet-500
+          hover:shadow-md hover:border-violet-400
           active:cursor-grabbing active:scale-[0.98]
           select-none touch-none
         "
       >
         <span className="text-slate-600">
-          {Icon ? <Icon size={24} /> : null}
+          {Icon ? <Icon size={20} /> : null}
         </span>
 
         <span className="text-xs font-semibold text-slate-700 text-center">

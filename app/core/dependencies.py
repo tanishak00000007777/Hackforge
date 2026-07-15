@@ -9,6 +9,7 @@ from app.core.security import decode_token
 from app.core.database import get_db
 
 bearer_scheme = HTTPBearer()
+optional_bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
@@ -66,3 +67,11 @@ def require_feature(feature_name: str):
         await check_feature_enabled(hackathon_id, feature_name, db)
 
     return _check
+
+async def get_optional_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(optional_bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+):
+    if credentials is None:
+        return None
+    return await get_current_user(credentials, db)
