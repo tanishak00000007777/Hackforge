@@ -21,6 +21,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const cursorGlowRef = useRef(null);
 
+  // Google Login states
+  const [googleIdToken, setGoogleIdToken] = useState('');
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState('participant');
+  const [orgName, setOrgName] = useState('');
+
   // If already authenticated, redirect to dashboard
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -90,9 +96,85 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // Google OAuth not yet implemented — placeholder
-    setError('Google login is not available yet.');
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
+  const handleGoogleCredentialResponse = async (response) => {
+    const idToken = response.credential;
+    setIsLoading(true);
+    setError('');
+    try {
+      const tokens = await authApi.loginWithGoogle(idToken);
+      useAuthStore.setState({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
+      const profile = await authApi.getMe();
+      setAuth(tokens, profile);
+      navigate(ROLE_ROUTES[profile.role] || '/', { replace: true });
+    } catch (err) {
+      if (err.detail === 'USER_NOT_REGISTERED') {
+        setGoogleIdToken(idToken);
+        setShowRoleModal(true);
+      } else {
+        setError(err.detail || 'Google Login failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!googleClientId) {
+      console.warn("Google Client ID not configured in VITE_GOOGLE_CLIENT_ID");
+      return;
+    }
+
+    const initGoogle = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCredentialResponse,
+        });
+
+        window.google.accounts.id.renderButton(
+          document.getElementById('google-login-btn'),
+          {
+            theme: 'outline',
+            size: 'large',
+            width: 384,
+            text: 'continue_with',
+            shape: 'rectangular',
+          }
+        );
+      }
+    };
+
+    if (window.google) {
+      initGoogle();
+    } else {
+      const interval = setInterval(() => {
+        if (window.google) {
+          initGoogle();
+          clearInterval(interval);
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [googleClientId]);
+
+  const handleRoleSubmit = async () => {
+    if (!googleIdToken) return;
+    setIsLoading(true);
+    setError('');
+    setShowRoleModal(false);
+    try {
+      const tokens = await authApi.loginWithGoogle(googleIdToken, selectedRole, selectedRole === 'organizer' ? orgName : null);
+      useAuthStore.setState({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
+      const profile = await authApi.getMe();
+      setAuth(tokens, profile);
+      navigate(ROLE_ROUTES[profile.role] || '/', { replace: true });
+    } catch (err) {
+      setError(err.detail || 'Google Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -184,24 +266,10 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleLogin} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* Google Login */}
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '12px 16px', border: '1px solid rgba(19,2,37,0.1)', borderRadius: 12, background: 'var(--color-surface)', cursor: 'pointer', transition: 'background 0.2s, transform 0.1s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-container-low)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'var(--color-surface)'}
-              onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
-              onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              <svg style={{ width: 20, height: 20 }} viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-on-surface)' }}>Continue with Google</span>
-            </button>
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <div id="google-login-btn"></div>
+            </div>
+
 
             {/* Divider */}
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -310,6 +378,159 @@ export default function LoginPage() {
 
       {/* Cursor glow */}
       <div ref={cursorGlowRef} style={{ position: 'fixed', pointerEvents: 'none', width: 600, height: 600, background: 'rgba(249,181,254,0.1)', borderRadius: '50%', filter: 'blur(100px)', transform: 'translate(-50%, -50%)', zIndex: -1, opacity: 0, transition: 'opacity 0.3s' }} />
+
+      {/* Role Selection Modal */}
+      {showRoleModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(15, 10, 25, 0.4)',
+          backdropFilter: 'blur(16px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          animation: 'fadeIn 0.25s ease',
+        }}>
+          <div style={{
+            background: '#fff',
+            border: '1px solid rgba(43,25,61,0.08)',
+            boxShadow: '0 24px 64px -16px rgba(43,25,61,0.25)',
+            borderRadius: 24,
+            padding: 32,
+            width: '100%',
+            maxWidth: 440,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 24,
+            boxSizing: 'border-box',
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 48, height: 48, background: 'var(--color-primary-container)', color: '#fff', borderRadius: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 24 }}>account_circle</span>
+              </div>
+              <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-primary)', margin: '0 0 4px 0' }}>Select Your Role</h2>
+              <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)', margin: 0 }}>To complete your sign-up, choose how you will use HackForge.</p>
+            </div>
+
+            {/* Role Options */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { value: 'participant', label: 'Participant', desc: 'Register for events & submit projects', icon: 'person' },
+                { value: 'organizer', label: 'Organizer', desc: 'Create organizations & host events', icon: 'groups' },
+                { value: 'judge', label: 'Judge', desc: 'Evaluate project submissions', icon: 'gavel' }
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setSelectedRole(opt.value)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 16,
+                    padding: 16,
+                    border: selectedRole === opt.value ? '2px solid var(--color-secondary)' : '1px solid rgba(19,2,37,0.1)',
+                    borderRadius: 16,
+                    background: selectedRole === opt.value ? 'rgba(249,181,254,0.1)' : 'var(--color-surface)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{
+                    fontSize: 24,
+                    color: selectedRole === opt.value ? 'var(--color-secondary)' : 'var(--color-outline-variant)',
+                    fontVariationSettings: selectedRole === opt.value ? "'FILL' 1" : "'FILL' 0"
+                  }}>{opt.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-primary)' }}>{opt.label}</div>
+                    <div style={{ fontSize: 12, color: 'var(--color-on-surface-variant)', marginTop: 2 }}>{opt.desc}</div>
+                  </div>
+                  {selectedRole === opt.value && (
+                    <span className="material-symbols-outlined" style={{ color: 'var(--color-secondary)', fontSize: 20 }}>check_circle</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Organization Input for Organizers */}
+            {selectedRole === 'organizer' && (
+              <div style={{ animation: 'fadeIn 0.2s ease', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label htmlFor="modalOrgName" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-on-surface-variant)', marginLeft: 4 }}>ORGANIZATION NAME</label>
+                <input
+                  id="modalOrgName"
+                  type="text"
+                  value={orgName}
+                  onChange={e => setOrgName(e.target.value)}
+                  placeholder="e.g. Stanford Innovation Lab"
+                  style={{
+                    width: '100%',
+                    padding: 12,
+                    background: '#fff',
+                    border: '1px solid rgba(19,2,37,0.1)',
+                    borderRadius: 12,
+                    fontSize: 15,
+                    outline: 'none',
+                    color: 'var(--color-on-surface)',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={e => e.target.style.borderColor = 'var(--color-secondary)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(19,2,37,0.1)'}
+                />
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+              <button
+                type="button"
+                onClick={() => setShowRoleModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'none',
+                  border: '1px solid rgba(19,2,37,0.1)',
+                  borderRadius: 12,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  color: 'var(--color-on-surface-variant)',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.02)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRoleSubmit}
+                disabled={selectedRole === 'organizer' && !orgName}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: (selectedRole === 'organizer' && !orgName) ? 'var(--color-outline-variant)' : 'var(--color-primary-container)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 12,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  cursor: (selectedRole === 'organizer' && !orgName) ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(19,2,37,0.1)',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={e => { if (!(selectedRole === 'organizer' && !orgName)) e.currentTarget.style.background = 'var(--color-secondary)'; }}
+                onMouseLeave={e => { if (!(selectedRole === 'organizer' && !orgName)) e.currentTarget.style.background = 'var(--color-primary-container)'; }}
+              >
+                Confirm & Sign Up
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

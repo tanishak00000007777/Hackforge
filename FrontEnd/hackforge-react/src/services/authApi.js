@@ -15,3 +15,8 @@ export function getMe() {
 export function refreshToken(refreshTokenStr) {
   return apiPost('/auth/refresh', { refresh_token: refreshTokenStr }, { skipAuth: true });
 }
+
+export function loginWithGoogle(idToken, role = null, orgName = null) {
+  return apiPost('/auth/google', { id_token: idToken, role, org_name: orgName }, { skipAuth: true });
+}
+

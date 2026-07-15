@@ -24,6 +24,76 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const cursorGlowRef = useRef(null);
 
+  // Google Sign-In refs and handlers
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const roleRef = useRef(role);
+  const orgNameRef = useRef(orgName);
+
+  useEffect(() => {
+    roleRef.current = role;
+    orgNameRef.current = orgName;
+  }, [role, orgName]);
+
+  const handleGoogleCredentialResponse = async (response) => {
+    const idToken = response.credential;
+    const currentRole = roleRef.current;
+    const currentOrgName = orgNameRef.current;
+
+    if (currentRole === 'organizer' && !currentOrgName) {
+      setError('Organization name is required for organizers.');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    try {
+      const tokens = await authApi.loginWithGoogle(idToken, currentRole, currentRole === 'organizer' ? currentOrgName : null);
+      useAuthStore.setState({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
+      const profile = await authApi.getMe();
+      setAuth(tokens, profile);
+      navigate(ROLE_ROUTES[profile.role] || '/', { replace: true });
+    } catch (err) {
+      setError(err.detail || 'Google Sign-Up failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!googleClientId) return;
+
+    const initGoogle = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleGoogleCredentialResponse,
+        });
+
+        window.google.accounts.id.renderButton(
+          document.getElementById('google-register-btn'),
+          {
+            theme: 'outline',
+            size: 'large',
+            width: 384,
+            text: 'signup_with',
+            shape: 'rectangular',
+          }
+        );
+      }
+    };
+
+    if (window.google) {
+      initGoogle();
+    } else {
+      const interval = setInterval(() => {
+        if (window.google) {
+          initGoogle();
+          clearInterval(interval);
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [googleClientId]);
+
   // If already authenticated, redirect
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -122,6 +192,18 @@ export default function RegisterPage() {
 
           {/* Form */}
           <form onSubmit={handleRegister} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Google Sign-Up */}
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <div id="google-register-btn"></div>
+            </div>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0' }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(123,117,126,0.1)' }} />
+              <span style={{ margin: '0 16px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-outline)', textTransform: 'uppercase' }}>Or email</span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(123,117,126,0.1)' }} />
+            </div>
+
             {/* Role Selector */}
             <div style={{ display: 'flex', gap: 8 }}>
               {[{ value: 'participant', label: 'Participant', icon: 'person' }, { value: 'organizer', label: 'Organizer', icon: 'groups' }].map(r => (
