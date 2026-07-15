@@ -2,7 +2,7 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_feature
 from app.schemas.judge import JudgeInvite, JudgeResponse, RubricCriteriaCreate, RubricCriteriaResponse
 from app.schemas.score import ScoreCreate, ScoreResponse
 from app.services.judging_service import (
@@ -58,6 +58,7 @@ async def get_rubric_criteria(
 async def score(
     submission_id: uuid.UUID,
     data: ScoreCreate,
+    _=Depends(require_feature("judging_enabled")),
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):

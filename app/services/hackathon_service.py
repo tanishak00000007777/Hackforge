@@ -5,7 +5,7 @@ from app.models.hackathon import Hackathon, HackathonStatus
 from app.models.user import User
 from app.schemas.hackathon import HackathonCreate, HackathonUpdate
 import uuid
-
+from app.services.feature_service import create_default_features
 
 async def create_hackathon(
     data: HackathonCreate,
@@ -30,6 +30,10 @@ async def create_hackathon(
     db.add(hackathon)
     await db.flush()
     await db.refresh(hackathon)
+
+    # Auto-create feature flags with all defaults enabled
+    await create_default_features(hackathon.id, db)
+    
     return hackathon
 
 

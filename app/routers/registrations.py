@@ -2,7 +2,7 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_feature
 from app.schemas.registration import RegistrationCreate, RegistrationResponse, RegistrationStatusUpdate
 from app.services.registration_service import (
     register_for_hackathon,
@@ -17,10 +17,12 @@ router = APIRouter(prefix="/registrations", tags=["Registrations"])
 async def register(
     hackathon_id: uuid.UUID,
     data: RegistrationCreate,
+    _=Depends(require_feature("registrations_enabled")),
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await register_for_hackathon(hackathon_id, data, current_user, db)
+
 
 
 @router.get("/{hackathon_id}", response_model=list[RegistrationResponse])

@@ -2,7 +2,7 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_feature
 from app.schemas.certificate import CertificateIssue, CertificateResponse
 from app.services.certificate_service import (
     issue_certificate,
@@ -18,6 +18,7 @@ router = APIRouter(prefix="/certificates", tags=["Certificates"])
 async def issue(
     hackathon_id: uuid.UUID,
     data: CertificateIssue,
+    _=Depends(require_feature("certificates_enabled")),
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):

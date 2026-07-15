@@ -1,3 +1,5 @@
+import uuid
+from fastapi import Path
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError
@@ -40,3 +42,27 @@ async def get_current_user(
         raise HTTPException(status_code=403, detail="Account is deactivated")
 
     return user
+
+def require_feature(feature_name: str):
+    """
+    Reusable FastAPI dependency that blocks any route
+    if a specific feature is disabled for that hackathon.
+
+    Usage in any router:
+        @router.post("/{hackathon_id}")
+        async def create_team(
+            _=Depends(require_feature("teams_enabled")),
+            ...
+        ):
+
+    The hackathon_id is automatically read from the URL path.
+    No extra code needed in the router or service.
+    """
+    async def _check(
+        hackathon_id: uuid.UUID = Path(...),
+        db: AsyncSession = Depends(get_db),
+    ):
+        from app.services.feature_service import check_feature_enabled
+        await check_feature_enabled(hackathon_id, feature_name, db)
+
+    return _check

@@ -12,3 +12,4 @@ from app.models.score import Score
 from app.models.track import Track
 from app.models.certificate import Certificate
 from app.models.announcement import Announcement
+from app.models.hackathon_features import HackathonFeature

@@ -2,9 +2,11 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_feature
 from app.schemas.team import TeamCreate, TeamJoin, TeamResponse
 from app.services.team_service import create_team, join_team, get_my_team
+
+
 
 router = APIRouter(prefix="/teams", tags=["Teams"])
 
@@ -13,6 +15,7 @@ router = APIRouter(prefix="/teams", tags=["Teams"])
 async def create(
     hackathon_id: uuid.UUID,
     data: TeamCreate,
+    _=Depends(require_feature("teams_enabled")),
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -23,10 +26,12 @@ async def create(
 async def join(
     hackathon_id: uuid.UUID,
     data: TeamJoin,
+    _=Depends(require_feature("teams_enabled")),
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await join_team(hackathon_id, data.invite_code, current_user, db)
+
 
 
 @router.get("/{hackathon_id}/my-team", response_model=TeamResponse)

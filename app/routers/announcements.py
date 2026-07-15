@@ -2,7 +2,7 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_feature
 from app.schemas.announcement import AnnouncementCreate, AnnouncementResponse
 from app.services.announcement_service import create_announcement, get_announcements
 
@@ -13,6 +13,7 @@ router = APIRouter(prefix="/announcements", tags=["Announcements"])
 async def create(
     hackathon_id: uuid.UUID,
     data: AnnouncementCreate,
+    _=Depends(require_feature("announcements_enabled")),
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):

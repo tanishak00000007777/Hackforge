@@ -9,7 +9,7 @@ from app.config.settings import get_settings
 from app.routers import (
     auth, users, organizations, hackathons, tracks,
     registrations, teams, submissions, judges, scores,
-    leaderboard, certificates, announcements, sponsors, analytics,
+    leaderboard, certificates, announcements, sponsors, analytics,features
 )
 
 settings = get_settings()
@@ -56,6 +56,7 @@ app.include_router(certificates.router,  prefix=API_PREFIX)
 app.include_router(announcements.router, prefix=API_PREFIX)
 app.include_router(sponsors.router,      prefix=API_PREFIX)
 app.include_router(analytics.router,     prefix=API_PREFIX)
+app.include_router(features.router,      prefix=API_PREFIX)
 
 
 @app.get("/health", tags=["Health"])
@@ -84,4 +85,4 @@ for path, react_path in REACT_ROUTES.items():
 async def dashboard():
     return RedirectResponse(f"{settings.frontend_url.rstrip('/')}/login")
 
-app.mount("/studio", StaticFiles(directory=STUDIO_DIR, html=True), name="studio")
+# app.mount("/studio", StaticFiles(directory=STUDIO_DIR, html=True), name="studio")

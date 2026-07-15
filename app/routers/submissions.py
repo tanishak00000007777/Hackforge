@@ -2,7 +2,7 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, require_feature
 from app.schemas.submission import SubmissionCreate, SubmissionUpdate, SubmissionResponse
 from app.services.submission_service import (
     create_submission,
@@ -18,10 +18,12 @@ router = APIRouter(prefix="/submissions", tags=["Submissions"])
 async def create(
     hackathon_id: uuid.UUID,
     data: SubmissionCreate,
+    _=Depends(require_feature("submissions_enabled")),
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     return await create_submission(hackathon_id, data, current_user, db)
+
 
 
 @router.patch("/{submission_id}", response_model=SubmissionResponse)
@@ -37,6 +39,7 @@ async def update(
 @router.post("/{submission_id}/submit", response_model=SubmissionResponse)
 async def submit(
     submission_id: uuid.UUID,
+    _=Depends(require_feature("submissions_enabled")),
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
