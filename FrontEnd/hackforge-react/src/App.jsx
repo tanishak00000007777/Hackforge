@@ -17,6 +17,10 @@ import CertificatesDashboard from './pages/CertificatesDashboard';
 import MyCertificatesPage from './pages/MyCertificatesPage';
 import CertificateVerifyPage from './pages/CertificateVerifyPage';
 
+import OrganizerTeamsPage from './pages/OrganizerTeamsPage';
+import OrganizerSubmissionsPage from './pages/OrganizerSubmissionsPage';
+import OrganizerAnalyticsPage from './pages/OrganizerAnalyticsPage';
+
 export default function App() {
   const restoreSession = useAuthStore((s) => s.restoreSession);
 
@@ -40,6 +44,9 @@ export default function App() {
             <OrganizerDashboard />
           </RoleRoute>
         } />
+        <Route path="/organizer/teams" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerTeamsPage /></RoleRoute>} />
+        <Route path="/organizer/submissions" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSubmissionsPage /></RoleRoute>} />
+        <Route path="/organizer/analytics" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerAnalyticsPage /></RoleRoute>} />
         <Route path="/organizer/forms" element={<RoleRoute allowedRoles={['organizer', 'admin']}><FormsDashboard /></RoleRoute>} />
         <Route path="/organizer/forms/:formId" element={<RoleRoute allowedRoles={['organizer', 'admin']}><FormBuilderPage /></RoleRoute>} />
         <Route path="/organizer/certificates" element={<RoleRoute allowedRoles={['organizer', 'admin']}><CertificatesDashboard /></RoleRoute>} />

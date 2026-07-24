@@ -15,10 +15,10 @@ const navItems = [
   { icon: 'description', label: 'Forms', key: 'forms', path: '/organizer/forms' },
   { icon: 'workspace_premium', label: 'Certificates', key: 'certificates', path: '/organizer/certificates' },
   { icon: 'group_add', label: 'Registrations', key: 'registrations' },
-  { icon: 'groups', label: 'Teams', key: 'teams' },
-  { icon: 'send', label: 'Submissions', key: 'submissions' },
+  { icon: 'groups', label: 'Teams', key: 'teams', path: '/organizer/teams' },
+  { icon: 'send', label: 'Submissions', key: 'submissions', path: '/organizer/submissions' },
   { icon: 'gavel', label: 'Judges', key: 'judges', path: '/judge' },
-  { icon: 'analytics', label: 'Analytics', key: 'analytics' },
+  { icon: 'analytics', label: 'Analytics', key: 'analytics', path: '/organizer/analytics' },
 ];
 
 const STATUS_STYLES = {
