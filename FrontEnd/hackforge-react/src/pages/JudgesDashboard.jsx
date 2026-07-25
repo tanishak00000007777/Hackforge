@@ -251,14 +251,7 @@ export default function JudgesDashboard() {
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {navItems.map(item => (
             <button key={item.key} onClick={() => handleNavClick(item.key)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, borderWidth: 0, borderStyle: 'solid', borderColor: 'transparent', cursor: 'pointer', background: 'none', width: '100%', textAlign: 'left', transition: 'all 0.15s',
-                ...(navActive === item.key
-                  ? { background: 'rgba(249,181,254,0.5)', color: 'var(--color-on-secondary-container)', borderRightWidth: 4, borderRightStyle: 'solid', borderRightColor: 'var(--color-on-tertiary-container)' }
-                  : { color: 'var(--color-on-surface-variant)' })
-              }}
-              onMouseEnter={e => { if (navActive !== item.key) e.currentTarget.style.background = 'rgba(222,224,255,0.3)'; }}
-              onMouseLeave={e => { if (navActive !== item.key) e.currentTarget.style.background = 'none'; }}
+              className={`sidebar-nav-item${navActive === item.key ? ' nav-active' : ''}`}
             >
               <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{item.icon}</span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{item.label}</span>

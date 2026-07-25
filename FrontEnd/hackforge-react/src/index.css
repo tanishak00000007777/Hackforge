@@ -175,9 +175,33 @@ body {
   box-shadow: 0 20px 40px -10px rgba(38, 46, 95, 0.15);
 }
 
+/* Sidebar nav item (dashboards) */
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: none;
+  transition: background 0.15s;
+  width: 100%;
+  text-align: left;
+  color: var(--color-on-surface-variant);
+}
+
+.sidebar-nav-item:hover {
+  background: rgba(222, 224, 255, 0.3);
+}
+
 /* Active nav link */
 .nav-active {
   background-color: rgba(249, 181, 254, 0.5);
   color: var(--color-on-secondary-container);
   border-right: 4px solid var(--color-on-tertiary-container);
+}
+
+.sidebar-nav-item.nav-active:hover {
+  background-color: rgba(249, 181, 254, 0.5);
 }

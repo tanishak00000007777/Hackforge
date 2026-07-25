@@ -4,7 +4,6 @@ import { useAuthStore } from '../store/authStore.js';
 import * as organizationApi from '../services/organizationApi.js';
 import * as hackathonApi from '../services/hackathonApi.js';
 import * as registrationApi from '../services/registrationApi.js';
-import * as analyticsApi from '../services/analyticsApi.js';
 
 const STUDIO_URL = import.meta.env.VITE_STUDIO_URL || (import.meta.env.DEV ? 'http://localhost:4175/studio/' : '/studio/');
 
@@ -38,7 +37,6 @@ export default function OrganizerDashboard() {
   const [registrations, setRegistrations] = useState([]);
   const [selectedHackathon, setSelectedHackathon] = useState(null);
   const [loadingRegs, setLoadingRegs] = useState(false);
-  const [analytics, setAnalytics] = useState(null);
 
   // Load orgs and hackathons on mount
   useEffect(() => {
@@ -76,9 +74,6 @@ export default function OrganizerDashboard() {
       .then(setRegistrations)
       .catch(() => setRegistrations([]))
       .finally(() => setLoadingRegs(false));
-    analyticsApi.getHackathonAnalytics(selectedHackathon.id)
-      .then(setAnalytics)
-      .catch(() => setAnalytics(null));
   }, [selectedHackathon]);
 
   const handleNavClick = (item) => {
@@ -151,15 +146,7 @@ export default function OrganizerDashboard() {
             <button
               key={item.key}
               onClick={() => handleNavClick(item)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, borderWidth: 0, borderStyle: 'solid', borderColor: 'transparent', cursor: 'pointer', background: 'none', transition: 'all 0.15s', width: '100%', textAlign: 'left',
-                ...(activeNav === item.key
-                  ? { background: 'rgba(249,181,254,0.5)', color: 'var(--color-on-secondary-container)', borderRightWidth: 4, borderRightStyle: 'solid', borderRightColor: 'var(--color-on-tertiary-container)' }
-                  : { color: 'var(--color-on-surface-variant)' }
-                )
-              }}
-              onMouseEnter={e => { if (activeNav !== item.key) e.currentTarget.style.background = 'rgba(222,224,255,0.3)'; }}
-              onMouseLeave={e => { if (activeNav !== item.key) e.currentTarget.style.background = 'none'; }}
+              className={`sidebar-nav-item${activeNav === item.key ? ' nav-active' : ''}`}
             >
               <span className="material-symbols-outlined" style={{ fontSize: 20, fontVariationSettings: activeNav === item.key ? "'FILL' 1" : "'FILL' 0" }}>{item.icon}</span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{item.label}</span>
@@ -178,10 +165,7 @@ export default function OrganizerDashboard() {
             New Event
           </button>
           {[{ icon: 'settings', label: 'Settings' }, { icon: 'help', label: 'Support' }].map(item => (
-            <button key={item.label} onClick={() => alert(`Opening ${item.label}...`)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'none', color: 'var(--color-on-surface-variant)', width: '100%', textAlign: 'left', transition: 'background 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(222,224,255,0.3)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            >
+            <button key={item.label} onClick={() => alert(`Opening ${item.label}...`)} className="sidebar-nav-item">
               <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{item.icon}</span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{item.label}</span>
             </button>
@@ -202,7 +186,7 @@ export default function OrganizerDashboard() {
       <main style={{ marginLeft: 256, flex: 1, minHeight: '100vh', position: 'relative', overflow: 'hidden', background: '#fbf8ff' }}>
         <div style={{ position: 'relative', zIndex: 10, padding: 'var(--spacing-margin-safe)', maxWidth: 1440, margin: '0 auto' }}>
           {/* Header */}
-          <header id="dashboard" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+          <header id="dashboard" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-on-surface-variant)', opacity: 0.6 }}>ADMIN</span>
               <span style={{ color: 'var(--color-outline-variant)' }}>/</span>
@@ -229,124 +213,13 @@ export default function OrganizerDashboard() {
             </div>
           </header>
 
-          {/* Welcome Banner + Stats */}
-          <section id="hackathons" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginBottom: 'var(--spacing-lg)' }}>
-            {/* Welcome Banner */}
-            <div style={{ gridColumn: 'span 4', background: 'var(--color-primary-container)', padding: 'var(--spacing-lg)', borderRadius: 12, position: 'relative', overflow: 'hidden', minHeight: 240, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', boxShadow: '0 20px 40px -10px rgba(43,25,61,0.3)' }}>
-              <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfZMyfjmaKlM7KKvNlVeB7e2NspP0_kcKPIQaaxV0yYqp1m7O9QWhMJjeW4azxDPQW4_e0zst79TgQxDY8JjwY_tT5dmzniKGByhaJqFpaROKFEWe19lFrH3Ktw7MNJDNCHrdxVRIs3AwNmiQG-Ix-XZXBBieHTM1WyKtgIrltE9WojSM4L8uYLcVYvfxRhdQ3GeB59jZ_xJc7trouHwj14le3kHNGE8NosVaoiQOLScCVsXgww3htTWFXP7zILGAnWwJ4Jv85-g" alt="Banner" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3, mixBlendMode: 'overlay' }} />
-              </div>
-              <div style={{ position: 'relative', zIndex: 10 }}>
-                <h2 style={{ fontSize: 48, fontWeight: 700, letterSpacing: '-0.02em', color: '#fff', marginBottom: 8 }}>Welcome back, {userName.split(' ')[0]}.</h2>
-                <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.8)', maxWidth: 576 }}>{selectedHackathon ? `${selectedHackathon.title} — ${registrations.length} registrations` : 'Create your first hackathon to get started.'}</p>
-              </div>
-              <div style={{ position: 'absolute', top: 16, right: 16, zIndex: 10 }}>
-                <span style={{ padding: '4px 12px', borderRadius: 9999, background: '#C5979D', color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span className="animate-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} />
-                  Live System
-                </span>
-              </div>
-            </div>
-
-            {/* Stats */}
-            {[
-              { label: 'Active Hackathons', value: '12', sub: '+2 this month', icon: 'rocket_launch', id: 'hackathons_stat' },
-              { label: 'Total Participants', value: '8,432', sub: '4.2% growth', icon: 'person', id: 'teams' },
-              { label: 'Submissions', value: '1,209', sub: '92% verified', icon: 'folder_zip', id: 'submissions' },
-              { label: 'Verified Judges', value: '45', sub: 'Global network', icon: 'verified', id: 'judges' },
-            ].map(stat => (
-              <div key={stat.label} id={stat.id} className="floating-card" style={{ padding: 24, borderRadius: 12, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: 128 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-on-surface-variant)' }}>{stat.label}</span>
-                  <span className="material-symbols-outlined" style={{ color: 'var(--color-on-primary-container)' }}>{stat.icon}</span>
-                </div>
-                <div>
-                  <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-primary)' }}>{stat.value}</p>
-                  <p style={{ fontSize: 10, color: 'var(--color-on-tertiary-container)', fontWeight: 600, marginTop: 2 }}>{stat.sub}</p>
-                </div>
-              </div>
-            ))}
-          </section>
-
-          {/* Analytics + Widgets */}
-          <section style={{ display: 'grid', gridTemplateColumns: '8fr 4fr', gap: 24, marginBottom: 'var(--spacing-lg)' }}>
-            {/* Funnel */}
-            <div id="analytics" className="floating-card" style={{ padding: 'var(--spacing-lg)', borderRadius: 12, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
-                <h3 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)' }}>Registration Funnel</h3>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, padding: '4px 12px', background: 'var(--color-surface-container)', borderRadius: 4, color: 'var(--color-on-surface-variant)' }}>Last 30 Days</span>
-              </div>
-              <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, alignItems: 'flex-end', paddingTop: 16, minHeight: 300 }}>
-                {[
-                  { label: 'Visits', value: '12k', height: '85%', bg: 'var(--color-secondary-container)' },
-                  { label: 'Started', value: '8.4k', height: '70%', bg: 'rgba(43,25,61,0.8)', color: '#fff' },
-                  { label: 'Team Formation', value: '5.2k', height: '60%', bg: 'var(--color-primary-container)', color: '#fff' },
-                  { label: 'Finalized', value: '2.1k', height: '40%', bg: 'var(--color-on-tertiary-container)', color: '#fff' },
-                ].map(bar => (
-                  <div key={bar.label} style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
-                    <div style={{ width: '100%', background: 'rgba(249,181,254,0.2)', borderRadius: '8px 8px 0 0', position: 'relative', overflow: 'hidden', height: '100%', minHeight: 200 }}>
-                      <div style={{ position: 'absolute', bottom: 0, width: '100%', height: bar.height, background: bar.bg, borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'height 0.5s ease' }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: bar.color || 'var(--color-on-secondary-container)' }}>{bar.value}</span>
-                      </div>
-                    </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textAlign: 'center' }}>{bar.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Sidebar Widgets */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              {/* Deadlines */}
-              <div className="floating-card" style={{ padding: 24, borderRadius: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <span className="material-symbols-outlined" style={{ color: 'var(--color-error)', fontSize: 18 }}>alarm</span>
-                  <h4 style={{ fontSize: 16, fontWeight: 700 }}>Upcoming Deadlines</h4>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {[
-                    { month: 'OCT', day: '24', title: 'Judge Matching Ends', sub: '14:00 GMT+2', highlight: true },
-                    { month: 'OCT', day: '28', title: 'Submission Portal Close', sub: 'Global Sync', highlight: false },
-                  ].map(d => (
-                    <div key={d.day} style={{ display: 'flex', gap: 16, padding: 12, borderRadius: 8, background: d.highlight ? 'var(--color-surface-container-low)' : 'transparent', border: '1px solid rgba(14,22,71,0.05)' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4px 12px', background: d.highlight ? '#fff' : 'var(--color-surface)', borderRadius: 4, boxShadow: d.highlight ? '0 1px 3px rgba(0,0,0,0.05)' : 'none' }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-on-surface-variant)' }}>{d.month}</span>
-                        <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary)' }}>{d.day}</span>
-                      </div>
-                      <div>
-                        <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-primary)' }}>{d.title}</p>
-                        <p style={{ fontSize: 10, color: 'var(--color-on-surface-variant)' }}>{d.sub}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={() => alert('Opening calendar...')}
-                  style={{ width: '100%', marginTop: 16, padding: '8px', color: 'var(--color-primary)', fontFamily: 'var(--font-mono)', fontSize: 12, border: '1px solid rgba(19,2,37,0.1)', borderRadius: 8, background: 'none', cursor: 'pointer', transition: 'background 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface-container-high)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                >
-                  View Calendar
-                </button>
-              </div>
-
-              {/* Growth Card */}
-              <div className="floating-card" style={{ padding: 24, borderRadius: 12, background: 'var(--color-on-secondary-fixed)', color: '#fff', overflow: 'hidden', position: 'relative' }}>
-                <div style={{ position: 'relative', zIndex: 10 }}>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>PARTICIPANT GROWTH</p>
-                  <h4 style={{ fontSize: 24, fontWeight: 700 }}>+18.4%</h4>
-                  <div style={{ marginTop: 16, height: 64, width: '100%', display: 'flex', alignItems: 'flex-end', gap: 4 }}>
-                    {[30, 45, 35, 60, 50, 80, 100].map((h, i) => (
-                      <div key={i} style={{ flex: 1, background: `rgba(255,255,255,${0.2 + (i / 7) * 0.6})`, height: `${h}%`, borderRadius: '2px 2px 0 0' }} />
-                    ))}
-                  </div>
-                </div>
-                <div style={{ position: 'absolute', right: -16, bottom: -16, opacity: 0.1 }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 96 }}>trending_up</span>
-                </div>
-              </div>
-            </div>
-          </section>
+          {/* Welcome line */}
+          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--color-primary)', marginBottom: 4 }}>Welcome back, {userName.split(' ')[0]}.</h1>
+            <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)' }}>
+              {selectedHackathon ? `${selectedHackathon.title} — ${registrations.length} registration${registrations.length === 1 ? '' : 's'}` : 'Create your first hackathon to get started.'}
+            </p>
+          </div>
 
           {/* Registrations Table */}
           <section style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24 }}>

@@ -181,14 +181,7 @@ export default function ParticipantDashboard() {
             <button
               key={item.key}
               onClick={() => handleNavClick(item)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, borderWidth: 0, borderStyle: 'solid', borderColor: 'transparent', cursor: 'pointer', background: 'none', width: '100%', textAlign: 'left', transition: 'all 0.15s',
-                ...(activeNav === item.key
-                  ? { background: 'rgba(249,181,254,0.5)', color: 'var(--color-on-secondary-container)', borderRightWidth: 4, borderRightStyle: 'solid', borderRightColor: 'var(--color-on-tertiary-container)' }
-                  : { color: 'var(--color-on-surface-variant)' })
-              }}
-              onMouseEnter={e => { if (activeNav !== item.key) e.currentTarget.style.background = 'rgba(222,224,255,0.5)'; }}
-              onMouseLeave={e => { if (activeNav !== item.key) e.currentTarget.style.background = 'none'; }}
+              className={`sidebar-nav-item${activeNav === item.key ? ' nav-active' : ''}`}
             >
               <span className="material-symbols-outlined" style={{ fontSize: 20 }}>{item.icon}</span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{item.label}</span>
@@ -196,10 +189,7 @@ export default function ParticipantDashboard() {
           ))}
         </nav>
         <div style={{ marginTop: 'auto' }}>
-          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', background: 'none', color: 'var(--color-on-surface-variant)', width: '100%', textAlign: 'left', transition: 'background 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(222,224,255,0.3)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-          >
+          <button onClick={handleLogout} className="sidebar-nav-item">
             <span className="material-symbols-outlined" style={{ fontSize: 20 }}>logout</span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>Logout</span>
           </button>
