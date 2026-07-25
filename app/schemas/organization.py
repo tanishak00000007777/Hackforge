@@ -7,6 +7,7 @@ class OrganizationCreate(BaseModel):
     name: str
     slug: str
     description: str | None = None
+    logo_url: str | None = None
     website_url: str | None = None
 
 

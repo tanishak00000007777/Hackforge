@@ -1,12 +1,27 @@
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from jose import JWTError
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, TokenResponse, GoogleLoginRequest
 from app.utils.hashing import hash_password, verify_password
 from app.core.security import create_access_token, create_refresh_token, decode_token
+
+
+def _signup_org_name(role: str, org_name: str | None) -> str | None:
+    """Validate and normalize public-signup organization data."""
+    if role != "organizer":
+        return None
+
+    normalized_org_name = (org_name or "").strip()
+    if not normalized_org_name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Organization name is required for organizers",
+        )
+    return normalized_org_name
 
 
 async def register_user(user_data: UserCreate, db: AsyncSession) -> User:
@@ -22,16 +37,27 @@ async def register_user(user_data: UserCreate, db: AsyncSession) -> User:
             detail="Email already registered",
         )
 
+    org_name = _signup_org_name(user_data.role.value, user_data.org_name)
     new_user = User(
         email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=hash_password(user_data.password),
-        role=user_data.role,
-        org_name=user_data.org_name,
+        role=user_data.role.value,
+        org_name=org_name,
     )
 
-    db.add(new_user)
-    await db.flush()
+    try:
+        # A nested transaction rolls back only the failed INSERT savepoint.
+        # The outer transaction remains valid for the shared get_db dependency.
+        async with db.begin_nested():
+            db.add(new_user)
+            await db.flush()
+    except IntegrityError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered",
+        ) from exc
+
     await db.refresh(new_user)
     return new_user
 
@@ -154,16 +180,26 @@ async def login_google_user(data: GoogleLoginRequest, db: AsyncSession) -> Token
                 detail="USER_NOT_REGISTERED",
             )
 
+        org_name = _signup_org_name(data.role.value, data.org_name)
+
         # Create new Google user
         user = User(
             email=email,
             full_name=full_name,
             hashed_password=hash_password(secrets.token_urlsafe(32)),
-            role=data.role,
-            org_name=data.org_name,
+            role=data.role.value,
+            org_name=org_name,
         )
-        db.add(user)
-        await db.flush()
+        try:
+            async with db.begin_nested():
+                db.add(user)
+                await db.flush()
+        except IntegrityError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered",
+            ) from exc
+
         await db.refresh(user)
 
     elif not user.is_active:
@@ -176,4 +212,4 @@ async def login_google_user(data: GoogleLoginRequest, db: AsyncSession) -> Token
     return TokenResponse(
         access_token=create_access_token(str(user.id)),
         refresh_token=create_refresh_token(str(user.id)),
-    )
+    )

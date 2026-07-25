@@ -10,6 +10,8 @@ const ROLE_ROUTES = {
   admin: '/organizer',
 };
 
+const DEV_MOCKS_ENABLED = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_MOCKS === 'true';
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
@@ -58,7 +60,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       let tokens, user;
-      if (password === 'dev') {
+      if (DEV_MOCKS_ENABLED && password === 'dev') {
         // Dev Mode Bypass
         tokens = {
           access_token: 'dev-access-token',
@@ -421,8 +423,7 @@ export default function LoginPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
                 { value: 'participant', label: 'Participant', desc: 'Register for events & submit projects', icon: 'person' },
-                { value: 'organizer', label: 'Organizer', desc: 'Create organizations & host events', icon: 'groups' },
-                { value: 'judge', label: 'Judge', desc: 'Evaluate project submissions', icon: 'gavel' }
+                { value: 'organizer', label: 'Organizer', desc: 'Create organizations & host events', icon: 'groups' }
               ].map(opt => (
                 <button
                   key={opt.value}

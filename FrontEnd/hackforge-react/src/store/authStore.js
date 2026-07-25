@@ -3,6 +3,7 @@ import * as authApi from '../services/authApi.js';
 
 const TOKEN_KEY = 'hackforge_access_token';
 const REFRESH_KEY = 'hackforge_refresh_token';
+const DEV_MOCKS_ENABLED = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_MOCKS === 'true';
 
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -53,7 +54,7 @@ export const useAuthStore = create((set, get) => ({
       return;
     }
 
-    if (token === 'dev-access-token') {
+    if (DEV_MOCKS_ENABLED && token === 'dev-access-token') {
       const user = JSON.parse(localStorage.getItem('hackforge_user')) || {
         id: '00000000-0000-0000-0000-000000000000',
         email: 'dev@dev.com',
@@ -63,6 +64,11 @@ export const useAuthStore = create((set, get) => ({
         is_active: true
       };
       set({ user, isAuthenticated: true, isLoading: false });
+      return;
+    }
+
+    if (token === 'dev-access-token') {
+      get().clearAuth();
       return;
     }
 

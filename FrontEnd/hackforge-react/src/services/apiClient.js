@@ -8,6 +8,7 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
+const DEV_MOCKS_ENABLED = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_MOCKS === 'true';
 
 const readDevData = (key) => {
   try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; }
@@ -342,7 +343,7 @@ export async function apiRequest(path, options = {}) {
   const { useAuthStore } = await import('../store/authStore.js');
   const { accessToken, clearAuth } = useAuthStore.getState();
 
-  if (accessToken === 'dev-access-token') {
+  if (DEV_MOCKS_ENABLED && accessToken === 'dev-access-token') {
     const mock = handleDevMockRequest(path, options);
     if (mock !== null) return mock;
   }

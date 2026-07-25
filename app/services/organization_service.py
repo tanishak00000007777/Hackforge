@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.organization import Organization
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.organization import OrganizationCreate
 import uuid
 
@@ -12,6 +12,12 @@ async def create_organization(
     current_user: User,
     db: AsyncSession,
 ) -> Organization:
+    if current_user.role not in {UserRole.organizer, UserRole.admin}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only organizers and admins can create organizations",
+        )
+
     # Check slug uniqueness
     result = await db.execute(
         select(Organization).where(Organization.slug == data.slug)
@@ -26,6 +32,7 @@ async def create_organization(
         name=data.name,
         slug=data.slug,
         description=data.description,
+        logo_url=data.logo_url,
         website_url=data.website_url,
         owner_id=current_user.id,
     )

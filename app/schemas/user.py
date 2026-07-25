@@ -11,11 +11,18 @@ class UserRole(str, Enum):
     admin = "admin"
 
 
+class PublicSignupRole(str, Enum):
+    """Roles that may be chosen through public registration flows."""
+
+    organizer = "organizer"
+    participant = "participant"
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     full_name: str
     password: str
-    role: UserRole = UserRole.participant
+    role: PublicSignupRole = PublicSignupRole.participant
     org_name: str | None = None
 
 
@@ -45,5 +52,5 @@ class TokenResponse(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     id_token: str
-    role: UserRole | None = None
-    org_name: str | None = None
+    role: PublicSignupRole | None = None
+    org_name: str | None = None

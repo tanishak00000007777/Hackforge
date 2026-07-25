@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore.js';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import RoleRoute from './components/RoleRoute.jsx';
+import OrganizerSetupRoute from './components/OrganizerSetupRoute.jsx';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -20,6 +21,7 @@ import CertificateVerifyPage from './pages/CertificateVerifyPage';
 import OrganizerTeamsPage from './pages/OrganizerTeamsPage';
 import OrganizerSubmissionsPage from './pages/OrganizerSubmissionsPage';
 import OrganizerAnalyticsPage from './pages/OrganizerAnalyticsPage';
+import OrganizerSetupPage from './pages/OrganizerSetupPage';
 
 export default function App() {
   const restoreSession = useAuthStore((s) => s.restoreSession);
@@ -41,15 +43,16 @@ export default function App() {
         {/* Role-protected dashboards */}
         <Route path="/organizer" element={
           <RoleRoute allowedRoles={['organizer', 'admin']}>
-            <OrganizerDashboard />
+            <OrganizerSetupRoute><OrganizerDashboard /></OrganizerSetupRoute>
           </RoleRoute>
         } />
-        <Route path="/organizer/teams" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerTeamsPage /></RoleRoute>} />
-        <Route path="/organizer/submissions" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSubmissionsPage /></RoleRoute>} />
-        <Route path="/organizer/analytics" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerAnalyticsPage /></RoleRoute>} />
-        <Route path="/organizer/forms" element={<RoleRoute allowedRoles={['organizer', 'admin']}><FormsDashboard /></RoleRoute>} />
-        <Route path="/organizer/forms/:formId" element={<RoleRoute allowedRoles={['organizer', 'admin']}><FormBuilderPage /></RoleRoute>} />
-        <Route path="/organizer/certificates" element={<RoleRoute allowedRoles={['organizer', 'admin']}><CertificatesDashboard /></RoleRoute>} />
+        <Route path="/organizer/setup" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupPage /></RoleRoute>} />
+        <Route path="/organizer/teams" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><OrganizerTeamsPage /></OrganizerSetupRoute></RoleRoute>} />
+        <Route path="/organizer/submissions" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><OrganizerSubmissionsPage /></OrganizerSetupRoute></RoleRoute>} />
+        <Route path="/organizer/analytics" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><OrganizerAnalyticsPage /></OrganizerSetupRoute></RoleRoute>} />
+        <Route path="/organizer/forms" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><FormsDashboard /></OrganizerSetupRoute></RoleRoute>} />
+        <Route path="/organizer/forms/:formId" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><FormBuilderPage /></OrganizerSetupRoute></RoleRoute>} />
+        <Route path="/organizer/certificates" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><CertificatesDashboard /></OrganizerSetupRoute></RoleRoute>} />
         <Route path="/participant" element={
           <RoleRoute allowedRoles={['participant']}>
             <ParticipantDashboard />
