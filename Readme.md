@@ -1,348 +1,269 @@
-# HackForge Backend
-### Customizable Hackathon Hosting SaaS — Python FastAPI + Supabase PostgreSQL
+# HackForge
+
+### Customizable Hackathon Hosting SaaS — FastAPI + PostgreSQL + React
 
 ---
 
 ## What is HackForge?
 
-HackForge is a platform where organizers can create and run hackathons end to end. Think of it like "Shopify for hackathons" — one platform that handles everything:
+HackForge is a platform where organizers can run a hackathon end to end — think "Shopify for hackathons." One platform handles the entire lifecycle:
 
-- Organizers create branded hackathon events and manage everything from one dashboard
-- Participants register, form teams, and submit projects
-- Judges score submissions using a custom rubric
-- Leaderboard and certificates are generated automatically
+- **Organizers** create a branded hackathon, design a public microsite for it, build custom registration forms, and manage everything from one dashboard.
+- **Participants** discover hackathons, register, form (or join) teams, and submit their projects.
+- **Judges** score submissions against a rubric the organizer defines.
+- **Leaderboards and certificates** are generated automatically once judging closes.
 
-This repository contains the **backend API only**. The frontend is a separate React project.
+This is a monorepo containing the backend API and two frontend applications:
+
+| Part | Path | What it is |
+|---|---|---|
+| **Backend API** | `app/` (repo root) | FastAPI service — auth, hackathons, teams, judging, certificates, etc. |
+| **Main web app** | `FrontEnd/hackforge-react/` | The product itself — login, organizer/participant/judge dashboards, forms, certificates |
+| **Website Studio** | `FrontEnd/EditorWindow/Editor window/hackforge-studio/` | A drag-and-drop page builder organizers use to design their hackathon's public microsite |
+
+---
+
+## Features
+
+- **Auth** — email/password signup & login, plus "Continue with Google" (Google Identity Services), JWT access + refresh tokens
+- **Organizer workspace** — create an organization, create and publish hackathons, manage registrations, invite judges, view analytics
+- **Hackathon builder & microsite generator** — each hackathon has a `website_config` that drives a public landing page at a unique slug
+- **Website Studio** — visual, drag-and-drop builder (separate app) for designing that public microsite
+- **Custom form builder** — organizers build arbitrary registration/application forms (text, choice, file-upload questions via Cloudinary); participants fill them out publicly
+- **Team formation** — create a team, get an invite code, join by code, max team size enforcement
+- **Submissions** — teams submit projects, organizers/judges can list and review them
+- **Judging** — organizer defines rubric criteria, judges score each submission per criterion
+- **Leaderboard** — automatically ranked from judge scores
+- **Certificates** — organizer defines a certificate template, bulk-issues certificates, participants download a PDF, anyone can verify a certificate via a public verification ID
+- **Announcements** — organizers broadcast updates to registered participants
+- **Analytics** — event-level stats for organizers
+- **A-la-carte feature toggles** — organizers can enable/disable modules (teams, submissions, judging, leaderboard, certificates, announcements) per hackathon
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Framework | FastAPI 0.111.0 | Fast, modern, auto-generates Swagger docs |
-| Language | Python 3.10 | |
-| Database | Supabase PostgreSQL | Free hosted PostgreSQL with dashboard |
-| ORM | SQLAlchemy 2.0 Async | Handles concurrent requests without blocking |
-| DB Driver | asyncpg | Async PostgreSQL driver |
-| Migrations | Alembic | Version control for database schema |
-| Auth | JWT via python-jose | Stateless authentication |
-| Password Hashing | bcrypt via passlib | Industry standard password security |
-| Deployment | Railway / Render (planned) | |
+| Layer | Technology |
+|---|---|
+| Backend framework | FastAPI 0.111 (Python 3.10+) |
+| Database | PostgreSQL (local or hosted, e.g. Supabase) |
+| ORM | SQLAlchemy 2.0 (async) via `asyncpg` |
+| Migrations | Alembic |
+| Auth | JWT (`python-jose`) + bcrypt password hashing (`passlib`) + Google OAuth |
+| File storage | Cloudinary (form file-upload questions) |
+| PDF generation | ReportLab (certificates) |
+| Main frontend | React 19, React Router 7, Zustand, Vite |
+| Website Studio | React 19, Tailwind CSS 4, dnd-kit, Framer Motion, Vite |
+| Deployment | Railway (`railway.json` included) |
+
+---
+
+## Prerequisites
+
+- **Python 3.10+**
+- **Node.js 18+** and npm
+- **PostgreSQL** — a local instance, or a hosted database (e.g. a free [Supabase](https://supabase.com) project)
+- *(Optional)* A [Cloudinary](https://cloudinary.com) account — only needed for file-upload questions in custom forms
+- *(Optional)* A Google Cloud OAuth Client ID — only needed for "Continue with Google" (see below)
 
 ---
 
 ## Getting Started
 
-### Prerequisites
-- Python 3.10+
-
-### Setup
+### 1. Clone the repository
 
 ```bash
-# Clone the repository
 git clone https://github.com/tanishak00000007777/Hackforge.git
 cd Hackforge
+```
 
-# Create virtual environment
-python -m venv venv
-venv\Scripts\activate        # Windows
-source venv/bin/activate     # Mac/Linux
+### 2. Backend setup
+
+```bash
+# Create and activate a virtual environment
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+source .venv/bin/activate     # Mac/Linux
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Open .env and fill in your DATABASE_URL and SECRET_KEY
+# Open .env and fill in DATABASE_URL, SECRET_KEY, and (optionally) GOOGLE_CLIENT_ID / Cloudinary keys
 
-# Run all migrations (creates all 13 tables in Supabase)
+# Run all migrations
 alembic upgrade head
 
-# Start the server
+# Start the API server
 uvicorn app.main:app --reload
 ```
 
-### Access the API
-- **Swagger UI (interactive docs):** `http://127.0.0.1:8000/docs`
-- **ReDoc:** `http://127.0.0.1:8000/redoc`
-- **Health Check:** `http://127.0.0.1:8000/health`
+The backend runs at `http://localhost:8000`:
+- **Swagger UI:** `http://localhost:8000/docs`
+- **ReDoc:** `http://localhost:8000/redoc`
+- **Health check:** `http://localhost:8000/health`
+
+### 3. Frontend setup (main app)
+
+```bash
+cd FrontEnd/hackforge-react
+npm install
+
+# Configure environment
+cp .env.example .env
+# Open .env and fill in VITE_GOOGLE_CLIENT_ID if you want Google Sign-In to work
+
+npm run dev
+```
+
+Runs at `http://localhost:5173` by default (Vite picks the next free port if that's taken).
+
+### 4. Website Studio (optional)
+
+Only needed if you're working on the drag-and-drop microsite builder.
+
+```bash
+cd "FrontEnd/EditorWindow/Editor window/hackforge-studio"
+npm install
+npm run dev
+```
+
+If it doesn't land on port `4175`, update `VITE_STUDIO_URL` in `FrontEnd/hackforge-react/.env` to match — that's what the main app links to for "Website Builder."
 
 ---
 
 ## Environment Variables
 
-Create a `.env` file in the `backend/` folder:
+### Backend — `.env` (repo root)
 
-```env
-APP_NAME=HackForge
-APP_VERSION=0.1.0
-DEBUG=True
-SECRET_KEY=your-super-secret-key-change-this-in-production
+| Variable | Required | Purpose |
+|---|---|---|
+| `SECRET_KEY` | Yes | Signs JWTs — use a long random string, never the placeholder, in any real deployment |
+| `DATABASE_URL` | Yes | `postgresql+asyncpg://user:password@host:5432/dbname` — local Postgres or hosted (e.g. Supabase) |
+| `GOOGLE_CLIENT_ID` | For Google login | Must match the frontend's `VITE_GOOGLE_CLIENT_ID` — validates the token's audience |
+| `JWT_ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS` | No | JWT tuning, sensible defaults provided |
+| `ALLOWED_ORIGINS` | Yes | Comma-separated list of frontend origins allowed by CORS |
+| `FRONTEND_URL` | Yes | Where the backend redirects browser hits on `/`, `/login`, etc. |
+| `CLOUDINARY_CLOUD_NAME` / `_API_KEY` / `_API_SECRET` | For form file uploads | Only required if a form has a file-upload question |
 
-# IMPORTANT: change postgresql:// to postgresql+asyncpg://
-DATABASE_URL=postgresql+asyncpg://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+### Frontend — `FrontEnd/hackforge-react/.env`
 
-JWT_ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-REFRESH_TOKEN_EXPIRE_DAYS=7
+| Variable | Required | Purpose |
+|---|---|---|
+| `VITE_API_BASE_URL` | Yes | Backend base URL, e.g. `http://localhost:8000/api/v1` |
+| `VITE_STUDIO_URL` | Yes | Where the "Website Builder" nav item sends organizers |
+| `VITE_GOOGLE_CLIENT_ID` | For Google login | Same Client ID as the backend's `GOOGLE_CLIENT_ID` |
+| `VITE_ENABLE_DEV_MOCKS` | No | See [Dev login bypass](#dev-login-bypass) below — leave unset unless you want it |
 
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
-FRONTEND_URL=http://localhost:4174
+> ⚠️ Never commit `.env`. Only commit `.env.example`. Both are already covered by `.gitignore`.
 
-```
+### Setting up Google Sign-In (optional)
 
-> ⚠️ Never commit `.env` to GitHub. Only commit `.env.example`.
-
----
-
-## Folder Structure
-
-```
-backend/
-├── alembic/                          ← Database migration history
-│   ├── versions/                     ← One .py file per migration
-│   ├── env.py                        ← Alembic async configuration
-│   └── script.py.mako               ← Migration file template
-│
-├── app/
-│   ├── main.py                       ← FastAPI app, all routers registered here
-│   │
-│   ├── config/
-│   │   └── settings.py              ← Reads .env, exposes typed settings
-│   │
-│   ├── core/
-│   │   ├── database.py              ← Async engine + session + Base
-│   │   ├── dependencies.py          ← get_current_user() dependency
-│   │   └── security.py             ← JWT create and decode
-│   │
-│   ├── models/                      ← SQLAlchemy ORM (database tables)
-│   │   ├── __init__.py             ← Imports ALL models — required for Alembic
-│   │   ├── base_model.py           ← Abstract base: id, created_at, updated_at
-│   │   ├── user.py
-│   │   ├── organization.py
-│   │   ├── hackathon.py
-│   │   ├── registration.py
-│   │   ├── team.py
-│   │   ├── team_member.py
-│   │   ├── track.py
-│   │   ├── submission.py
-│   │   ├── judge.py
-│   │   ├── rubric_criteria.py
-│   │   ├── score.py
-│   │   ├── certificate.py
-│   │   └── announcement.py
-│   │
-│   ├── schemas/                     ← Pydantic models (API input/output)
-│   │   ├── user.py
-│   │   ├── organization.py
-│   │   ├── hackathon.py
-│   │   ├── registration.py
-│   │   ├── team.py
-│   │   ├── track.py
-│   │   ├── submission.py
-│   │   ├── judge.py
-│   │   ├── score.py
-│   │   ├── certificate.py
-│   │   └── announcement.py
-│   │
-│   ├── routers/                     ← URL routes, one file per feature
-│   │   ├── __init__.py
-│   │   ├── auth.py
-│   │   ├── organizations.py
-│   │   ├── hackathons.py
-│   │   ├── tracks.py
-│   │   ├── registrations.py
-│   │   ├── teams.py
-│   │   ├── submissions.py
-│   │   ├── judges.py
-│   │   ├── leaderboard.py
-│   │   ├── certificates.py
-│   │   ├── announcements.py
-│   │   └── analytics.py
-│   │
-│   ├── services/                    ← Business logic, one file per feature
-│   │   ├── auth_service.py
-│   │   ├── organization_service.py
-│   │   ├── hackathon_service.py
-│   │   ├── registration_service.py
-│   │   ├── team_service.py
-│   │   ├── track_service.py
-│   │   ├── submission_service.py
-│   │   ├── judging_service.py
-│   │   ├── leaderboard_service.py
-│   │   ├── certificate_service.py
-│   │   ├── announcement_service.py
-│   │   └── analytics_service.py
-│   │
-│   └── utils/
-│       └── hashing.py              ← hash_password() and verify_password()
-│
-├── .env                             ← Never commit this
-├── .env.example                     ← Commit this instead
-├── alembic.ini
-├── requirements.txt
-└── requirements-dev.txt
-```
+1. [Google Cloud Console](https://console.cloud.google.com/) → create/select a project.
+2. **APIs & Services → OAuth consent screen** → configure it (External, add yourself as a test user if in Testing mode).
+3. **APIs & Services → Credentials → Create Credentials → OAuth client ID** → Application type: **Web application**.
+4. Under **Authorized JavaScript origins**, add the URL your frontend runs on (e.g. `http://localhost:5173`).
+5. Copy the generated **Client ID** into both `GOOGLE_CLIENT_ID` (backend `.env`) and `VITE_GOOGLE_CLIENT_ID` (frontend `.env`) — same value in both, no secret needed for this flow.
+6. Restart both dev servers (env vars are only read at startup).
 
 ---
 
-## Database Tables
+## Database
+
+Every table has `id` (UUID), `created_at`, `updated_at` via a shared base model.
 
 | Table | What it stores |
-|-------|---------------|
+|---|---|
 | `users` | All users — organizers, participants, judges |
-| `organizations` | College or company that owns hackathons |
-| `hackathons` | Hackathon events with all configuration |
-| `registrations` | Who registered for which hackathon |
-| `teams` | Teams within a hackathon |
-| `team_members` | Which users are in which team |
+| `organizations` | The college/company/team that owns hackathons |
+| `hackathons` | Hackathon events, including `website_config` for the public microsite |
+| `registrations` | Who registered for which hackathon, plus custom form answers |
+| `teams` / `team_members` | Teams within a hackathon and their membership |
 | `tracks` | Problem tracks (e.g. AI, Web3, Sustainability) |
 | `submissions` | Project submissions from teams |
 | `judges` | Which users are judges for which hackathon |
-| `rubric_criteria` | Scoring criteria defined by organizer |
-| `scores` | Individual scores given by judges per criterion |
-| `certificates` | Issued certificates with unique verification ID |
-| `announcements` | Updates sent by organizers to participants |
+| `rubric_criteria` / `scores` | Organizer-defined scoring criteria and judges' scores |
+| `certificates` / `certificate_templates` | Certificate templates and issued certificates with a verification ID |
+| `announcements` | Organizer updates to participants |
+| `hackathon_features` | Per-hackathon on/off toggles for optional modules |
+| `custom_forms`, `form_questions`, `form_responses`, `form_answers`, `form_attachments` | The custom form builder |
 
-Every table automatically has: `id` (UUID), `created_at`, `updated_at`
-
----
-
-## API Endpoints
-
-### Public — No authentication required
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/health` | Server health check |
-| POST | `/api/v1/auth/register` | Create new account |
-| POST | `/api/v1/auth/login` | Login and get JWT tokens |
-| GET | `/api/v1/hackathons/` | List all published hackathons |
-| GET | `/api/v1/hackathons/{slug}` | Get hackathon by slug |
-| GET | `/api/v1/tracks/{hackathon_id}` | View tracks |
-| GET | `/api/v1/judges/{hackathon_id}/rubric` | View scoring rubric |
-| GET | `/api/v1/announcements/{hackathon_id}` | View announcements |
-| GET | `/api/v1/certificates/verify/{verification_id}` | Verify a certificate |
-
-### Protected — Requires `Authorization: Bearer <token>` header
-
-#### Organizations
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/v1/organizations/` | Create organization |
-| GET | `/api/v1/organizations/me` | Get my organizations |
-
-#### Hackathons
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/v1/hackathons/{org_id}` | Create hackathon |
-| POST | `/api/v1/hackathons/{id}/publish` | Publish hackathon |
-| PATCH | `/api/v1/hackathons/{id}/website-config` | Update website design config |
-
-#### Tracks
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/v1/tracks/{hackathon_id}` | Add a track |
-| DELETE | `/api/v1/tracks/{track_id}` | Delete a track |
-
-#### Registrations
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/v1/registrations/{hackathon_id}` | Register for hackathon |
-| GET | `/api/v1/registrations/{hackathon_id}` | List all registrations |
-| PATCH | `/api/v1/registrations/{id}/status` | Approve / reject / waitlist |
-
-#### Teams
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/v1/teams/{hackathon_id}` | Create team |
-| POST | `/api/v1/teams/{hackathon_id}/join` | Join team via invite code |
-| GET | `/api/v1/teams/{hackathon_id}/my-team` | Get my team |
-| DELETE | `/api/v1/teams/{hackathon_id}/leave` | Leave team |
-
-#### Submissions
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/v1/submissions/{hackathon_id}` | Create submission |
-| PATCH | `/api/v1/submissions/{id}` | Update submission |
-| POST | `/api/v1/submissions/{id}/submit` | Finalize and submit |
-| GET | `/api/v1/submissions/{hackathon_id}/all` | List all submissions |
-
-#### Judging
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/v1/judges/{hackathon_id}/invite` | Invite a judge |
-| POST | `/api/v1/judges/{hackathon_id}/accept` | Accept judge invitation |
-| POST | `/api/v1/judges/{hackathon_id}/rubric` | Add rubric criteria |
-| POST | `/api/v1/judges/scores/{submission_id}` | Submit a score |
-| GET | `/api/v1/judges/scores/{submission_id}` | Get scores for submission |
-
-#### Results
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | `/api/v1/leaderboard/{hackathon_id}` | Get ranked leaderboard |
-| POST | `/api/v1/certificates/{hackathon_id}/issue` | Issue certificate |
-| GET | `/api/v1/certificates/me` | Get my certificates |
-| GET | `/api/v1/certificates/{hackathon_id}` | List all certificates |
-
-#### Announcements & Analytics
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/api/v1/announcements/{hackathon_id}` | Post announcement |
-| GET | `/api/v1/analytics/{hackathon_id}` | Get event statistics |
-
----
-
-## Assigned Modules — Final Status
-
-### 1. Organizer Workspace ✅ 100% Complete
-Create org, create hackathon, publish, manage registrations, invite judges, build rubric, view submissions, analytics, announcements.
-
-### 2. Hackathon Builder ✅ 100% Complete
-Hackathon CRUD, track management, website_config JSONB, update website config endpoint.
-
-### 3. Microsite Generator ✅ 100% Complete
-website_config stored in hackathon, public GET by slug, list published hackathons, update config endpoint.
-
-### 4. Registration & Application System ✅ 100% Complete
-Register, open vs approval mode, approve/reject/waitlist, list registrations, form_data JSONB for custom fields.
-
-### 5. Team Formation Flow ✅ 100% Complete
-Create team, generate invite code, join by code, max size enforcement, view team, leave team.
-
----
-
-## Alembic Commands
+### Alembic commands
 
 ```bash
-# After changing any model, generate a migration:
+# After changing any SQLAlchemy model, generate a migration
 alembic revision --autogenerate -m "describe the change"
 
-# Apply all pending migrations:
+# Apply all pending migrations
 alembic upgrade head
 
-# Roll back one migration:
+# Roll back one migration
 alembic downgrade -1
 
-# See migration history:
+# Inspect history / current version
 alembic history
-
-# See current DB version:
 alembic current
 ```
 
 ---
 
-## Team Rules
+## API Overview
 
-1. **Routers never touch the database** — router calls service, service calls DB
-2. **Never store plain text passwords** — always use `hash_password()` before saving
-3. **Never return `hashed_password`** in any response — use `UserResponse` schema
-4. **Never commit `.env`** — only commit `.env.example`
-5. **Import every new model** in `models/__init__.py` or Alembic will not detect it
-6. **Run migration after every model change** — never edit tables manually in Supabase
-7. **Same error for wrong email and wrong password** — never reveal which one failed
+Full request/response schemas are self-documented at `/docs` (Swagger) once the server is running — that's the source of truth. Rough shape of what's available:
+
+| Module | Prefix | Notes |
+|---|---|---|
+| Auth | `/api/v1/auth` | Register, login, Google login |
+| Organizations | `/api/v1/organizations` | Create org, list my orgs |
+| Hackathons | `/api/v1/hackathons` | CRUD, publish, website config, public listing by slug |
+| Tracks | `/api/v1/tracks` | Problem tracks per hackathon |
+| Registrations | `/api/v1/registrations` | Register, list, approve/reject/waitlist |
+| Teams | `/api/v1/teams` | Create, join by invite code, leave |
+| Submissions | `/api/v1/submissions` | Create, update, finalize, list |
+| Judges & Scores | `/api/v1/judges`, `/api/v1/scores` | Invite/accept judges, rubric, scoring |
+| Leaderboard | `/api/v1/leaderboard` | Ranked results per hackathon |
+| Certificates | `/api/v1/certificates` | Template config, bulk issue, PDF download, public verification |
+| Announcements | `/api/v1/announcements` | Organizer → participant updates |
+| Analytics | `/api/v1/analytics` | Event-level stats |
+| Feature toggles | `/api/v1/hackathons/{id}/features` | Enable/disable modules per hackathon |
+| Forms | `/api/v1/forms` | Custom form builder, public submission, response grading |
+| Sponsors, Users | `/api/v1/sponsors`, `/api/v1/users` | Routers scaffolded, not yet implemented |
+
+Public endpoints (no auth) include the health check, hackathon listing/detail by slug, public form view/submit, and certificate verification. Everything else requires `Authorization: Bearer <access_token>`.
 
 ---
 
+## Authentication model
+
+- **Email/password**: `POST /auth/register` then `POST /auth/login` → JWT access + refresh token.
+- **Google**: frontend gets a Google ID token via Google Identity Services, posts it to `POST /auth/google`. If the email isn't registered yet, the backend returns `USER_NOT_REGISTERED` and the frontend prompts for a role (participant/organizer) before creating the account.
+- Tokens are stored client-side (Zustand store) and attached as a Bearer header on every request.
+
+### Dev login bypass
+
+For local development only, `FrontEnd/hackforge-react` supports a shortcut login: enter **any email** and the password **`dev`**. It logs you straight in with a role inferred from the email (containing `"participant"` or `"judge"`, otherwise `"organizer"`) — no backend round-trip.
+
+It only activates when **both** are true:
+- The app is running in a Vite dev build (`import.meta.env.DEV`)
+- `VITE_ENABLE_DEV_MOCKS=true` is set in `FrontEnd/hackforge-react/.env`
+
+It's off by default and compiled out of production builds either way — never set that flag in a deployed environment's config.
+
+---
+
+## Team rules
+
+1. **Routers never touch the database** — router calls service, service calls DB.
+2. **Never store plaintext passwords** — always `hash_password()` before saving.
+3. **Never return `hashed_password`** in any response — use the `UserResponse` schema.
+4. **Never commit `.env`** — only commit `.env.example`.
+5. **Import every new model** in `app/models/__init__.py`, or Alembic won't detect it.
+6. **Run a migration after every model change** — never edit tables manually in the database.
+7. **Same error for wrong email and wrong password** — never reveal which one failed.
+
+---
+
+## Deployment
+
+`railway.json` is configured for [Railway](https://railway.app): it runs `alembic upgrade head` before each deploy, starts the API with `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and health-checks `/health`. Point `DATABASE_URL`, `SECRET_KEY`, `GOOGLE_CLIENT_ID`, `ALLOWED_ORIGINS`, and `FRONTEND_URL` at your production values via Railway's environment variables — don't reuse local dev secrets.
