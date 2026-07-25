@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig({
   base: "/studio/",
+
   plugins: [
     react(),
     tailwindcss(),
@@ -17,7 +18,8 @@ export default defineConfig({
   },
 
   server: {
-    port: 5173,
+    port: 4175,
+    strictPort: true,
     open: true,
   },
 });
