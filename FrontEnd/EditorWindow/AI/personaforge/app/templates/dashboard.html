@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - PersonaForge{% endblock %}
+{% block content %}
+<section class="panel">
+  <h1>Your Projects</h1>
+  <form id="upload-form">
+    <input type="file" id="upload-folder" webkitdirectory directory multiple>
+    <button type="submit">Upload Project Folder</button>
+  </form>
+  <p class="muted">Select a folder containing your HTML/CSS/JS (or a built React app's output). No ZIP needed.</p>
+  <p id="upload-status" class="muted"></p>
+</section>
+
+<section class="panel">
+  <table class="project-table">
+    <thead>
+      <tr>
+        <th>Name</th><th>Entry</th><th>Pages</th><th>HTML</th><th>CSS</th><th>JS</th><th>Version</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="project-list"></tbody>
+  </table>
+</section>
+
+<script src="/static/app.js"></script>
+<script>loadDashboard();</script>
+{% endblock %}

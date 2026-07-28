@@ -28,6 +28,8 @@ export default function LoginPage() {
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState('participant');
   const [orgName, setOrgName] = useState('');
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const hasGoogleClientId = googleClientId && !googleClientId.startsWith('your-');
 
   // If already authenticated, redirect to dashboard
   useEffect(() => {
@@ -102,8 +104,6 @@ export default function LoginPage() {
     }
   };
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-
   const handleGoogleCredentialResponse = async (response) => {
     const idToken = response.credential;
     setIsLoading(true);
@@ -127,7 +127,7 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    if (!googleClientId) {
+    if (!hasGoogleClientId) {
       console.warn("Google Client ID not configured in VITE_GOOGLE_CLIENT_ID");
       return;
     }
@@ -163,7 +163,7 @@ export default function LoginPage() {
       }, 100);
       return () => clearInterval(interval);
     }
-  }, [googleClientId]);
+  }, [googleClientId, hasGoogleClientId]);
 
   const handleRoleSubmit = async () => {
     if (!googleIdToken) return;
@@ -272,9 +272,11 @@ export default function LoginPage() {
 
           {/* Form */}
           <form onSubmit={handleLogin} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-              <div id="google-login-btn"></div>
-            </div>
+            {hasGoogleClientId && (
+              <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <div id="google-login-btn"></div>
+              </div>
+            )}
 
 
             {/* Divider */}

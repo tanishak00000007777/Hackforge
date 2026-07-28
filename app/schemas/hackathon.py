@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
-from pydantic import BaseModel
+from typing import Literal
+from pydantic import BaseModel, Field
 from app.models.hackathon import HackathonMode, HackathonStatus, RegistrationMode
 
 
@@ -26,6 +27,20 @@ class HackathonUpdate(BaseModel):
     venue: str | None = None
     prize_pool: str | None = None
     contact_email: str | None = None
+
+
+class WebsiteConfigUpdate(BaseModel):
+    schemaVersion: Literal[1] = 1
+    components: list[dict] = Field(default_factory=list, max_length=500)
+    pages: list[dict] = Field(default_factory=list, max_length=50)
+    currentPageId: str = Field(min_length=1, max_length=100)
+    globalTheme: dict = Field(default_factory=dict)
+    assets: list[dict] = Field(default_factory=list, max_length=250)
+    device: Literal["desktop", "tablet", "mobile"] = "desktop"
+    banner_url: str | None = Field(default=None, max_length=500)
+    logo_url: str | None = Field(default=None, max_length=500)
+
+    model_config = {"extra": "forbid"}
 
 
 class HackathonResponse(BaseModel):

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore.js';
 import * as organizationApi from '../services/organizationApi.js';
+import * as hackathonApi from '../services/hackathonApi.js';
 
 function toSlug(value) {
   return value
@@ -15,7 +16,7 @@ function toSlug(value) {
 function errorMessage(error) {
   return typeof error?.detail === 'string'
     ? error.detail
-    : 'We could not create your organization. Please try again.';
+    : 'We could not complete organizer setup. Please try again.';
 }
 
 const fieldStyle = {
@@ -60,14 +61,18 @@ export default function OrganizerSetupPage() {
     setIsSubmitting(true);
     setError('');
     try {
-      await organizationApi.createOrganization({
+      const organization = await organizationApi.createOrganization({
         name: normalizedName,
         slug: normalizedSlug,
         description: description.trim() || null,
         website_url: websiteUrl.trim() || null,
         logo_url: logoUrl.trim() || null,
       });
-      navigate('/organizer', { replace: true });
+      const hackathon = await hackathonApi.createHackathon(organization.id, {
+        title: `${normalizedName} Hackathon`,
+        slug: `${normalizedSlug}-hackathon`,
+      });
+      navigate(`/organizer/hackathons/${hackathon.id}/studio`, { replace: true });
     } catch (requestError) {
       setError(errorMessage(requestError));
     } finally {

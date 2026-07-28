@@ -75,7 +75,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const user = await authApi.getMe();
       set({ user, isAuthenticated: true, isLoading: false });
-    } catch (err) {
+    } catch {
       // Token might be expired — try refresh
       const refresh = get().refreshToken;
       if (refresh) {
@@ -83,9 +83,9 @@ export const useAuthStore = create((set, get) => ({
           const tokens = await authApi.refreshToken(refresh);
           localStorage.setItem(TOKEN_KEY, tokens.access_token);
           localStorage.setItem(REFRESH_KEY, tokens.refresh_token);
-          localStorage.setItem('hackforge_user', JSON.stringify(user));
           set({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
           const user = await authApi.getMe();
+          localStorage.setItem('hackforge_user', JSON.stringify(user));
           set({ user, isAuthenticated: true, isLoading: false });
           return;
         } catch {

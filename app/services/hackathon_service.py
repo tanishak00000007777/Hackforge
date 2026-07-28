@@ -7,6 +7,24 @@ from app.schemas.hackathon import HackathonCreate, HackathonUpdate
 import uuid
 from app.services.feature_service import create_default_features
 
+
+async def get_owned_hackathon(
+    hackathon_id: uuid.UUID,
+    current_user: User,
+    db: AsyncSession,
+) -> Hackathon:
+    result = await db.execute(
+        select(Hackathon).where(
+            Hackathon.id == hackathon_id,
+            Hackathon.created_by == current_user.id,
+        )
+    )
+    hackathon = result.scalar_one_or_none()
+    if not hackathon:
+        # Do not reveal whether another organizer owns this event.
+        raise HTTPException(status_code=404, detail="Hackathon not found")
+    return hackathon
+
 async def create_hackathon(
     data: HackathonCreate,
     organization_id: uuid.UUID,
@@ -52,14 +70,7 @@ async def publish_hackathon(
     current_user: User,
     db: AsyncSession,
 ) -> Hackathon:
-    result = await db.execute(
-        select(Hackathon).where(Hackathon.id == hackathon_id)
-    )
-    hackathon = result.scalar_one_or_none()
-    if not hackathon:
-        raise HTTPException(status_code=404, detail="Hackathon not found")
-    if hackathon.created_by != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    hackathon = await get_owned_hackathon(hackathon_id, current_user, db)
     hackathon.status = HackathonStatus.published
     await db.flush()
     await db.refresh(hackathon)
@@ -72,31 +83,16 @@ async def update_website_config(
     current_user: User,
     db: AsyncSession,
 ) -> Hackathon:
-
-    result = await db.execute(
-        select(Hackathon).where(Hackathon.id == hackathon_id)
-    )
-
-    hackathon = result.scalar_one_or_none()
-
-    if not hackathon:
-        raise HTTPException(
-            status_code=404,
-            detail="Hackathon not found"
-        )
-
-    if hackathon.created_by != current_user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Not authorized"
-        )
+    hackathon = await get_owned_hackathon(hackathon_id, current_user, db)
 
     # Update website configuration JSON
     hackathon.website_config = config
 
-    # Keep dedicated columns synchronized
-    hackathon.banner_url = config.get("banner_url")
-    hackathon.logo_url = config.get("logo_url")
+    # Studio project saves must not erase media managed elsewhere.
+    if "banner_url" in config:
+        hackathon.banner_url = config["banner_url"]
+    if "logo_url" in config:
+        hackathon.logo_url = config["logo_url"]
 
     await db.flush()
     await db.refresh(hackathon)

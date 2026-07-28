@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+beautifulsoup4
+lxml
+tinycss2
+httpx
+jinja2
+python-multipart
+python-dotenv
+pytest

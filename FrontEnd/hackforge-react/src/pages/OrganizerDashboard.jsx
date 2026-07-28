@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore.js';
-import * as organizationApi from '../services/organizationApi.js';
 import * as hackathonApi from '../services/hackathonApi.js';
 import * as registrationApi from '../services/registrationApi.js';
-
-const STUDIO_URL = import.meta.env.VITE_STUDIO_URL || (import.meta.env.DEV ? 'http://localhost:4175/studio/' : '/studio/');
 
 const navItems = [
   { icon: 'dashboard', label: 'Dashboard', key: 'dashboard' },
   { icon: 'event', label: 'Hackathons', key: 'hackathons' },
-  { icon: 'web', label: 'Website Builder', key: 'builder', path: '/templates' },
+  { icon: 'web', label: 'Website Builder', key: 'builder' },
   { icon: 'description', label: 'Forms', key: 'forms', path: '/organizer/forms' },
   { icon: 'workspace_premium', label: 'Certificates', key: 'certificates', path: '/organizer/certificates' },
   { icon: 'group_add', label: 'Registrations', key: 'registrations' },
@@ -32,18 +29,14 @@ export default function OrganizerDashboard() {
   const { user, logout } = useAuthStore();
   const [activeNav, setActiveNav] = useState('dashboard');
   const [showAIPanel, setShowAIPanel] = useState(false);
-  const [organizations, setOrganizations] = useState([]);
   const [hackathons, setHackathons] = useState([]);
   const [registrations, setRegistrations] = useState([]);
   const [selectedHackathon, setSelectedHackathon] = useState(null);
   const [loadingRegs, setLoadingRegs] = useState(false);
 
-  // Load orgs and hackathons on mount
+  // Load organizer-owned hackathons on mount.
   useEffect(() => {
-    organizationApi.getMyOrganizations()
-      .then(setOrganizations)
-      .catch(() => {});
-    hackathonApi.listPublishedHackathons()
+    hackathonApi.listOwnedHackathons()
       .then(data => {
         setHackathons(data);
         if (data.length > 0) setSelectedHackathon(data[0]);
@@ -78,7 +71,9 @@ export default function OrganizerDashboard() {
 
   const handleNavClick = (item) => {
     setActiveNav(item.key);
-    if (item.path) {
+    if (item.key === 'builder') {
+      navigate(selectedHackathon ? `/organizer/hackathons/${selectedHackathon.id}/studio` : '/organizer/setup');
+    } else if (item.path) {
       navigate(item.path);
     } else {
       const element = document.getElementById(item.key);
@@ -89,7 +84,7 @@ export default function OrganizerDashboard() {
   };
 
   const handleNewEvent = () => {
-    window.location.href = STUDIO_URL;
+    navigate('/organizer/setup');
   };
 
   const handleReview = async (reg) => {
@@ -214,11 +209,35 @@ export default function OrganizerDashboard() {
           </header>
 
           {/* Welcome line */}
-          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--color-primary)', marginBottom: 4 }}>Welcome back, {userName.split(' ')[0]}.</h1>
-            <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)' }}>
-              {selectedHackathon ? `${selectedHackathon.title} — ${registrations.length} registration${registrations.length === 1 ? '' : 's'}` : 'Create your first hackathon to get started.'}
-            </p>
+          <div style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 24 }}>
+            <div>
+              <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--color-primary)', marginBottom: 4 }}>Welcome back, {userName.split(' ')[0]}.</h1>
+              <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)' }}>
+                {selectedHackathon ? `${selectedHackathon.title} — ${registrations.length} registration${registrations.length === 1 ? '' : 's'}` : 'Create your first hackathon to get started.'}
+              </p>
+            </div>
+            {selectedHackathon && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {hackathons.length > 1 && (
+                  <select
+                    value={selectedHackathon.id}
+                    onChange={(event) => setSelectedHackathon(hackathons.find((item) => item.id === event.target.value))}
+                    aria-label="Select hackathon"
+                    style={{ height: 40, border: '1px solid rgba(14,22,71,0.12)', borderRadius: 8, background: '#fff', padding: '0 12px', color: 'var(--color-primary)' }}
+                  >
+                    {hackathons.map((hackathon) => <option key={hackathon.id} value={hackathon.id}>{hackathon.title}</option>)}
+                  </select>
+                )}
+                <button
+                  type="button"
+                  onClick={() => navigate(`/organizer/hackathons/${selectedHackathon.id}/studio`)}
+                  style={{ height: 40, display: 'flex', alignItems: 'center', gap: 8, border: 0, borderRadius: 8, background: 'var(--color-primary-container)', color: '#fff', padding: '0 16px', cursor: 'pointer', fontWeight: 700 }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 18 }}>web</span>
+                  Open Website Studio
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Registrations Table */}

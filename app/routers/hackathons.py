@@ -3,8 +3,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.schemas.hackathon import HackathonCreate, HackathonResponse
-from app.services.hackathon_service import create_hackathon, get_hackathon_by_slug, publish_hackathon
+from app.schemas.hackathon import HackathonCreate, HackathonResponse, WebsiteConfigUpdate
+from app.services.hackathon_service import (
+    create_hackathon,
+    get_hackathon_by_slug,
+    get_owned_hackathon,
+    publish_hackathon,
+    update_website_config,
+)
 
 router = APIRouter(prefix="/hackathons", tags=["Hackathons"])
 
@@ -23,6 +29,15 @@ async def create(
     db: AsyncSession = Depends(get_db),
 ):
     return await create_hackathon(data, org_id, current_user, db)
+
+
+@router.get("/manage/{hackathon_id}", response_model=HackathonResponse)
+async def get_for_management(
+    hackathon_id: uuid.UUID,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await get_owned_hackathon(hackathon_id, current_user, db)
 
 
 @router.get("/{slug}", response_model=HackathonResponse)
@@ -45,12 +60,16 @@ async def publish(
 @router.patch("/{hackathon_id}/website-config", response_model=HackathonResponse)
 async def update_config(
     hackathon_id: uuid.UUID,
-    config: dict,
+    config: WebsiteConfigUpdate,
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    from app.services.hackathon_service import update_website_config
-    return await update_website_config(hackathon_id, config, current_user, db)
+    return await update_website_config(
+        hackathon_id,
+        config.model_dump(exclude_none=True),
+        current_user,
+        db,
+    )
 
 
 @router.get("/", response_model=list[HackathonResponse])

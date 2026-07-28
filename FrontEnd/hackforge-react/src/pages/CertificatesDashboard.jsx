@@ -8,6 +8,16 @@ const field = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', bo
 const button = { border: 0, borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontWeight: 700 };
 const card = { background: '#fff', border: '1px solid #e8e2ec', borderRadius: 16, padding: 22, boxShadow: '0 8px 24px rgba(43,25,61,.06)' };
 const presetNames = { classic: 'Classic', modern: 'Modern', bold: 'Bold' };
+const demoTemplate = {
+  preset: 'modern',
+  primary_color: '#0F4C5C',
+  secondary_color: '#E0A458',
+  heading: 'Certificate of Innovation',
+  body_text: 'This certificate recognizes outstanding creativity, collaboration, and impact.',
+  signatory_name: 'Priya Sharma',
+  signatory_title: 'HackForge Program Director',
+  sponsor_names: ['HackForge Labs', 'Northstar Foundation'],
+};
 
 export default function CertificatesDashboard() {
   const navigate = useNavigate();
@@ -37,10 +47,11 @@ export default function CertificatesDashboard() {
       certificateApi.getHackathonCertificates(hackathonId),
       teamApi.getHackathonTeams(hackathonId),
     ]).then(([savedTemplate, issued, eventTeams]) => {
-      setTemplate(savedTemplate);
+      setTemplate(savedTemplate.id ? savedTemplate : { ...savedTemplate, ...demoTemplate });
       setCertificates(issued);
       setTeams(Array.isArray(eventTeams) ? eventTeams : []);
       setTeamIds([]);
+      setMessage(savedTemplate.id ? '' : 'Demo certificate template loaded. Save it to keep these settings.');
     }).catch((err) => setError(err.detail || 'Could not load certificate settings'));
   }, [hackathonId]);
 
@@ -122,7 +133,10 @@ export default function CertificatesDashboard() {
 
       {template && <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(420px, 100%), 1fr))', gap: 24, alignItems: 'start' }}>
         <div style={{ ...card, display: 'grid', gap: 15 }}>
-          <h2 style={{ margin: 0 }}>Template</h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <h2 style={{ margin: 0 }}>Template</h2>
+            <button onClick={() => setTemplate((current) => ({ ...current, ...demoTemplate }))} style={{ ...button, padding: '7px 11px', background: '#f1ebf5', color: '#2b0a5a' }}>Load demo</button>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
             {Object.keys(presetNames).map((preset) => <button key={preset} onClick={() => update('preset', preset)} style={{ ...button, background: template.preset === preset ? '#2b0a5a' : '#f1ebf5', color: template.preset === preset ? '#fff' : '#2b193d' }}>{presetNames[preset]}</button>)}
           </div>

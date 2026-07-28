@@ -11,6 +11,14 @@ const btn = { border: 0, borderRadius: 8, padding: '9px 14px', cursor: 'pointer'
 const panel = { background: '#fff', border: '1px solid #e8e2ec', borderRadius: 14, padding: 20, marginBottom: 16 };
 
 const blankQuestion = () => ({ title: 'Untitled question', description: '', type: 'short_answer', required: false, options: [], max_points: 0 });
+const demoQuestions = () => [
+  { title: 'Team name', description: 'Enter the name your team is competing under.', type: 'short_answer', required: true, options: [], max_points: 0 },
+  { title: 'Project name', description: 'What is your solution called?', type: 'short_answer', required: true, options: [], max_points: 0 },
+  { title: 'Problem statement', description: 'Describe the problem and who it affects.', type: 'paragraph', required: true, options: [], max_points: 0 },
+  { title: 'Hackathon track', description: 'Choose the track that best fits your project.', type: 'multiple_choice', required: true, options: ['AI for Good', 'FinTech', 'Climate Tech', 'Open Innovation'], max_points: 0 },
+  { title: 'Technologies used', description: 'Select every major technology used by your team.', type: 'checkboxes', required: true, options: ['React', 'Python', 'AI / ML', 'Cloud', 'Other'], max_points: 0 },
+  { title: 'Pitch deck or project brief', description: 'Upload a PDF with your solution overview.', type: 'file', required: false, options: [], max_points: 0 },
+];
 
 export default function FormBuilderPage() {
   const { formId } = useParams();
@@ -25,7 +33,11 @@ export default function FormBuilderPage() {
 
   useEffect(() => {
     formApi.getForm(formId)
-      .then((data) => { setForm(data); setQuestions(data.questions); })
+      .then((data) => {
+        setForm(data);
+        setQuestions(data.questions.length ? data.questions : demoQuestions());
+        setMessage(data.questions.length ? '' : 'Demo questions loaded. Click Save to keep them.');
+      })
       .catch((e) => setMessage(e.detail || 'Could not load form'));
   }, [formId]);
   useEffect(() => { if (tab === 'responses') formApi.listResponses(formId).then(setResponses).catch((e) => setMessage(e.detail)); }, [tab, formId]);

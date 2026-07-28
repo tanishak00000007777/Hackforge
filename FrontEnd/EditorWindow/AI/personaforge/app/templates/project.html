@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Project - PersonaForge{% endblock %}
+{% block content %}
+<input type="hidden" id="project-id" value="{{ project_id }}">
+
+<section class="panel" id="project-summary"></section>
+
+<section class="panel">
+  <h2>Personalise</h2>
+  <textarea id="prompt-input" rows="3" placeholder="Describe the changes you want..."></textarea>
+  <details>
+    <summary>Advanced settings</summary>
+    <label><input type="checkbox" id="preserve-layout" checked> Preserve layout</label>
+    <label><input type="checkbox" id="allow-add" checked> Allow component addition</label>
+    <label><input type="checkbox" id="allow-remove" checked> Allow component removal</label>
+    <label><input type="checkbox" id="allow-js"> Allow JavaScript edits</label>
+    <label>Max files to change <input type="number" id="max-files" value="8" min="1" max="50"></label>
+  </details>
+  <button id="submit-prompt">Generate Changes</button>
+</section>
+
+<section class="panel" id="job-panel" hidden>
+  <h2>Job Progress</h2>
+  <p id="job-stage" class="muted"></p>
+  <div id="job-error" class="error" hidden></div>
+
+  <div id="job-review" hidden>
+    <h3>Validation</h3>
+    <p id="validation-summary"></p>
+    <h3>Changed Files</h3>
+    <ul id="changed-files-list"></ul>
+    <h3>Preview</h3>
+    <div class="preview-tabs">
+      <button data-vp="375">Mobile</button>
+      <button data-vp="768">Tablet</button>
+      <button data-vp="1440" class="active">Desktop</button>
+    </div>
+    <div class="preview-compare">
+      <div>
+        <h4>Original</h4>
+        <iframe id="preview-before" sandbox="allow-same-origin" referrerpolicy="no-referrer"></iframe>
+      </div>
+      <div>
+        <h4>Modified</h4>
+        <iframe id="preview-after" sandbox="allow-same-origin" referrerpolicy="no-referrer"></iframe>
+      </div>
+    </div>
+    <h3>Diff</h3>
+    <div id="diff-view"></div>
+
+    <div class="actions">
+      <button id="approve-btn">Approve</button>
+      <button id="reject-btn">Reject</button>
+      <button id="retry-btn">Retry</button>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Version History</h2>
+  <ul id="version-list"></ul>
+</section>
+
+<script src="/static/app.js"></script>
+<script>loadProjectPage();</script>
+{% endblock %}

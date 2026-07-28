@@ -22,6 +22,7 @@ import OrganizerTeamsPage from './pages/OrganizerTeamsPage';
 import OrganizerSubmissionsPage from './pages/OrganizerSubmissionsPage';
 import OrganizerAnalyticsPage from './pages/OrganizerAnalyticsPage';
 import OrganizerSetupPage from './pages/OrganizerSetupPage';
+import StudioBridgePage from './pages/StudioBridgePage';
 
 export default function App() {
   const restoreSession = useAuthStore((s) => s.restoreSession);
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/organizer/forms" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><FormsDashboard /></OrganizerSetupRoute></RoleRoute>} />
         <Route path="/organizer/forms/:formId" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><FormBuilderPage /></OrganizerSetupRoute></RoleRoute>} />
         <Route path="/organizer/certificates" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><CertificatesDashboard /></OrganizerSetupRoute></RoleRoute>} />
+        <Route path="/organizer/hackathons/:hackathonId/studio" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><StudioBridgePage /></OrganizerSetupRoute></RoleRoute>} />
         <Route path="/participant" element={
           <RoleRoute allowedRoles={['participant']}>
             <ParticipantDashboard />

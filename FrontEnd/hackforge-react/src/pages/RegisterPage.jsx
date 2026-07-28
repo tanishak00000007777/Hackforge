@@ -26,6 +26,7 @@ export default function RegisterPage() {
 
   // Google Sign-In refs and handlers
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const hasGoogleClientId = googleClientId && !googleClientId.startsWith('your-');
   const roleRef = useRef(role);
   const orgNameRef = useRef(orgName);
 
@@ -59,7 +60,7 @@ export default function RegisterPage() {
   };
 
   useEffect(() => {
-    if (!googleClientId) return;
+    if (!hasGoogleClientId) return;
 
     const initGoogle = () => {
       if (window.google) {
@@ -92,7 +93,7 @@ export default function RegisterPage() {
       }, 100);
       return () => clearInterval(interval);
     }
-  }, [googleClientId]);
+  }, [googleClientId, hasGoogleClientId]);
 
   // If already authenticated, redirect
   useEffect(() => {
@@ -193,9 +194,11 @@ export default function RegisterPage() {
           {/* Form */}
           <form onSubmit={handleRegister} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Google Sign-Up */}
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-              <div id="google-register-btn"></div>
-            </div>
+            {hasGoogleClientId && (
+              <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <div id="google-register-btn"></div>
+              </div>
+            )}
 
             {/* Divider */}
             <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0' }}>

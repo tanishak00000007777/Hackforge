@@ -2,7 +2,6 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const filterChips = ['All Templates', 'Technology', 'Web3', 'Academic', 'Design'];
-const STUDIO_URL = import.meta.env.VITE_STUDIO_URL || '/studio/';
 
 const templates = [
   {
@@ -80,9 +79,9 @@ export default function TemplateGallery() {
     return matchesFilter && matchesSearch;
   });
 
-  const handlePreview = () => window.location.href = STUDIO_URL;
-  const handleStartBuilding = () => window.location.href = STUDIO_URL;
-  const handleCreateHackathon = () => window.location.href = STUDIO_URL;
+  const handlePreview = () => navigate('/organizer');
+  const handleStartBuilding = () => navigate('/organizer');
+  const handleCreateHackathon = () => navigate('/organizer/setup');
 
   return (
     <div style={{ background: 'var(--color-surface)', color: 'var(--color-on-surface)', overflowX: 'hidden', fontFamily: 'var(--font-inter)' }}>

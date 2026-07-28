@@ -16,11 +16,18 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
 
-    allowed_origins: str = "http://localhost:4174,http://localhost:5173"
-    frontend_url: str = "http://localhost:4174"
+    allowed_origins: str = "http://127.0.0.1:5174,http://localhost:5174,http://127.0.0.1:4175,http://localhost:4175"
+    frontend_url: str = "http://127.0.0.1:5174"
     cloudinary_cloud_name: str = ""
     cloudinary_api_key: str = ""
     cloudinary_api_secret: str = ""
+    ai_groq_api_key: str = ""
+    ai_groq_model: str = "llama-3.3-70b-versatile"
+    ai_gemini_api_key: str = ""
+    ai_gemini_model: str = "gemini-flash-latest"
+    ai_request_timeout_seconds: float = 45
+    ai_requests_per_minute: int = 10
+    ai_max_tokens: int = 800
 
     @field_validator("database_url", mode="before")
     @classmethod

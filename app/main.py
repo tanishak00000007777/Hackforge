@@ -9,7 +9,7 @@ from app.config.settings import get_settings
 from app.routers import (
     auth, users, organizations, hackathons, tracks,
     registrations, teams, submissions, judges, scores,
-    leaderboard, certificates, announcements, sponsors, analytics, features, forms,
+    leaderboard, certificates, announcements, sponsors, analytics, features, forms, ai,
 )
 
 settings = get_settings()
@@ -58,6 +58,7 @@ app.include_router(sponsors.router,      prefix=API_PREFIX)
 app.include_router(analytics.router,     prefix=API_PREFIX)
 app.include_router(features.router,      prefix=API_PREFIX)
 app.include_router(forms.router,         prefix=API_PREFIX)
+app.include_router(ai.router,            prefix=API_PREFIX)
 
 
 @app.get("/health", tags=["Health"])
@@ -66,7 +67,7 @@ async def health_check():
 
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "FrontEnd"
-STUDIO_DIR = FRONTEND_DIR / "EditorWindow" / "Editor window" / "hackforge-studio" / "dist"
+STUDIO_DIR = FRONTEND_DIR / "EditorWindow" / "dist"
 REACT_ROUTES = {
     "/": "/",
     "/login": "/login",

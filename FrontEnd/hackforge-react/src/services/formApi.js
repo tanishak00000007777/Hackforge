@@ -17,7 +17,9 @@ export const gradeResponse = (responseId, data) => apiPatch(`/forms/response-rec
 export async function downloadAttachment(attachmentId, filename) {
   const { useAuthStore } = await import('../store/authStore.js');
   const token = useAuthStore.getState().accessToken;
-  const base = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
+  const base = import.meta.env.DEV
+    ? '/api/v1'
+    : (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1');
   const response = await fetch(`${base}/forms/attachment-files/${attachmentId}/download`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
