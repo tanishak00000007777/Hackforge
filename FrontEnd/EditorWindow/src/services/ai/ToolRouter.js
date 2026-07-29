@@ -8,15 +8,28 @@ import { toolRegistry } from "./ToolRegistry";
  * so narrowing the list never removes a capability.
  */
 
-/** Always present: orientation, batching and escape hatches. */
+/**
+ * Always present: orientation, batching and escape hatches, plus the styling
+ * tools the design rules require after every create. Keyword scoring alone
+ * never surfaces those -- "add a hero section" contains no word that matches
+ * updateSpacing or updateColors -- so a created section stayed unstyled.
+ */
 export const CORE_TOOL_NAMES = [
   "getCanvasState",
   "getSelection",
   "findComponent",
   "inspectComponent",
+  "setContent",
   "discoverTools",
   "callTool",
+  "executeBatchActions",
+  "composeSection",
+  "updateColors",
+  "updateTypography",
+  "updateSpacing",
 ];
+// moveElement is deliberately NOT core: "move" matches its name at full weight,
+// so scoring surfaces it whenever it is actually wanted.
 
 const STOP_WORDS = new Set([
   "the", "a", "an", "and", "or", "to", "of", "in", "on", "for", "with", "this",
@@ -113,8 +126,11 @@ export function scoreTool(entry, promptWords) {
 /**
  * Tools to expose for one turn: the core set, plus the highest scoring others.
  * `maxTools` is a token budget in disguise -- each schema costs ~100 tokens.
+ * It has to clear CORE_TOOL_NAMES by a wide margin: the core is subtracted from
+ * this budget, so a cap set too close to the core size starves the scored list
+ * and drops the very tool the prompt asked for.
  */
-export function selectTools(prompt, { maxTools = 18 } = {}) {
+export function selectTools(prompt, { maxTools = 20 } = {}) {
   const entries = getIndex();
   const core = entries.filter((entry) => CORE_TOOL_NAMES.includes(entry.tool.name)).map((entry) => entry.tool);
 

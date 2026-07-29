@@ -1,79 +1,116 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as hackathonApi from '../services/hackathonApi.js';
+import { PageHeader } from '../components/DashboardLayout.jsx';
+import { useOrganizer, HackathonPicker } from './organizer/OrganizerLayout.jsx';
 import * as formApi from '../services/formApi.js';
-
-const card = { background: '#fff', border: '1px solid #e8e2ec', borderRadius: 16, padding: 24, boxShadow: '0 8px 24px rgba(43,25,61,.06)' };
-const button = { border: 0, borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontWeight: 700 };
 
 export default function FormsDashboard() {
   const navigate = useNavigate();
-  const [hackathons, setHackathons] = useState([]);
-  const [hackathonId, setHackathonId] = useState('');
+  const { selectedHackathon } = useOrganizer();
   const [forms, setForms] = useState([]);
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
-    hackathonApi.listOwnedHackathons().then((items) => {
-      setHackathons(items);
-      if (items[0]) setHackathonId(items[0].id);
-    }).catch((err) => setError(err.detail || 'Could not load hackathons'));
-  }, []);
+    if (!selectedHackathon) return;
+    setError('');
+    formApi.listForms(selectedHackathon.id)
+      .then(setForms)
+      .catch(err => setError(err.detail || 'Could not load forms.'));
+  }, [selectedHackathon]);
 
-  useEffect(() => {
-    if (!hackathonId) return;
-    formApi.listForms(hackathonId).then(setForms).catch((err) => setError(err.detail || 'Could not load forms'));
-  }, [hackathonId]);
-
-  const create = async () => {
-    const title = window.prompt('Form title', 'Project Submission');
-    if (!title) return;
+  const create = async (e) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
     setCreating(true);
+    setError('');
     try {
-      const form = await formApi.createForm(hackathonId, { title, purpose: 'submission', access: 'public' });
+      const form = await formApi.createForm(selectedHackathon.id, {
+        title: newTitle.trim(),
+        purpose: 'submission',
+        access: 'public',
+      });
       navigate(`/organizer/forms/${form.id}`);
     } catch (err) {
-      setError(err.detail || 'Could not create form');
-    } finally {
+      setError(err.detail || 'Could not create the form.');
       setCreating(false);
     }
   };
 
+  if (!selectedHackathon) {
+    return (
+      <>
+        <PageHeader title="Forms" />
+        <div className="dash-card empty-state">Create a hackathon before building forms.</div>
+      </>
+    );
+  }
+
   return (
-    <main style={{ minHeight: '100vh', background: '#fbf8ff', padding: '40px max(24px, 6vw)', color: '#2b193d' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', gap: 24, alignItems: 'center', marginBottom: 32 }}>
-        <div>
-          <button onClick={() => navigate('/organizer')} style={{ ...button, background: 'transparent', paddingLeft: 0 }}>← Organizer dashboard</button>
-          <h1 style={{ fontSize: 40, margin: '8px 0' }}>Forms</h1>
-          <p style={{ color: '#6f6575' }}>Create submission forms and manually graded quizzes.</p>
-        </div>
-        <button disabled={!hackathonId || creating} onClick={create} style={{ ...button, background: '#2b0a5a', color: '#fff' }}>+ New form</button>
-      </header>
+    <>
+      <PageHeader
+        title="Forms"
+        subtitle="Submission forms and manually graded quizzes."
+        actions={
+          <>
+            <HackathonPicker />
+            <button className="btn btn-primary" onClick={() => setShowCreate(v => !v)}>
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>add</span>
+              New form
+            </button>
+          </>
+        }
+      />
 
-      <label style={{ display: 'block', marginBottom: 24, maxWidth: 420 }}>
-        <span style={{ display: 'block', fontWeight: 700, marginBottom: 8 }}>Hackathon</span>
-        <select value={hackathonId} onChange={(e) => setHackathonId(e.target.value)} style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid #d9d1de', background: '#fff' }}>
-          {hackathons.map((h) => <option key={h.id} value={h.id}>{h.title}</option>)}
-        </select>
-      </label>
+      {error && <div className="alert-error" style={{ marginBottom: 'var(--spacing-sm)' }}>{error}</div>}
 
-      {error && <p style={{ background: '#fff1f2', color: '#b42318', padding: 12, borderRadius: 8 }}>{error}</p>}
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-        {forms.map((form) => (
-          <article key={form.id} style={card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', color: form.status === 'published' ? '#087443' : '#775f85' }}>{form.status}</span>
-              <span style={{ fontSize: 12 }}>{form.purpose}</span>
-            </div>
-            <h2 style={{ margin: '16px 0 8px' }}>{form.title}</h2>
-            <p style={{ color: '#6f6575', minHeight: 42 }}>{form.description || 'No description yet.'}</p>
-            <p style={{ fontWeight: 700 }}>{form.response_count} responses</p>
-            <button onClick={() => navigate(`/organizer/forms/${form.id}`)} style={{ ...button, width: '100%', background: '#f0e9f7', color: '#2b0a5a' }}>Open builder</button>
-          </article>
-        ))}
-        {!forms.length && hackathonId && <div style={card}>No forms yet. Create the first one.</div>}
-      </section>
-    </main>
+      {showCreate && (
+        <form className="dash-card" onSubmit={create} style={{ marginBottom: 'var(--spacing-sm)', maxWidth: 480 }}>
+          <h2 className="section-title">Create a form</h2>
+          <input
+            className="field"
+            autoFocus
+            placeholder="Form title, e.g. Project submission"
+            value={newTitle}
+            onChange={e => setNewTitle(e.target.value)}
+            style={{ marginBottom: 12 }}
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-primary" disabled={creating || !newTitle.trim()}>
+              {creating ? 'Creating…' : 'Create and open builder'}
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => setShowCreate(false)}>Cancel</button>
+          </div>
+        </form>
+      )}
+
+      {forms.length === 0 ? (
+        <div className="dash-card empty-state">No forms yet. Create the first one.</div>
+      ) : (
+        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+          {forms.map(form => (
+            <article key={form.id} className="dash-card floating-card" style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+                <span className="pill" style={{
+                  background: form.status === 'published' ? '#dcfce7' : 'var(--color-surface-container-high)',
+                  color: form.status === 'published' ? '#15803d' : 'var(--color-on-surface-variant)',
+                }}>{form.status}</span>
+                <span className="label-mono">{form.purpose}</span>
+              </div>
+              <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-primary)', marginBottom: 6 }}>{form.title}</h2>
+              <p style={{ fontSize: 13, color: 'var(--color-on-surface-variant)', flexGrow: 1, marginBottom: 12 }}>
+                {form.description || 'No description yet.'}
+              </p>
+              <p className="label-mono" style={{ marginBottom: 14 }}>{form.response_count} responses</p>
+              <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => navigate(`/organizer/forms/${form.id}`)}>
+                Open builder
+              </button>
+            </article>
+          ))}
+        </section>
+      )}
+    </>
   );
 }

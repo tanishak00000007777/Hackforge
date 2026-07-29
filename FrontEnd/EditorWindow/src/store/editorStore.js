@@ -345,15 +345,19 @@ const createEditorStore = (set, get) => ({
      UPDATE COMPONENT
   ============================================================ */
 
+  // Resolve anywhere in the tree, not just the root list: canvas drag and the
+  // inspector both hand us the id of whatever is selected, which is usually a
+  // nested element. Root nodes still match, so this is a superset of the old
+  // top-level-only behaviour.
   updateComponent: (id, changes) =>
     set((state) => ({
       ...createHistorySnapshot(state),
-      components: coreCommands.updateComponentProps(state.components, id, changes),
+      components: coreCommands.updateNodeById(state.components, id, changes),
     })),
 
   updateComponentTransient: (id, changes) =>
     set((state) => ({
-      components: coreCommands.updateComponentProps(state.components, id, changes),
+      components: coreCommands.updateNodeById(state.components, id, changes),
     })),
 
   /* ============================================================

@@ -51,6 +51,9 @@ export default function Canvas() {
   const deleteComponent = useEditorStore((state) => state.deleteComponent);
   const [dropTarget, setDropTarget] = useState(null); // kept for potential future nesting, but mostly unused now
   const [pendingDrag, setPendingDrag] = useState(null); // { id, startX, startY }
+  // Where inside the node the user grabbed it, in canvas units. Without this the
+  // node jumps so its top-left snaps under the cursor the moment dragging starts.
+  const grabOffsetRef = useRef({ x: 50, y: 20 });
 
   // Mouse wheel to pan
   const handleWheel = (e) => {
@@ -77,6 +80,12 @@ export default function Canvas() {
       if (e.shiftKey) {
         toggleSelection(id);
       } else {
+        const zoomFactor = zoom / 100;
+        const nodeRect = node.getBoundingClientRect();
+        grabOffsetRef.current = {
+          x: (e.clientX - nodeRect.left) / zoomFactor,
+          y: (e.clientY - nodeRect.top) / zoomFactor,
+        };
         setPendingDrag({ id, startX: e.clientX, startY: e.clientY });
       }
     } else {
@@ -127,11 +136,12 @@ export default function Canvas() {
           const y = (e.clientY - rect.top) / zoomFactor;
           
           // Apply transient style updates so the element follows the cursor freely
+          const grab = grabOffsetRef.current;
           updateComponentTransient(draggedComponentId, {
             styles: {
               position: "absolute",
-              left: `${Math.round(x - 50)}px`,
-              top: `${Math.round(y - 20)}px` // offset for cursor center
+              left: `${Math.round(x - grab.x)}px`,
+              top: `${Math.round(y - grab.y)}px`
             }
           });
         }
@@ -243,11 +253,12 @@ export default function Canvas() {
         const x = (e.clientX - rect.left) / zoomFactor;
         const y = (e.clientY - rect.top) / zoomFactor;
         
+        const grab = grabOffsetRef.current;
         updateComponent(draggedComponentId, {
           styles: {
             position: "absolute",
-            left: `${Math.round(x - 50)}px`,
-            top: `${Math.round(y - 20)}px`
+            left: `${Math.round(x - grab.x)}px`,
+            top: `${Math.round(y - grab.y)}px`
           }
         });
       }

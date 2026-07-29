@@ -190,7 +190,7 @@ export default function JudgesDashboard() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true });
   };
 
   const isOrganizer = user?.role === 'organizer' || user?.role === 'admin';

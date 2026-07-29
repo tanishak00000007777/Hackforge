@@ -1,95 +1,73 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import * as hackathonApi from '../services/hackathonApi.js';
+import { PageHeader } from '../components/DashboardLayout.jsx';
+import { useOrganizer, HackathonPicker } from './organizer/OrganizerLayout.jsx';
 import * as teamApi from '../services/teamApi.js';
 
-const button = { border: 0, borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontWeight: 700 };
-
 export default function OrganizerTeamsPage() {
-  const navigate = useNavigate();
-  const [hackathons, setHackathons] = useState([]);
-  const [hackathonId, setHackathonId] = useState('');
+  const { selectedHackathon } = useOrganizer();
   const [teams, setTeams] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    hackathonApi.listOwnedHackathons().then((items) => {
-      setHackathons(items);
-      if (items[0]) setHackathonId(items[0].id);
-    }).catch((err) => setError(err.detail || 'Could not load hackathons'));
-  }, []);
-
-  useEffect(() => {
-    if (!hackathonId) return;
+    if (!selectedHackathon) return;
     setLoading(true);
-    teamApi.getHackathonTeams(hackathonId)
+    setError('');
+    teamApi.getHackathonTeams(selectedHackathon.id)
       .then(setTeams)
-      .catch((err) => setError(err.detail || 'Could not load teams'))
+      .catch(err => setError(err.detail || 'Could not load teams.'))
       .finally(() => setLoading(false));
-  }, [hackathonId]);
+  }, [selectedHackathon]);
+
+  if (!selectedHackathon) {
+    return (
+      <>
+        <PageHeader title="Teams" />
+        <div className="dash-card empty-state">Create a hackathon before managing teams.</div>
+      </>
+    );
+  }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#fbf8ff', padding: '40px max(24px, 6vw)', color: '#2b193d' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', gap: 24, alignItems: 'center', marginBottom: 32 }}>
-        <div>
-          <button onClick={() => navigate('/organizer')} style={{ ...button, background: 'transparent', paddingLeft: 0, color: '#2b193d' }}>
-            ← Organizer dashboard
-          </button>
-          <h1 style={{ fontSize: 40, margin: '8px 0', color: 'var(--color-primary, #2b193d)' }}>Teams</h1>
-          <p style={{ color: '#6f6575' }}>Manage and view all participating teams in your hackathons.</p>
-        </div>
-      </header>
+    <>
+      <PageHeader
+        title="Teams"
+        subtitle={`Teams formed for ${selectedHackathon.title}.`}
+        actions={<HackathonPicker />}
+      />
 
-      {error && (
-        <div style={{ background: '#fef2f2', color: '#dc2626', padding: '12px 16px', borderRadius: 8, marginBottom: 24 }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="alert-error" style={{ marginBottom: 'var(--spacing-sm)' }}>{error}</div>}
 
-      <label style={{ display: 'block', marginBottom: 24, maxWidth: 420 }}>
-        <span style={{ display: 'block', fontWeight: 700, marginBottom: 8 }}>Hackathon</span>
-        <select value={hackathonId} onChange={(e) => setHackathonId(e.target.value)} style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid #d9d1de', background: '#fff' }}>
-          {hackathons.map((h) => <option key={h.id} value={h.id}>{h.title}</option>)}
-        </select>
-      </label>
-
-      <div style={{ background: '#fff', border: '1px solid #e8e2ec', borderRadius: 16, overflow: 'hidden', boxShadow: '0 8px 24px rgba(43,25,61,.06)' }}>
+      <div className="dash-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-            <thead style={{ background: 'var(--color-surface-container-low, #f8f7f9)' }}>
+          <table className="dash-table">
+            <thead>
               <tr>
-                <th style={{ padding: '16px 24px', textAlign: 'left', textTransform: 'uppercase', fontSize: 12, color: '#6f6575', fontWeight: 600 }}>Team Name</th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', textTransform: 'uppercase', fontSize: 12, color: '#6f6575', fontWeight: 600 }}>Invite Code</th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', textTransform: 'uppercase', fontSize: 12, color: '#6f6575', fontWeight: 600 }}>Leader</th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', textTransform: 'uppercase', fontSize: 12, color: '#6f6575', fontWeight: 600 }}>Members</th>
+                <th>Team</th>
+                <th>Invite code</th>
+                <th>Leader</th>
+                <th>Members</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={4} style={{ padding: 32, textAlign: 'center', color: '#6f6575' }}>
-                    Loading teams...
-                  </td>
-                </tr>
+                <tr><td colSpan={4} className="empty-state">
+                  <span className="material-symbols-outlined animate-spin" style={{ fontSize: 24 }}>progress_activity</span>
+                </td></tr>
               ) : teams.length === 0 ? (
-                <tr>
-                  <td colSpan={4} style={{ padding: 32, textAlign: 'center', color: '#6f6575' }}>
-                    No teams found for this hackathon.
-                  </td>
-                </tr>
-              ) : teams.map((team) => (
-                <tr key={team.id} style={{ borderTop: '1px solid #e8e2ec' }}>
-                  <td style={{ padding: '16px 24px', fontWeight: 600, color: '#2b193d' }}>{team.name}</td>
-                  <td style={{ padding: '16px 24px', color: '#6f6575' }}>{team.invite_code}</td>
-                  <td style={{ padding: '16px 24px', color: '#2b193d' }}>{team.leader_id?.slice(0, 8)}...</td>
-                  <td style={{ padding: '16px 24px', color: '#6f6575' }}>{team.members ? team.members.length : 1}</td>
+                <tr><td colSpan={4} className="empty-state">No teams have been formed yet.</td></tr>
+              ) : teams.map(team => (
+                <tr key={team.id}>
+                  <td style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{team.name}</td>
+                  <td style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{team.invite_code}</td>
+                  <td style={{ color: 'var(--color-on-surface-variant)' }}>{team.leader_id?.slice(0, 8)}</td>
+                  <td style={{ color: 'var(--color-on-surface-variant)' }}>{team.members ? team.members.length : 1}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-    </main>
+    </>
   );
 }

@@ -1,125 +1,122 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import * as hackathonApi from '../services/hackathonApi.js';
+import { PageHeader } from '../components/DashboardLayout.jsx';
+import { useOrganizer, HackathonPicker } from './organizer/OrganizerLayout.jsx';
+import * as registrationApi from '../services/registrationApi.js';
+import * as teamApi from '../services/teamApi.js';
+import * as submissionApi from '../services/submissionApi.js';
 
-const button = { border: 0, borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontWeight: 700 };
+const STATUS_ORDER = ['pending', 'approved', 'waitlisted', 'rejected'];
+const STATUS_COLORS = {
+  pending: 'var(--color-outline)',
+  approved: '#15803d',
+  waitlisted: '#b45309',
+  rejected: 'var(--color-error)',
+};
+
+function Bar({ label, value, total, color }) {
+  const pct = total ? Math.round((value / total) * 100) : 0;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ width: 140, fontSize: 13, color: 'var(--color-on-surface-variant)', textTransform: 'capitalize' }}>{label}</div>
+      <div style={{ flex: 1, background: 'var(--color-surface-container)', borderRadius: 'var(--radius-full)', height: 22, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 'var(--radius-full)', transition: 'width 0.4s ease' }} />
+      </div>
+      <div style={{ width: 76, fontSize: 13, fontWeight: 700, color: 'var(--color-primary)', textAlign: 'right' }}>
+        {value} · {pct}%
+      </div>
+    </div>
+  );
+}
+
+function Metric({ label, value, hint }) {
+  return (
+    <div className="dash-card">
+      <p className="label-mono" style={{ marginBottom: 10 }}>{label}</p>
+      <p style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-primary)' }}>{value}</p>
+      {hint && <p style={{ fontSize: 13, color: 'var(--color-on-surface-variant)', marginTop: 4 }}>{hint}</p>}
+    </div>
+  );
+}
 
 export default function OrganizerAnalyticsPage() {
-  const navigate = useNavigate();
-  const [hackathons, setHackathons] = useState([]);
-  const [hackathonId, setHackathonId] = useState('');
-  const [error, setError] = useState('');
+  const { selectedHackathon } = useOrganizer();
+  const [registrations, setRegistrations] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    hackathonApi.listOwnedHackathons().then((items) => {
-      setHackathons(items);
-      if (items[0]) setHackathonId(items[0].id);
-    }).catch((err) => setError(err.detail || 'Could not load hackathons'));
-  }, []);
+    if (!selectedHackathon) return;
+    setLoading(true);
+    Promise.all([
+      registrationApi.getRegistrations(selectedHackathon.id).catch(() => []),
+      teamApi.getHackathonTeams(selectedHackathon.id).catch(() => []),
+      submissionApi.getHackathonSubmissions(selectedHackathon.id).catch(() => []),
+    ])
+      .then(([regs, tms, subs]) => { setRegistrations(regs); setTeams(tms); setSubmissions(subs); })
+      .finally(() => setLoading(false));
+  }, [selectedHackathon]);
+
+  if (!selectedHackathon) {
+    return (
+      <>
+        <PageHeader title="Analytics" />
+        <div className="dash-card empty-state">Create a hackathon to see its analytics.</div>
+      </>
+    );
+  }
+
+  const byStatus = STATUS_ORDER.map(s => ({ status: s, count: registrations.filter(r => r.status === s).length }));
+  const approved = registrations.filter(r => r.status === 'approved').length;
+  const submitted = submissions.filter(s => s.status !== 'draft').length;
+  const teamed = teams.reduce((n, t) => n + (t.members ? t.members.length : 1), 0);
+  const avgTeamSize = teams.length ? (teamed / teams.length).toFixed(1) : '—';
 
   return (
-    <main style={{ minHeight: '100vh', background: '#fbf8ff', padding: '40px max(24px, 6vw)', color: '#2b193d' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', gap: 24, alignItems: 'center', marginBottom: 32 }}>
-        <div>
-          <button onClick={() => navigate('/organizer')} style={{ ...button, background: 'transparent', paddingLeft: 0, color: '#2b193d' }}>
-            ← Organizer dashboard
-          </button>
-          <h1 style={{ fontSize: 40, margin: '8px 0', color: 'var(--color-primary, #2b193d)' }}>Analytics</h1>
-          <p style={{ color: '#6f6575' }}>View engagement metrics, demographics, and submission statistics.</p>
-        </div>
-      </header>
+    <>
+      <PageHeader
+        title="Analytics"
+        subtitle={`Live numbers for ${selectedHackathon.title}.`}
+        actions={<HackathonPicker />}
+      />
 
-      {error && (
-        <div style={{ background: '#fef2f2', color: '#dc2626', padding: '12px 16px', borderRadius: 8, marginBottom: 24 }}>
-          {error}
+      {loading ? (
+        <div className="empty-state">
+          <span className="material-symbols-outlined animate-spin" style={{ fontSize: 28 }}>progress_activity</span>
         </div>
+      ) : (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 'var(--spacing-md)' }}>
+            <Metric label="Registrations" value={registrations.length} hint={`${approved} approved`} />
+            <Metric label="Teams" value={teams.length} hint={`avg ${avgTeamSize} members`} />
+            <Metric label="Participants in teams" value={teamed} hint={approved ? `${Math.round((teamed / approved) * 100)}% of approved` : 'No approvals yet'} />
+            <Metric label="Submitted projects" value={submitted} hint={`${submissions.length - submitted} still draft`} />
+          </div>
+
+          <section className="dash-card" style={{ marginBottom: 'var(--spacing-md)' }}>
+            <h2 className="section-title">Registrations by status</h2>
+            {registrations.length === 0 ? (
+              <p className="empty-state">No registrations yet.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {byStatus.map(row => (
+                  <Bar key={row.status} label={row.status} value={row.count} total={registrations.length} color={STATUS_COLORS[row.status]} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="dash-card">
+            <h2 className="section-title">Funnel</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <Bar label="Registered" value={registrations.length} total={registrations.length} color="var(--color-primary-container)" />
+              <Bar label="Approved" value={approved} total={registrations.length} color="var(--color-secondary)" />
+              <Bar label="In a team" value={teamed} total={registrations.length} color="var(--color-on-tertiary-container)" />
+              <Bar label="Submitted" value={submitted} total={registrations.length} color="#15803d" />
+            </div>
+          </section>
+        </>
       )}
-
-      <label style={{ display: 'block', marginBottom: 24, maxWidth: 420 }}>
-        <span style={{ display: 'block', fontWeight: 700, marginBottom: 8 }}>Hackathon</span>
-        <select value={hackathonId} onChange={(e) => setHackathonId(e.target.value)} style={{ width: '100%', padding: 12, borderRadius: 8, border: '1px solid #d9d1de', background: '#fff' }}>
-          {hackathons.map((h) => <option key={h.id} value={h.id}>{h.title}</option>)}
-        </select>
-      </label>
-
-      {/* Analytics Charts Area */}
-      <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        
-        {/* Registration Funnel */}
-        <div className="floating-card" style={{ padding: '24px', borderRadius: 16, background: '#fff', border: '1px solid #e8e2ec', boxShadow: '0 8px 24px rgba(43,25,61,.06)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 600, color: '#2b193d' }}>Registration Funnel</h3>
-            <span style={{ fontFamily: 'monospace', fontSize: 12, padding: '4px 12px', background: '#f8f7f9', borderRadius: 4, color: '#6f6575' }}>Last 30 Days</span>
-          </div>
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, alignItems: 'flex-end', paddingTop: 16, minHeight: 250 }}>
-            {[
-              { label: 'Landing Page Visits', value: '14.2k', height: '90%', bg: '#f4f2ff', color: '#2b193d' },
-              { label: 'Signups Started', value: '9.8k', height: '70%', bg: '#2b193d', color: '#fff' },
-              { label: 'Teams Formed', value: '6.1k', height: '55%', bg: '#602e9a', color: '#fff' },
-              { label: 'Completed Registration', value: '3.4k', height: '40%', bg: '#c5979d', color: '#fff' },
-            ].map(bar => (
-              <div key={bar.label} style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-                <div style={{ width: '100%', background: '#f8f7f9', borderRadius: '8px 8px 0 0', position: 'relative', overflow: 'hidden', height: '100%', minHeight: 180 }}>
-                  <div style={{ position: 'absolute', bottom: 0, width: '100%', height: bar.height, background: bar.bg, borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'height 0.5s ease' }}>
-                    <span style={{ fontFamily: 'monospace', fontSize: 12, color: bar.color }}>{bar.value}</span>
-                  </div>
-                </div>
-                <span style={{ fontFamily: 'monospace', fontSize: 10, textAlign: 'center', color: '#6f6575' }}>{bar.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Submissions by Track */}
-        <div className="floating-card" style={{ padding: '24px', borderRadius: 16, background: '#fff', border: '1px solid #e8e2ec', boxShadow: '0 8px 24px rgba(43,25,61,.06)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 600, color: '#2b193d' }}>Submissions by Track</h3>
-            <span style={{ fontFamily: 'monospace', fontSize: 12, padding: '4px 12px', background: '#f8f7f9', borderRadius: 4, color: '#6f6575' }}>Final Count</span>
-          </div>
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, alignItems: 'flex-end', paddingTop: 16, minHeight: 250 }}>
-            {[
-              { label: 'AI & ML', value: '320', height: '80%', bg: '#2b193d', color: '#fff' },
-              { label: 'Web3', value: '185', height: '55%', bg: '#602e9a', color: '#fff' },
-              { label: 'HealthTech', value: '210', height: '65%', bg: '#865fc2', color: '#fff' },
-              { label: 'FinTech', value: '140', height: '40%', bg: '#ab8ee1', color: '#fff' },
-              { label: 'EdTech', value: '95', height: '25%', bg: '#d0c3f7', color: '#2b193d' },
-            ].map(bar => (
-              <div key={bar.label} style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
-                <div style={{ width: '100%', background: '#f8f7f9', borderRadius: '8px 8px 0 0', position: 'relative', overflow: 'hidden', height: '100%', minHeight: 180 }}>
-                  <div style={{ position: 'absolute', bottom: 0, width: '100%', height: bar.height, background: bar.bg, borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'height 0.5s ease' }}>
-                    <span style={{ fontFamily: 'monospace', fontSize: 12, color: bar.color }}>{bar.value}</span>
-                  </div>
-                </div>
-                <span style={{ fontFamily: 'monospace', fontSize: 10, textAlign: 'center', color: '#6f6575' }}>{bar.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Participant Demographics */}
-        <div className="floating-card" style={{ gridColumn: 'span 2', padding: '24px', borderRadius: 16, background: '#fff', border: '1px solid #e8e2ec', boxShadow: '0 8px 24px rgba(43,25,61,.06)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 600, color: '#2b193d' }}>Participant Experience Levels</h3>
-            <span style={{ fontFamily: 'monospace', fontSize: 12, padding: '4px 12px', background: '#f8f7f9', borderRadius: 4, color: '#6f6575' }}>Self-Reported</span>
-          </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-             {[
-              { label: 'Beginner (0-1 yrs)', value: '35%', width: '35%', bg: '#c5979d' },
-              { label: 'Intermediate (1-3 yrs)', value: '45%', width: '45%', bg: '#602e9a' },
-              { label: 'Advanced (3+ yrs)', value: '20%', width: '20%', bg: '#2b193d' },
-             ].map(row => (
-               <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                 <div style={{ width: 140, fontSize: 12, color: '#6f6575', fontWeight: 600 }}>{row.label}</div>
-                 <div style={{ flex: 1, background: '#f8f7f9', borderRadius: 8, height: 24, position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: row.width, background: row.bg, borderRadius: 8, transition: 'width 0.5s ease' }}></div>
-                 </div>
-                 <div style={{ width: 40, fontSize: 12, fontWeight: 700, color: '#2b193d', textAlign: 'right' }}>{row.value}</div>
-               </div>
-             ))}
-          </div>
-        </div>
-
-      </section>
-    </main>
+    </>
   );
 }

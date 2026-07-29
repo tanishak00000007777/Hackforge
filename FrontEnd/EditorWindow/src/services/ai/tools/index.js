@@ -9,6 +9,7 @@ import { selectionTools } from "./selectionTools";
 import { canvasTools } from "./canvasTools";
 import { pageTools } from "./pageTools";
 import { sectionTools } from "./sectionTools";
+import { composeTools } from "./composeTools";
 import { elementTools } from "./elementTools";
 import { styleTools } from "./styleTools";
 import { responsiveTools } from "./responsiveTools";
@@ -32,6 +33,7 @@ export const toolsByCategory = {
   canvas: canvasTools,
   page: pageTools,
   section: sectionTools,
+  compose: composeTools,
   element: elementTools,
   style: styleTools,
   responsive: responsiveTools,

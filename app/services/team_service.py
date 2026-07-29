@@ -30,6 +30,7 @@ async def _get_user_team(
         )
         .options(selectinload(Team.members))
     )
+    return result.scalars().first()
 
 
 async def create_team(

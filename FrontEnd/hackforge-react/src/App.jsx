@@ -7,8 +7,6 @@ import OrganizerSetupRoute from './components/OrganizerSetupRoute.jsx';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import OrganizerDashboard from './pages/OrganizerDashboard';
-import ParticipantDashboard from './pages/ParticipantDashboard';
 import JudgesDashboard from './pages/JudgesDashboard';
 import TemplateGallery from './pages/TemplateGallery';
 import FormsDashboard from './pages/FormsDashboard';
@@ -23,6 +21,23 @@ import OrganizerSubmissionsPage from './pages/OrganizerSubmissionsPage';
 import OrganizerAnalyticsPage from './pages/OrganizerAnalyticsPage';
 import OrganizerSetupPage from './pages/OrganizerSetupPage';
 import StudioBridgePage from './pages/StudioBridgePage';
+import JoinTeamPage from './pages/JoinTeamPage';
+
+import ParticipantLayout from './pages/participant/ParticipantLayout.jsx';
+import ParticipantOverview from './pages/participant/ParticipantOverview.jsx';
+import ParticipantHackathons from './pages/participant/ParticipantHackathons.jsx';
+import ParticipantTeam from './pages/participant/ParticipantTeam.jsx';
+import ParticipantAnnouncements from './pages/participant/ParticipantAnnouncements.jsx';
+
+import OrganizerLayout from './pages/organizer/OrganizerLayout.jsx';
+import OrganizerOverview from './pages/organizer/OrganizerOverview.jsx';
+import OrganizerHackathons from './pages/organizer/OrganizerHackathons.jsx';
+import OrganizerRegistrations from './pages/organizer/OrganizerRegistrations.jsx';
+import OrganizerStudioRedirect from './pages/organizer/OrganizerStudioRedirect.jsx';
+
+const organizerOnly = (element) => (
+  <RoleRoute allowedRoles={['organizer', 'admin']}>{element}</RoleRoute>
+);
 
 export default function App() {
   const restoreSession = useAuthStore((s) => s.restoreSession);
@@ -41,26 +56,35 @@ export default function App() {
         <Route path="/forms/:slug" element={<PublicFormPage />} />
         <Route path="/certificates/verify/:verificationId" element={<CertificateVerifyPage />} />
 
-        {/* Role-protected dashboards */}
-        <Route path="/organizer" element={
-          <RoleRoute allowedRoles={['organizer', 'admin']}>
-            <OrganizerSetupRoute><OrganizerDashboard /></OrganizerSetupRoute>
-          </RoleRoute>
-        } />
-        <Route path="/organizer/setup" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupPage /></RoleRoute>} />
-        <Route path="/organizer/teams" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><OrganizerTeamsPage /></OrganizerSetupRoute></RoleRoute>} />
-        <Route path="/organizer/submissions" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><OrganizerSubmissionsPage /></OrganizerSetupRoute></RoleRoute>} />
-        <Route path="/organizer/analytics" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><OrganizerAnalyticsPage /></OrganizerSetupRoute></RoleRoute>} />
-        <Route path="/organizer/forms" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><FormsDashboard /></OrganizerSetupRoute></RoleRoute>} />
-        <Route path="/organizer/forms/:formId" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><FormBuilderPage /></OrganizerSetupRoute></RoleRoute>} />
-        <Route path="/organizer/certificates" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><CertificatesDashboard /></OrganizerSetupRoute></RoleRoute>} />
-        <Route path="/organizer/hackathons/:hackathonId/studio" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><StudioBridgePage /></OrganizerSetupRoute></RoleRoute>} />
-        <Route path="/participant" element={
-          <RoleRoute allowedRoles={['participant']}>
-            <ParticipantDashboard />
-          </RoleRoute>
-        } />
-        <Route path="/participant/certificates" element={<RoleRoute allowedRoles={['participant']}><MyCertificatesPage /></RoleRoute>} />
+        {/* Organizer — nested under a shared dashboard shell */}
+        <Route path="/organizer" element={organizerOnly(<OrganizerSetupRoute><OrganizerLayout /></OrganizerSetupRoute>)}>
+          <Route index element={<OrganizerOverview />} />
+          <Route path="hackathons" element={<OrganizerHackathons />} />
+          <Route path="studio" element={<OrganizerStudioRedirect />} />
+          <Route path="registrations" element={<OrganizerRegistrations />} />
+          <Route path="teams" element={<OrganizerTeamsPage />} />
+          <Route path="submissions" element={<OrganizerSubmissionsPage />} />
+          <Route path="analytics" element={<OrganizerAnalyticsPage />} />
+          <Route path="forms" element={<FormsDashboard />} />
+          <Route path="certificates" element={<CertificatesDashboard />} />
+        </Route>
+
+        {/* Organizer — full-bleed routes that intentionally sit outside the shell */}
+        <Route path="/organizer/setup" element={organizerOnly(<OrganizerSetupPage />)} />
+        <Route path="/organizer/forms/:formId" element={organizerOnly(<OrganizerSetupRoute><FormBuilderPage /></OrganizerSetupRoute>)} />
+        <Route path="/organizer/hackathons/:hackathonId/studio" element={organizerOnly(<OrganizerSetupRoute><StudioBridgePage /></OrganizerSetupRoute>)} />
+
+        {/* Participant — nested under a shared dashboard shell */}
+        <Route path="/participant" element={<RoleRoute allowedRoles={['participant']}><ParticipantLayout /></RoleRoute>}>
+          <Route index element={<ParticipantOverview />} />
+          <Route path="hackathons" element={<ParticipantHackathons />} />
+          <Route path="team" element={<ParticipantTeam />} />
+          <Route path="announcements" element={<ParticipantAnnouncements />} />
+          <Route path="certificates" element={<MyCertificatesPage />} />
+        </Route>
+
+        <Route path="/join/:hackathonId/:inviteCode" element={<RoleRoute allowedRoles={['participant']}><JoinTeamPage /></RoleRoute>} />
+
         <Route path="/judge" element={
           <RoleRoute allowedRoles={['judge', 'organizer', 'admin']}>
             <JudgesDashboard />

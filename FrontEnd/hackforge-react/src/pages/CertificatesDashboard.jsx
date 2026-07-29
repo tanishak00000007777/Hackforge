@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '../components/DashboardLayout.jsx';
+import { useOrganizer, HackathonPicker } from './organizer/OrganizerLayout.jsx';
 import * as certificateApi from '../services/certificateApi.js';
-import * as hackathonApi from '../services/hackathonApi.js';
 import * as teamApi from '../services/teamApi.js';
 
-const field = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #d8cfdf', borderRadius: 8, background: '#fff', color: '#2b193d' };
-const button = { border: 0, borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontWeight: 700 };
-const card = { background: '#fff', border: '1px solid #e8e2ec', borderRadius: 16, padding: 22, boxShadow: '0 8px 24px rgba(43,25,61,.06)' };
 const presetNames = { classic: 'Classic', modern: 'Modern', bold: 'Bold' };
 const demoTemplate = {
   preset: 'modern',
@@ -19,10 +16,11 @@ const demoTemplate = {
   sponsor_names: ['HackForge Labs', 'Northstar Foundation'],
 };
 
+const labelStyle = { display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--color-on-surface-variant)', marginBottom: 6 };
+
 export default function CertificatesDashboard() {
-  const navigate = useNavigate();
-  const [hackathons, setHackathons] = useState([]);
-  const [hackathonId, setHackathonId] = useState('');
+  const { selectedHackathon } = useOrganizer();
+  const hackathonId = selectedHackathon?.id;
   const [template, setTemplate] = useState(null);
   const [certificates, setCertificates] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -31,13 +29,6 @@ export default function CertificatesDashboard() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    hackathonApi.listOwnedHackathons().then((items) => {
-      setHackathons(items);
-      if (items[0]) setHackathonId(items[0].id);
-    }).catch((err) => setError(err.detail || 'Could not load hackathons'));
-  }, []);
 
   useEffect(() => {
     if (!hackathonId) return;
@@ -51,11 +42,10 @@ export default function CertificatesDashboard() {
       setCertificates(issued);
       setTeams(Array.isArray(eventTeams) ? eventTeams : []);
       setTeamIds([]);
-      setMessage(savedTemplate.id ? '' : 'Demo certificate template loaded. Save it to keep these settings.');
-    }).catch((err) => setError(err.detail || 'Could not load certificate settings'));
+      setMessage(savedTemplate.id ? '' : 'Demo template loaded. Save it to keep these settings.');
+    }).catch((err) => setError(err.detail || 'Could not load certificate settings.'));
   }, [hackathonId]);
 
-  const selectedHackathon = hackathons.find((item) => item.id === hackathonId);
   const selectedMemberCount = useMemo(() => teams
     .filter((team) => teamIds.includes(team.id))
     .reduce((total, team) => total + (team.members?.length || 0), 0), [teams, teamIds]);
@@ -66,11 +56,10 @@ export default function CertificatesDashboard() {
   const save = async () => {
     setBusy(true); setError(''); setMessage('');
     try {
-      const saved = await certificateApi.saveTemplate(hackathonId, template);
-      setTemplate(saved);
-      setMessage('Template saved successfully.');
+      setTemplate(await certificateApi.saveTemplate(hackathonId, template));
+      setMessage('Template saved.');
     } catch (err) {
-      setError(err.detail || 'Could not save template');
+      setError(err.detail || 'Could not save the template.');
     } finally { setBusy(false); }
   };
 
@@ -85,7 +74,7 @@ export default function CertificatesDashboard() {
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (err) {
       if (tab) tab.close();
-      setError(err.detail || 'Could not generate preview');
+      setError(err.detail || 'Could not generate a preview.');
     } finally { setBusy(false); }
   };
 
@@ -99,7 +88,7 @@ export default function CertificatesDashboard() {
       setMessage(`${result.issued} issued, ${result.skipped} already existed.`);
       setCertificates(await certificateApi.getHackathonCertificates(hackathonId));
     } catch (err) {
-      setError(err.detail || 'Could not issue certificates');
+      setError(err.detail || 'Could not issue certificates.');
     } finally { setBusy(false); }
   };
 
@@ -114,64 +103,188 @@ export default function CertificatesDashboard() {
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.detail || 'Could not download certificate');
+      setError(err.detail || 'Could not download the certificate.');
     } finally { setBusy(false); }
   };
 
-  if (!template && hackathonId) return <main style={{ padding: 40 }}>Loading certificate studio…</main>;
+  if (!selectedHackathon) {
+    return (
+      <>
+        <PageHeader title="Certificates" />
+        <div className="dash-card empty-state">Create a hackathon before issuing certificates.</div>
+      </>
+    );
+  }
 
   return (
-    <main style={{ minHeight: '100vh', background: '#fbf8ff', padding: '36px max(22px, 5vw)', color: '#2b193d' }}>
-      <button onClick={() => navigate('/organizer')} style={{ ...button, background: 'transparent', paddingLeft: 0 }}>← Organizer dashboard</button>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 20, flexWrap: 'wrap', margin: '8px 0 28px' }}>
-        <div><h1 style={{ fontSize: 38, margin: 0 }}>Certificates</h1><p style={{ color: '#6f6575' }}>Design, preview, and bulk-issue verified event certificates.</p></div>
-        <label style={{ minWidth: 280 }}><span style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>Hackathon</span><select value={hackathonId} onChange={(e) => setHackathonId(e.target.value)} style={field}>{hackathons.map((h) => <option key={h.id} value={h.id}>{h.title}</option>)}</select></label>
-      </header>
+    <>
+      <PageHeader
+        title="Certificates"
+        subtitle="Design, preview and bulk-issue verified event certificates."
+        actions={<HackathonPicker />}
+      />
 
-      {error && <p role="alert" style={{ background: '#fff1f2', color: '#b42318', padding: 12, borderRadius: 8 }}>{error}</p>}
-      {message && <p role="status" style={{ background: '#ecfdf3', color: '#087443', padding: 12, borderRadius: 8 }}>{message}</p>}
-
-      {template && <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(420px, 100%), 1fr))', gap: 24, alignItems: 'start' }}>
-        <div style={{ ...card, display: 'grid', gap: 15 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <h2 style={{ margin: 0 }}>Template</h2>
-            <button onClick={() => setTemplate((current) => ({ ...current, ...demoTemplate }))} style={{ ...button, padding: '7px 11px', background: '#f1ebf5', color: '#2b0a5a' }}>Load demo</button>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-            {Object.keys(presetNames).map((preset) => <button key={preset} onClick={() => update('preset', preset)} style={{ ...button, background: template.preset === preset ? '#2b0a5a' : '#f1ebf5', color: template.preset === preset ? '#fff' : '#2b193d' }}>{presetNames[preset]}</button>)}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <label>Primary color<input type="color" value={template.primary_color} onChange={(e) => update('primary_color', e.target.value)} style={{ ...field, height: 42, padding: 4 }} /></label>
-            <label>Accent color<input type="color" value={template.secondary_color} onChange={(e) => update('secondary_color', e.target.value)} style={{ ...field, height: 42, padding: 4 }} /></label>
-          </div>
-          <label>Heading<input value={template.heading} maxLength={120} onChange={(e) => update('heading', e.target.value)} style={field} /></label>
-          <label>Presentation text<textarea value={template.body_text} maxLength={300} onChange={(e) => update('body_text', e.target.value)} rows={2} style={field} /></label>
-          <label>Signatory name<input value={template.signatory_name} maxLength={120} onChange={(e) => update('signatory_name', e.target.value)} style={field} /></label>
-          <label>Signatory title<input value={template.signatory_title} maxLength={120} onChange={(e) => update('signatory_title', e.target.value)} style={field} /></label>
-          <label>Sponsors <small style={{ color: '#746a79' }}>(comma separated)</small><input value={template.sponsor_names.join(', ')} onChange={(e) => update('sponsor_names', e.target.value.split(',').map((name) => name.trim()).filter(Boolean))} style={field} /></label>
-          <div style={{ display: 'flex', gap: 10 }}><button disabled={busy} onClick={save} style={{ ...button, background: '#2b0a5a', color: '#fff', flex: 1 }}>Save template</button><button disabled={busy} onClick={previewPdf} style={{ ...button, background: '#efe7f5', color: '#2b0a5a' }}>Preview PDF</button></div>
+      {error && <div className="alert-error" style={{ marginBottom: 'var(--spacing-sm)' }} role="alert">{error}</div>}
+      {message && (
+        <div style={{ background: '#dcfce7', color: '#15803d', padding: '12px 16px', borderRadius: 'var(--radius-md)', fontSize: 14, marginBottom: 'var(--spacing-sm)' }} role="status">
+          {message}
         </div>
+      )}
 
-        <div style={{ display: 'grid', gap: 24, minWidth: 0 }}>
-          <article aria-label="Certificate preview" style={{ width: '100%', minWidth: 0, overflow: 'hidden', aspectRatio: '1.414 / 1', padding: 'clamp(14px, 4vw, 34px)', boxSizing: 'border-box', color: template.preset === 'bold' ? '#fff' : '#352c3b', background: template.preset === 'bold' ? template.primary_color : '#fff', border: template.preset === 'classic' ? `8px double ${template.primary_color}` : '1px solid #ded5e3', borderLeft: template.preset === 'modern' ? `clamp(18px, 5vw, 56px) solid ${template.primary_color}` : undefined, borderRadius: template.preset === 'modern' ? 4 : 12, boxShadow: '0 18px 45px rgba(43,25,61,.13)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-            <div style={{ fontSize: 12, letterSpacing: 2, opacity: .7 }}>HACKFORGE · {selectedHackathon?.title}</div>
-            <h2 style={{ fontFamily: template.preset === 'classic' ? 'Georgia, serif' : 'inherit', fontSize: 30, color: template.preset === 'bold' ? '#fff' : template.primary_color, margin: '22px 0 14px' }}>{template.heading}</h2>
-            <p style={{ margin: 0 }}>{template.body_text}</p><strong style={{ fontSize: 28, margin: '14px 0', color: template.preset === 'bold' ? template.secondary_color : template.primary_color }}>Alex Morgan</strong><p>for successfully participating in <b>{selectedHackathon?.title}</b></p>
-            <div style={{ width: 180, borderTop: `2px solid ${template.secondary_color}`, marginTop: 22, paddingTop: 8 }}><b>{template.signatory_name}</b><br /><small>{template.signatory_title}</small></div>
-            {!!template.sponsor_names.length && <small style={{ marginTop: 18 }}>Supported by: {template.sponsor_names.join(' · ')}</small>}
-          </article>
-
-          <div style={card}>
-            <h2 style={{ marginTop: 0 }}>Bulk issuance</h2>
-            <label><span style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>Certificate type</span><select value={certificateType} onChange={(e) => { setCertificateType(e.target.value); setTeamIds([]); }} style={field}><option value="participant">Participant</option><option value="judge">Judge</option><option value="winner">Winner</option><option value="runner_up">Runner-up</option></select></label>
-            {awardType && <div style={{ marginTop: 16 }}><b>Select winning teams</b><div style={{ display: 'grid', gap: 8, marginTop: 8 }}>{teams.map((team) => <label key={team.id} style={{ display: 'flex', gap: 9, alignItems: 'center', padding: 10, background: '#f8f4fa', borderRadius: 8 }}><input type="checkbox" checked={teamIds.includes(team.id)} onChange={(e) => setTeamIds((ids) => e.target.checked ? [...ids, team.id] : ids.filter((id) => id !== team.id))} /> <span>{team.name} <small>({team.members?.length || 0} members)</small></span></label>)}{!teams.length && <p>No teams are available for this event.</p>}</div><p><b>{selectedMemberCount}</b> member certificate(s) will be issued.</p></div>}
-            {!awardType && <p style={{ color: '#6f6575' }}>This issues to all {certificateType === 'participant' ? 'approved participants' : 'accepted judges'}.</p>}
-            <button disabled={busy} onClick={issue} style={{ ...button, width: '100%', background: '#2b0a5a', color: '#fff' }}>Issue certificates</button>
-          </div>
+      {!template ? (
+        <div className="empty-state">
+          <span className="material-symbols-outlined animate-spin" style={{ fontSize: 28 }}>progress_activity</span>
         </div>
-      </section>}
+      ) : (
+        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(420px, 100%), 1fr))', gap: 24, alignItems: 'start' }}>
+          <div className="dash-card" style={{ display: 'grid', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <h2 className="section-title" style={{ marginBottom: 0 }}>Template</h2>
+              <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => setTemplate((c) => ({ ...c, ...demoTemplate }))}>
+                Load demo
+              </button>
+            </div>
 
-      <section style={{ ...card, marginTop: 24 }}><h2 style={{ marginTop: 0 }}>Issued certificates ({certificates.length})</h2>{certificates.length ? <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse' }}><thead><tr>{['Recipient', 'Type', 'Issued', 'Verification ID', ''].map((title, index) => <th key={`${title}-${index}`} style={{ textAlign: 'left', padding: 10, borderBottom: '1px solid #e8e2ec' }}>{title}</th>)}</tr></thead><tbody>{certificates.map((item) => <tr key={item.id}><td style={{ padding: 10 }}>{item.recipient_name}</td><td style={{ padding: 10 }}>{item.type.replace('_', ' ')}</td><td style={{ padding: 10 }}>{new Date(item.created_at).toLocaleDateString()}</td><td style={{ padding: 10, fontFamily: 'monospace' }}>{item.verification_id.slice(0, 12)}…</td><td style={{ padding: 10 }}><button disabled={busy} onClick={() => download(item)} style={{ ...button, padding: '7px 10px', background: '#efe7f5', color: '#2b0a5a' }}>Download</button></td></tr>)}</tbody></table></div> : <p style={{ color: '#6f6575' }}>No certificates have been issued for this event.</p>}</section>
-    </main>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {Object.keys(presetNames).map((preset) => (
+                <button
+                  key={preset}
+                  className={`btn ${template.preset === preset ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => update('preset', preset)}
+                >
+                  {presetNames[preset]}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <label><span style={labelStyle}>Primary color</span>
+                <input type="color" className="field" value={template.primary_color} onChange={(e) => update('primary_color', e.target.value)} style={{ height: 42, padding: 4 }} />
+              </label>
+              <label><span style={labelStyle}>Accent color</span>
+                <input type="color" className="field" value={template.secondary_color} onChange={(e) => update('secondary_color', e.target.value)} style={{ height: 42, padding: 4 }} />
+              </label>
+            </div>
+
+            <label><span style={labelStyle}>Heading</span>
+              <input className="field" value={template.heading} maxLength={120} onChange={(e) => update('heading', e.target.value)} />
+            </label>
+            <label><span style={labelStyle}>Presentation text</span>
+              <textarea className="field" value={template.body_text} maxLength={300} rows={2} onChange={(e) => update('body_text', e.target.value)} />
+            </label>
+            <label><span style={labelStyle}>Signatory name</span>
+              <input className="field" value={template.signatory_name} maxLength={120} onChange={(e) => update('signatory_name', e.target.value)} />
+            </label>
+            <label><span style={labelStyle}>Signatory title</span>
+              <input className="field" value={template.signatory_title} maxLength={120} onChange={(e) => update('signatory_title', e.target.value)} />
+            </label>
+            <label><span style={labelStyle}>Sponsors (comma separated)</span>
+              <input className="field" value={template.sponsor_names.join(', ')} onChange={(e) => update('sponsor_names', e.target.value.split(',').map((n) => n.trim()).filter(Boolean))} />
+            </label>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-primary" style={{ flex: 1 }} disabled={busy} onClick={save}>Save template</button>
+              <button className="btn btn-ghost" disabled={busy} onClick={previewPdf}>Preview PDF</button>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gap: 24, minWidth: 0 }}>
+            <article aria-label="Certificate preview" style={{
+              width: '100%', minWidth: 0, overflow: 'hidden', aspectRatio: '1.414 / 1',
+              padding: 'clamp(14px, 4vw, 34px)', boxSizing: 'border-box',
+              color: template.preset === 'bold' ? '#fff' : '#352c3b',
+              background: template.preset === 'bold' ? template.primary_color : '#fff',
+              border: template.preset === 'classic' ? `8px double ${template.primary_color}` : '1px solid var(--color-outline-variant)',
+              borderLeft: template.preset === 'modern' ? `clamp(18px, 5vw, 56px) solid ${template.primary_color}` : undefined,
+              borderRadius: template.preset === 'modern' ? 4 : 12,
+              boxShadow: '0 18px 45px rgba(43,25,61,.13)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 12, letterSpacing: 2, opacity: .7 }}>HACKFORGE · {selectedHackathon.title}</div>
+              <h2 style={{ fontFamily: template.preset === 'classic' ? 'Georgia, serif' : 'inherit', fontSize: 30, color: template.preset === 'bold' ? '#fff' : template.primary_color, margin: '22px 0 14px' }}>{template.heading}</h2>
+              <p style={{ margin: 0 }}>{template.body_text}</p>
+              <strong style={{ fontSize: 28, margin: '14px 0', color: template.preset === 'bold' ? template.secondary_color : template.primary_color }}>Alex Morgan</strong>
+              <p>for successfully participating in <b>{selectedHackathon.title}</b></p>
+              <div style={{ width: 180, borderTop: `2px solid ${template.secondary_color}`, marginTop: 22, paddingTop: 8 }}>
+                <b>{template.signatory_name}</b><br /><small>{template.signatory_title}</small>
+              </div>
+              {!!template.sponsor_names.length && <small style={{ marginTop: 18 }}>Supported by: {template.sponsor_names.join(' · ')}</small>}
+            </article>
+
+            <div className="dash-card">
+              <h2 className="section-title">Bulk issuance</h2>
+              <label><span style={labelStyle}>Certificate type</span>
+                <select className="field" value={certificateType} onChange={(e) => { setCertificateType(e.target.value); setTeamIds([]); }}>
+                  <option value="participant">Participant</option>
+                  <option value="judge">Judge</option>
+                  <option value="winner">Winner</option>
+                  <option value="runner_up">Runner-up</option>
+                </select>
+              </label>
+
+              {awardType ? (
+                <div style={{ marginTop: 16 }}>
+                  <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Select winning teams</p>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {teams.map((team) => (
+                      <label key={team.id} style={{ display: 'flex', gap: 9, alignItems: 'center', padding: 10, background: 'var(--color-surface-container-low)', borderRadius: 'var(--radius-md)', fontSize: 14 }}>
+                        <input
+                          type="checkbox"
+                          checked={teamIds.includes(team.id)}
+                          onChange={(e) => setTeamIds((ids) => e.target.checked ? [...ids, team.id] : ids.filter((id) => id !== team.id))}
+                        />
+                        <span>{team.name} <small style={{ color: 'var(--color-on-surface-variant)' }}>({team.members?.length || 0} members)</small></span>
+                      </label>
+                    ))}
+                    {!teams.length && <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)' }}>No teams are available for this event.</p>}
+                  </div>
+                  <p style={{ fontSize: 14, margin: '12px 0' }}><b>{selectedMemberCount}</b> member certificate(s) will be issued.</p>
+                </div>
+              ) : (
+                <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)', margin: '12px 0' }}>
+                  This issues to all {certificateType === 'participant' ? 'approved participants' : 'accepted judges'}.
+                </p>
+              )}
+
+              <button className="btn btn-primary" style={{ width: '100%' }} disabled={busy} onClick={issue}>Issue certificates</button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="dash-card" style={{ marginTop: 24, padding: 0, overflow: 'hidden' }}>
+        <h2 className="section-title" style={{ padding: 'var(--spacing-md) var(--spacing-md) 0' }}>
+          Issued certificates ({certificates.length})
+        </h2>
+        {certificates.length ? (
+          <div style={{ overflowX: 'auto', marginTop: 12 }}>
+            <table className="dash-table">
+              <thead>
+                <tr>
+                  <th>Recipient</th><th>Type</th><th>Issued</th><th>Verification ID</th><th />
+                </tr>
+              </thead>
+              <tbody>
+                {certificates.map((item) => (
+                  <tr key={item.id}>
+                    <td style={{ fontWeight: 600 }}>{item.recipient_name}</td>
+                    <td style={{ textTransform: 'capitalize' }}>{item.type.replace('_', ' ')}</td>
+                    <td style={{ color: 'var(--color-on-surface-variant)' }}>{new Date(item.created_at).toLocaleDateString()}</td>
+                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{item.verification_id.slice(0, 12)}…</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button className="btn btn-ghost" style={{ padding: '5px 12px', fontSize: 13 }} disabled={busy} onClick={() => download(item)}>
+                        Download
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="empty-state">No certificates have been issued for this event.</p>
+        )}
+      </section>
+    </>
   );
 }

@@ -80,17 +80,52 @@ export class ContextEngine {
     return lines;
   }
 
+  /**
+   * What the page is made of, so a request with no selection ("make this look
+   * better") can still be reasoned about at page level instead of stalling.
+   */
+  composition(components = []) {
+    if (!components.length) return "EMPTY PAGE — nothing has been added yet.";
+
+    const types = components.map((node) => node.type);
+    const counts = types.reduce((acc, type) => ({ ...acc, [type]: (acc[type] || 0) + 1 }), {});
+    const present = Object.entries(counts).map(([type, n]) => (n > 1 ? `${type} x${n}` : type));
+
+    // A landing page missing any of these reads as unfinished; surfacing the gap
+    // lets the model suggest the right next section unprompted.
+    const expected = ["hero", "about", "tracks", "timeline", "sponsors", "faq", "footer"];
+    const missing = expected.filter((type) => !types.includes(type));
+
+    return [
+      `SECTIONS (top to bottom): ${present.join(" -> ")}`,
+      missing.length ? `NOT ON THE PAGE YET: ${missing.join(", ")}` : "All common sections are present.",
+    ].join("\n");
+  }
+
+  /** Theme values the design rules refer to by name, so styling uses real tokens. */
+  themeString(theme = {}) {
+    const tokens = theme.tokens?.[theme.mode || "light"] || {};
+    const { color = {}, typography = {}, radius = {}, shadow = {} } = tokens;
+    return [
+      `MODE: ${theme.mode || "light"}`,
+      `COLOR TOKENS: ${Object.entries(color).map(([k, v]) => `${k}=${v}`).join(", ") || "none"}`,
+      `TYPE: font ${typography.fontFamily || "Inter"}, heading ${typography.headingSize || "?"}/${typography.headingWeight || "?"}, body ${typography.subtitleSize || "?"}`,
+      `RADIUS: button ${radius.button || "?"}, card ${radius.card || "?"} | SHADOW: card ${shadow.card || "none"}`,
+    ].join("\n");
+  }
+
   getContextString() {
     const state = this.getState();
     const theme = state.globalTheme || {};
-    const colors = theme.tokens?.[theme.mode || "light"]?.color || {};
     const selected = this.getSelectedNode();
 
     return `
 --- SYSTEM CONTEXT ---
 VIEWPORT: ${state.device}
-THEME: ${theme.mode || "light"} mode, primary ${colors.primary}, background ${colors.background}, text ${colors.text}
-SELECTED: ${selected ? `${selected.type} (id: ${selected.id}) ${JSON.stringify(selected.props || {}).slice(0, 200)}` : "nothing selected"}
+${this.themeString(theme)}
+SELECTED: ${selected ? `${selected.type} (id: ${selected.id}) ${JSON.stringify(selected.props || {}).slice(0, 200)}` : "nothing selected — resolve the target from the outline below, do not ask the user to select"}
+PAGE COMPOSITION
+${this.composition(state.components)}
 PAGE OUTLINE — each line is: type (id: <id>) "text"
 ${this.outline(state.components).join("\n")}
 TEMPLATES: ${(state.savedTemplates || []).map((t) => t.name).join(", ") || "none"}
