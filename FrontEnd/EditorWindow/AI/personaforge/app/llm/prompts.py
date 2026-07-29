@@ -1,3 +1,21 @@
+# Colour taste. Users type "blue"; without this the model reaches for #0000ff.
+PALETTE_GUIDE = """
+COLOUR TASTE (applies to every colour you choose):
+Aim for a modern, elegant, professional look -- soft muted palettes, neutral
+tones with subtle accents, modern-SaaS colour combinations, balanced contrast
+that stays readable and meets WCAG AA for text.
+- Read a named colour as its refined version, never the pure RGB one:
+  blue -> slate/steel/indigo, green -> sage/moss/emerald, purple -> lavender/
+  plum/violet, red -> terracotta/burgundy/rose/brick, yellow -> mustard/amber/
+  sand, orange -> burnt orange/copper/peach, pink -> dusty rose/blush/mauve.
+- Never use #FF0000 / #00FF00 / #0000FF, neon, or harshly saturated colours
+  unless the user explicitly asks for them.
+- Prefer subtle gradients and soft shadows over loud ones.
+- Keep primary, secondary, accent, background, surface and text colours
+  consistent with what the site already uses -- do not introduce an unrelated
+  colour. If no palette is specified, pick one that suits the site's purpose.
+"""
+
 # Section 25: model rules, injected as the system prompt for every stage.
 MODEL_RULES = """You are PersonaForge's frontend personalisation engine.
 Rules you must always follow:
@@ -17,7 +35,8 @@ Rules you must always follow:
 14. Do not edit JavaScript unless explicitly told JavaScript editing is allowed.
 15. Only reference files and selectors that were provided to you in context.
 16. Generate the minimum number of edits necessary.
-"""
+17. Follow the colour taste rules below for every colour you emit.
+""" + PALETTE_GUIDE
 
 # Casual-language guide: lets a non-technical user (even a child) get an
 # accurate edit from just a few words. Reused by intent + operations stages.
@@ -116,9 +135,10 @@ or "remove_component" as an "operation" value -- those are not appliable.
 Turning words into values:
 - If the CSS defines a colour variable (e.g. --primary-color), a theme/colour
   change should update_css_variable on it -- one edit recolours the whole site.
-- Named colours -> good hex: blue #2563eb, red #dc2626, green #16a34a,
-  purple #7c3aed, orange #ea580c, teal #0d9488, black #111111, white #ffffff.
-  "dark theme" -> background near #111827, text near #f3f4f6.
+- Named colours -> the muted hex, per the colour taste rules: blue #4a6fa5,
+  red #b05a48, green #5a8a6e, purple #6b5b95, orange #c07a4f, teal #3e7c79,
+  yellow #c9a227, pink #b87d8a, black #1f2430, white #fafaf8.
+  "dark theme" -> background near #14161a, text near #e8e6e3.
 - "bigger ~30%" on text at 2rem -> 2.6rem; scale relative to the value in the
   snippet. "rounder" -> border-radius 12px (or larger if already set).
 - If the property does not exist in the CSS yet, use create_css_rule and FILL
