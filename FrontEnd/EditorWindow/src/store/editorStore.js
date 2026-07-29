@@ -349,6 +349,18 @@ const createEditorStore = (set, get) => ({
   // inspector both hand us the id of whatever is selected, which is usually a
   // nested element. Root nodes still match, so this is a superset of the old
   // top-level-only behaviour.
+  /**
+   * Swap the whole tree in one undoable step. Used by page-wide rewrites such
+   * as a theme repaint, which touch many nodes at once; going through
+   * setState directly would skip the history snapshot and leave "Undo this"
+   * unable to put the old colours back.
+   */
+  replaceComponents: (components) =>
+    set((state) => ({
+      ...createHistorySnapshot(state),
+      components,
+    })),
+
   updateComponent: (id, changes) =>
     set((state) => ({
       ...createHistorySnapshot(state),

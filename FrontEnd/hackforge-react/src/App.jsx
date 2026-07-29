@@ -20,7 +20,7 @@ import OrganizerTeamsPage from './pages/OrganizerTeamsPage';
 import OrganizerSubmissionsPage from './pages/OrganizerSubmissionsPage';
 import OrganizerAnalyticsPage from './pages/OrganizerAnalyticsPage';
 import OrganizerSetupPage from './pages/OrganizerSetupPage';
-import StudioBridgePage from './pages/StudioBridgePage';
+import StudioPage from './pages/StudioPage';
 import JoinTeamPage from './pages/JoinTeamPage';
 
 import ParticipantLayout from './pages/participant/ParticipantLayout.jsx';
@@ -72,7 +72,7 @@ export default function App() {
         {/* Organizer — full-bleed routes that intentionally sit outside the shell */}
         <Route path="/organizer/setup" element={organizerOnly(<OrganizerSetupPage />)} />
         <Route path="/organizer/forms/:formId" element={organizerOnly(<OrganizerSetupRoute><FormBuilderPage /></OrganizerSetupRoute>)} />
-        <Route path="/organizer/hackathons/:hackathonId/studio" element={organizerOnly(<OrganizerSetupRoute><StudioBridgePage /></OrganizerSetupRoute>)} />
+        <Route path="/organizer/hackathons/:hackathonId/studio" element={organizerOnly(<OrganizerSetupRoute><StudioPage /></OrganizerSetupRoute>)} />
 
         {/* Participant — nested under a shared dashboard shell */}
         <Route path="/participant" element={<RoleRoute allowedRoles={['participant']}><ParticipantLayout /></RoleRoute>}>

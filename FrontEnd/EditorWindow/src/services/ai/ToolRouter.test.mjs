@@ -73,6 +73,18 @@ assert.ok(names("check the site for accessibility problems").includes("analyzeAc
 assert.ok(names("save this as a template").includes("saveTemplate"));
 assert.ok(names("group these elements into a container").includes("groupElements"));
 
+// --- a selected component owns unscoped colour edits ---
+const selectedNames = (prompt) => selectTools(prompt, { hasSelection: true }).map((tool) => tool.name);
+assert.ok(selectedNames("change the background colour to blue").includes("updateColors"));
+assert.ok(
+  !selectedNames("change the background colour to blue").includes("applyTheme"),
+  "a selected section background must not become a whole-site theme edit",
+);
+assert.ok(
+  selectedNames("apply the ocean theme to the whole site").includes("applyTheme"),
+  "explicit whole-site requests must keep theme tools available",
+);
+
 // --- plurals and spelling variants still match ---
 assert.ok(names("fix the colours on mobile").includes("updateColors"), "colours -> color");
 assert.ok(names("duplicate two sections").includes("duplicateSection"), "sections -> section");

@@ -27,6 +27,36 @@ const MAX_NODES = 60;
 const MAX_DEPTH = 6;
 
 /**
+ * The canvas renders the user's generated site and does not load ForgeAI's own
+ * stylesheet, so `var(--color-surface)` resolves to nothing and renders
+ * transparent. A model that has just read a token-based design system reaches
+ * for those names constantly, and the failure is invisible: the tool succeeds
+ * and the section renders unstyled. Rejecting it puts a precise message back in
+ * front of the model, which then retries with literal values.
+ */
+const CANVAS_VARS = /var\(\s*--/;
+
+function findUnresolvableVars(styles = {}, path = "") {
+  return Object.entries(styles)
+    .filter(([, value]) => typeof value === "string" && CANVAS_VARS.test(value))
+    .map(([key, value]) => `${path}${key}: "${value}"`);
+}
+
+/**
+ * Section padding is a number of px; the Preview interpolates it as
+ * `${paddingTop}px`. A string like "space-20" or "128px" would produce
+ * "space-20px" / "128pxpx", so normalise here rather than trusting the caller.
+ */
+function coercePx(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const match = /^\s*(-?\d+(?:\.\d+)?)\s*(px)?\s*$/.exec(value);
+    if (match) return Number(match[1]);
+  }
+  return undefined;
+}
+
+/**
  * Turn one spec node into a real editor node. Unknown types fail loudly rather
  * than silently vanishing at render time -- ElementRenderer skips types it does
  * not recognise, so a typo would otherwise produce a half-built section with no
@@ -43,6 +73,13 @@ function buildNode(spec, depth, counter) {
   }
 
   if (++counter.n > MAX_NODES) return { error: `A section may not exceed ${MAX_NODES} nodes.` };
+
+  const bad = findUnresolvableVars(styles, `${type}.styles.`);
+  if (bad.length) {
+    return { error:
+      `CSS variables do not resolve on the canvas — ${bad.join("; ")}. ` +
+      "Use literal values (hex, rgba, px) taken from the THEME tokens in SYSTEM CONTEXT." };
+  }
 
   const node = coreFactory.createElement(type);
   if (!node) return { error: `Could not create a '${type}' element.` };
@@ -108,11 +145,27 @@ export const composeSection = defineTool({
     if (!node) return fail("Could not create the section shell.");
 
     const { background, paddingTop, paddingBottom, styles = {} } = section;
+
+    const shellBad = [
+      ...findUnresolvableVars(styles, "section.styles."),
+      ...(typeof background === "string" && CANVAS_VARS.test(background)
+        ? [`section.background: "${background}"`]
+        : []),
+    ];
+    if (shellBad.length) {
+      return fail(
+        `CSS variables do not resolve on the canvas — ${shellBad.join("; ")}. ` +
+          "Use literal values (hex, rgba, gradient) taken from the THEME tokens in SYSTEM CONTEXT.",
+      );
+    }
+
+    const top = coercePx(paddingTop);
+    const bottom = coercePx(paddingBottom);
     node.props = {
       ...node.props,
       ...(background !== undefined && { background }),
-      ...(paddingTop !== undefined && { paddingTop }),
-      ...(paddingBottom !== undefined && { paddingBottom }),
+      ...(top !== undefined && { paddingTop: top }),
+      ...(bottom !== undefined && { paddingBottom: bottom }),
     };
     node.styles = { ...node.styles, ...styles };
 

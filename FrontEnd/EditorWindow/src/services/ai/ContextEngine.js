@@ -124,6 +124,7 @@ export class ContextEngine {
 VIEWPORT: ${state.device}
 ${this.themeString(theme)}
 SELECTED: ${selected ? `${selected.type} (id: ${selected.id}) ${JSON.stringify(selected.props || {}).slice(0, 200)}` : "nothing selected — resolve the target from the outline below, do not ask the user to select"}
+SELECTION SCOPE: ${selected ? "Unscoped edits such as \"change the background colour\" apply ONLY to this selected node. Use component styling tools and omit the id so selection is the target. Use theme/global tools only when the user explicitly asks for the whole site, page, theme, or all sections." : "No selected node; resolve the target from the user's words and the outline."}
 PAGE COMPOSITION
 ${this.composition(state.components)}
 PAGE OUTLINE — each line is: type (id: <id>) "text"

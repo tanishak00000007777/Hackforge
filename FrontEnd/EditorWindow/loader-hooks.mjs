@@ -9,6 +9,14 @@ const SRC = new URL("./src/", import.meta.url).href;
 const EXTENSIONS = [".js", ".jsx", ".mjs", "/index.js", "/index.jsx"];
 
 export async function resolve(specifier, context, next) {
+  // Vite's `?raw` suffix: resolve the file itself and let load() inline it.
+  if (specifier.endsWith("?raw")) {
+    const bare = specifier.slice(0, -4);
+    const base = bare.startsWith("@/") ? SRC + bare.slice(2) : bare;
+    const href = /^[a-z]+:/i.test(base) ? base : new URL(base, context.parentURL).href;
+    return { url: href + "?raw", format: "module", shortCircuit: true };
+  }
+
   const target = specifier.startsWith("@/") ? SRC + specifier.slice(2) : specifier;
 
   // vite fills in the extension; node requires it.
@@ -23,6 +31,14 @@ export async function resolve(specifier, context, next) {
 }
 
 export async function load(url, context, next) {
+  if (url.endsWith("?raw")) {
+    const source = readFileSync(fileURLToPath(url.slice(0, -4)), "utf8");
+    return {
+      format: "module",
+      source: `export default ${JSON.stringify(source)};`,
+      shortCircuit: true,
+    };
+  }
   if (url.endsWith(".jsx")) {
     const source = readFileSync(fileURLToPath(url), "utf8");
     const { code } = transformSync(source, { loader: "jsx", format: "esm", jsx: "automatic" });

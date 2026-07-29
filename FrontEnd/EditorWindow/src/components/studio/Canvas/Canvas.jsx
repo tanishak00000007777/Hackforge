@@ -315,6 +315,9 @@ export default function Canvas() {
       onPointerDown={handlePointerDown}
       onWheel={handleWheel}
       ref={containerRef}
+      // Hold the grabbing hand for the whole gesture: once the pointer leaves
+      // the thin edge strip mid-drag, the strip's own cursor no longer applies.
+      style={draggedComponentId ? { cursor: "grabbing" } : isPanning ? { cursor: "grabbing" } : undefined}
     >
       {/* Transform Wrapper for Pan and Zoom */}
       <div

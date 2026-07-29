@@ -1,9 +1,34 @@
 {
+  "name": "hackforge",
+  "private": true,
+  "description": "Root orchestration for the HackForge stack: FastAPI API, organizer web app, and the website studio.",
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload",
+    "dev:web": "npm --prefix FrontEnd/hackforge-react run dev",
+
+    "build": "npm --prefix FrontEnd/hackforge-react run build",
+
+    "start": "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000",
+
+    "test": "concurrently -n api,studio -c blue,magenta \"npm:test:api\" \"npm:test:studio\"",
+    "test:api": "python -m pytest tests -q",
+    "test:studio": "npm --prefix FrontEnd/EditorWindow test",
+
+    "lint": "concurrently -n web,studio -c green,magenta \"npm:lint:web\" \"npm:lint:studio\"",
+    "lint:web": "npm --prefix FrontEnd/hackforge-react run lint",
+    "lint:studio": "npm --prefix FrontEnd/EditorWindow run lint",
+
+    "install:all": "npm install && npm --prefix FrontEnd/hackforge-react install && npm --prefix FrontEnd/EditorWindow install"
+  },
   "dependencies": {
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "jsonwebtoken": "^9.0.3",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.4"
   }
 }

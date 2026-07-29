@@ -187,14 +187,27 @@ async def request_ai_completion(data: AICopilotRequest) -> AICopilotResponse:
         )
 
     body = response.json()
-    if "choices" in body:
-        choice = (body.get("choices") or [{}])[0].get("message") or {}
-        return AICopilotResponse(
-            message=choice.get("content") or "",
-            tool_calls=normalize_tool_calls(choice.get("tool_calls") or [], allowed_names),
-        )
 
-    parts = (((body.get("candidates") or [{}])[0].get("content") or {}).get("parts") or [])
+    # A response cut off at the token ceiling loses its tool calls, so the UI
+    # would show half a sentence and silently do nothing. Say so instead.
+    truncated_detail = (
+        "The AI ran out of room before it finished that edit. "
+        "Try a more specific request, or raise AI_MAX_TOKENS."
+    )
+
+    if "choices" in body:
+        first = (body.get("choices") or [{}])[0]
+        choice = first.get("message") or {}
+        calls = normalize_tool_calls(choice.get("tool_calls") or [], allowed_names)
+        if first.get("finish_reason") == "length" and not calls:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=truncated_detail,
+            )
+        return AICopilotResponse(message=choice.get("content") or "", tool_calls=calls)
+
+    candidate = (body.get("candidates") or [{}])[0]
+    parts = ((candidate.get("content") or {}).get("parts") or [])
     message = "".join(part.get("text", "") for part in parts).strip()
     calls = []
     for index, part in enumerate(parts[:8]):
@@ -205,4 +218,9 @@ async def request_ai_completion(data: AICopilotRequest) -> AICopilotResponse:
                 name=function["name"],
                 arguments=function.get("args") or {},
             ))
+    if candidate.get("finishReason") == "MAX_TOKENS" and not calls:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=truncated_detail,
+        )
     return AICopilotResponse(message=message, tool_calls=calls)

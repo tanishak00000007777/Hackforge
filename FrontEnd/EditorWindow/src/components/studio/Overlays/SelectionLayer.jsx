@@ -2,6 +2,7 @@ import React from "react";
 import ResizeHandle from "./ResizeHandle";
 import RotationHandle from "./RotationHandle";
 import ComponentLabel from "./ComponentLabel";
+import MoveBand from "./MoveBand";
 
 export default function SelectionLayer({ id, rect }) {
   if (!rect) return null;
@@ -17,6 +18,10 @@ export default function SelectionLayer({ id, rect }) {
       }}
     >
       <ComponentLabel id={id} />
+
+      {/* Grab strips first, so the resize handles below sit on top of them
+          and corners still resize rather than move. */}
+      <MoveBand id={id} />
 
       {/* Resize Handles - corners and edges */}
       <ResizeHandle position="top-left" />

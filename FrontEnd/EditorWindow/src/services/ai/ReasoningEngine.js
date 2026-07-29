@@ -3,6 +3,7 @@ import { PromptBuilder } from "./PromptBuilder";
 import { selectTools } from "./ToolRouter";
 import { toolRegistry } from "./ToolRegistry";
 import { memoryManager } from "./MemoryManager";
+import { contextEngine } from "./ContextEngine";
 
 export class ReasoningEngine {
   /**
@@ -14,7 +15,8 @@ export class ReasoningEngine {
     const history = memoryManager.getFormattedHistoryForAPI();
     // Only the tools relevant to this turn; the rest stay reachable via
     // discoverTools/callTool. Sending all of them costs ~8k tokens.
-    const availableTools = toolRegistry.getSchemasFor(selectTools(userPrompt));
+    const hasSelection = contextEngine.getState().selectedIds?.length > 0;
+    const availableTools = toolRegistry.getSchemasFor(selectTools(userPrompt, { hasSelection }));
 
     // The LLM will perform reasoning (in its message content) 
     // and planning (by selecting toolCalls)

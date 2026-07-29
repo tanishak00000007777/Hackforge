@@ -3,11 +3,12 @@ import { useEditorStore } from "@/store/editorStore";
 
 const MODES = ["light", "dark"];
 const TOKEN_GROUPS = ["color", "typography", "spacing", "radius", "shadow"];
+const NAMED_COLORS = { red: "#DC2626" };
 
 /* --- colour maths, so generateTheme is deterministic rather than a guess --- */
 
 function hexToHsl(hex) {
-  const clean = String(hex).replace("#", "");
+  const clean = String(NAMED_COLORS[String(hex).trim().toLowerCase()] || hex).replace("#", "");
   const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
   if (!/^[0-9a-fA-F]{6}$/.test(full)) return null;
 
@@ -47,6 +48,7 @@ const shift = (hsl, { h = 0, s = 0, l = 0 }) =>
 
 /** Named palettes the model can reach for by name. */
 export const THEME_PRESETS = {
+  red: { primary: "#DC2626", secondary: "#EF4444" },
   violet: { primary: "#2B0A5A", secondary: "#6D28D9" },
   ocean: { primary: "#0C4A6E", secondary: "#0284C7" },
   forest: { primary: "#14532D", secondary: "#16A34A" },
@@ -71,8 +73,123 @@ function writeTokens(mode, group, values) {
   });
 }
 
+/* --- repainting existing content when the palette changes ------------------
+ *
+ * Writing tokens alone changes nothing on screen. Every section Default bakes a
+ * literal `background` into props, and `props.background ?? var(--token-...)`
+ * therefore never falls through to the theme, so "change the colour theme"
+ * updated the CSS variables and left the page looking identical.
+ *
+ * So a theme change also repaints: any colour that matches the OUTGOING palette
+ * is remapped to the incoming one. Colours the user picked themselves do not
+ * match, so they survive untouched.
+ */
+
+const normalizeHex = (value) => {
+  if (typeof value !== "string") return null;
+  const clean = value.trim().replace("#", "");
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  return /^[0-9a-fA-F]{6}$/.test(full) ? `#${full.toLowerCase()}` : null;
+};
+
+/**
+ * The literals shipped in the section Defaults. Without these the very first
+ * theme change matches nothing, because those colours were never derived from
+ * a theme in the first place.
+ */
+const LEGACY_ROLES = {
+  "#ffffff": "background",
+  "#f8fafc": "surfaceSubtle",
+  "#0f172a": "surfaceInverse",
+  "#2b0a5a": "primary",
+  "#6d28d9": "secondary",
+  "#ede9fe": "badgeBg",
+  "#171c5a": "text",
+  "#64748b": "subtitle",
+  "#e2e8f0": "onInverse",
+};
+
+/** Roles the palette does not name outright, derived so bands keep their contrast. */
+function rolesFor(colors) {
+  const bg = hexToHsl(colors.background || "#ffffff");
+  return {
+    ...colors,
+    surfaceSubtle: bg ? shift(bg, { l: bg.l > 0.5 ? -0.04 : 0.04 }) : colors.background,
+    surfaceInverse: colors.text,
+    onInverse: colors.background,
+  };
+}
+
+/** old hex -> new hex, for every role present in both palettes. */
+function buildColorMap(oldColors, newColors) {
+  const oldRoles = rolesFor(oldColors);
+  const newRoles = rolesFor(newColors);
+  const map = new Map();
+
+  for (const [role, value] of Object.entries(oldRoles)) {
+    const from = normalizeHex(value);
+    const to = newRoles[role];
+    if (from && to && normalizeHex(to)) map.set(from, to);
+  }
+  // Seed the shipped literals, but never override a live-theme match.
+  for (const [hex, role] of Object.entries(LEGACY_ROLES)) {
+    if (!map.has(hex) && newRoles[role]) map.set(hex, newRoles[role]);
+  }
+  return map;
+}
+
+const COLOR_KEYS = ["background", "backgroundColor", "color", "borderColor", "buttonColor"];
+
+function repaintNode(node, map) {
+  let changed = 0;
+  const swap = (bag) => {
+    if (!bag) return bag;
+    let touched = false;
+    const next = { ...bag };
+    for (const key of COLOR_KEYS) {
+      const hex = normalizeHex(next[key]);
+      if (hex && map.has(hex)) {
+        next[key] = map.get(hex);
+        touched = true;
+      }
+    }
+    if (touched) changed++;
+    return touched ? next : bag;
+  };
+
+  const props = swap(node.props);
+  const styles = swap(node.styles);
+  const children = (node.children || []).map((child) => {
+    const result = repaintNode(child, map);
+    changed += result.changed;
+    return result.node;
+  });
+
+  const node2 = props === node.props && styles === node.styles ? node : { ...node, props, styles };
+  return { node: { ...node2, children }, changed };
+}
+
+/** Repaint the whole page. Returns how many nodes changed. */
+function repaintPage(oldColors, newColors) {
+  const map = buildColorMap(oldColors || {}, newColors || {});
+  if (!map.size) return 0;
+
+  const store = useEditorStore.getState();
+  let changed = 0;
+  const components = (store.components || []).map((node) => {
+    const result = repaintNode(node, map);
+    changed += result.changed;
+    return result.node;
+  });
+
+  // Through the store action, not setState, so the repaint is one undo step.
+  if (changed) useEditorStore.getState().replaceComponents(components);
+  return changed;
+}
+
 /** Build a full colour set from one base colour, keeping text readable. */
 function derivePalette(baseHex, mode) {
+  baseHex = NAMED_COLORS[String(baseHex).trim().toLowerCase()] || baseHex;
   const hsl = hexToHsl(baseHex);
   if (!hsl) return null;
   const dark = mode === "dark";
@@ -91,8 +208,12 @@ function derivePalette(baseHex, mode) {
     : {
         primary: baseHex,
         secondary: shift(hsl, { h: 12, l: 0.18 }),
-        background: "#FFFFFF",
-        canvasBackground: "#FFFFFF",
+        // A hair of the brand hue rather than pure white. Hardcoding #FFFFFF
+        // meant every light theme shared one background, so switching preset
+        // visibly changed nothing on a page that is mostly background.
+        // At l=0.985 this reads as white while still shifting with the brand.
+        background: shift(hsl, { s: -0.55, l: -hsl.l + 0.985 }),
+        canvasBackground: shift(hsl, { s: -0.55, l: -hsl.l + 0.985 }),
         text: shift(hsl, { s: -0.25, l: -hsl.l + 0.18 }),
         subtitle: "#64748B",
         badgeBg: shift(hsl, { s: -0.3, l: Math.max(0, 0.93 - hsl.l) }),
@@ -116,10 +237,21 @@ export const applyTheme = defineTool({
     if (!chosen) return fail(`Unknown preset '${preset}'. Available: ${Object.keys(THEME_PRESETS).join(", ")}.`);
 
     const target = mode || currentTheme().mode || "light";
+    const before = currentTheme().tokens?.[target]?.color || {};
     const palette = derivePalette(chosen.primary, target);
-    writeTokens(target, "color", { ...palette, secondary: chosen.secondary });
+    const after = { ...palette, secondary: chosen.secondary };
 
-    return ok({ preset, mode: target, colors: currentTheme().tokens[target].color });
+    writeTokens(target, "color", after);
+    // Tokens alone are invisible while section colours are literals, so bring
+    // the existing page along with the new palette.
+    const repainted = repaintPage(before, after);
+
+    return ok({
+      preset,
+      mode: target,
+      colors: currentTheme().tokens[target].color,
+      repaintedNodes: repainted,
+    });
   },
 });
 
@@ -158,7 +290,7 @@ export const generateTheme = defineTool({
   parameters: {
     type: "object",
     properties: {
-      baseColor: { type: "string", description: "Base brand colour as hex, e.g. '#2563eb'." },
+      baseColor: { type: "string", description: "Base brand colour as hex or a common name, e.g. '#2563eb' or 'red'." },
       mode: { type: "string", enum: MODES, description: "Colour mode to generate for. Defaults to the active mode." },
     },
     required: ["baseColor"],
@@ -168,8 +300,10 @@ export const generateTheme = defineTool({
     const palette = derivePalette(baseColor, target);
     if (!palette) return fail(`'${baseColor}' is not a valid hex colour (expected #rgb or #rrggbb).`);
 
+    const before = currentTheme().tokens?.[target]?.color || {};
     writeTokens(target, "color", palette);
-    return ok({ baseColor, mode: target, colors: palette });
+    const repainted = repaintPage(before, palette);
+    return ok({ baseColor, mode: target, colors: palette, repaintedNodes: repainted });
   },
 });
 

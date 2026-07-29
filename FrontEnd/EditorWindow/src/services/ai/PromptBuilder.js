@@ -1,6 +1,26 @@
 import { contextEngine } from "./ContextEngine";
 import { memoryManager } from "./MemoryManager";
-import designRules from "./design/DESIGN_RULES.md?raw";
+import builderBrief from "./design/BUILDER_BRIEF.md?raw";
+import { designBrief } from "./design/designBrief";
+
+/**
+ * The backend rejects a `system` field over 20,000 characters with a 422 before
+ * the model is ever called, which surfaces in the UI as "Something went wrong".
+ * The design system is human-edited and can grow without warning, so the prompt
+ * is clamped here rather than trusting every input to stay small.
+ */
+export const SYSTEM_PROMPT_LIMIT = 20000;
+const SAFETY_MARGIN = 600;
+
+function clamp(prompt) {
+  const max = SYSTEM_PROMPT_LIMIT - SAFETY_MARGIN;
+  if (prompt.length <= max) return prompt;
+  console.warn(
+    `[ai] system prompt ${prompt.length} chars exceeds ${max}; truncating. ` +
+      "Trim DESIGN_RULES.md or lower the designBrief budget.",
+  );
+  return `${prompt.slice(0, max)}\n\n[design system truncated to fit the request limit]`;
+}
 
 export const PromptBuilder = {
   buildSystemPrompt: () => {
@@ -9,7 +29,7 @@ export const PromptBuilder = {
       ? `\nALREADY COMPLETED THIS SESSION (do NOT repeat these):\n${actions.map((entry) => `- ${entry}`).join("\n")}\n`
       : "";
 
-    return `You are ForgeAI, an expert UI/UX Design Partner embedded inside HackForge Studio.
+    return clamp(`You are ForgeAI, an expert UI/UX Design Partner embedded inside HackForge Studio.
 Your goal is to act as a proactive, intelligent design copilot, not a generic chatbot.
 
 INTELLIGENT DESIGN KNOWLEDGE:
@@ -39,7 +59,11 @@ obvious. Instead resolve the target yourself:
 - Only when several nodes genuinely match and they differ in a way that changes
   the outcome, ask ONE short question naming the candidates.
 
-${designRules}
+${builderBrief}
+
+--- DESIGN SYSTEM (authoritative; take real values from here) ---
+${designBrief}
+--- END DESIGN SYSTEM ---
 
 AVAILABLE CONTEXT:
 ${contextEngine.getContextString()}
@@ -78,6 +102,6 @@ text in the message body -- no "<function=name{...}</function>", no
 "<tool_call>", no JSON code block pretending to be a call. A tool call written
 as text is rejected by the API and the user's request fails.
 To run several steps, emit several tool calls, or use executeBatchActions.
-`;
+`);
   }
 };

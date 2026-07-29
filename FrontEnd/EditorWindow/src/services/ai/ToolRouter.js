@@ -37,6 +37,9 @@ const STOP_WORDS = new Set([
   "i", "we", "should", "would", "how", "what", "do", "does", "get", "set", "up",
 ]);
 
+const WHOLE_SITE_SCOPE = /\b(theme|palette|site[- ]?wide|whole (?:site|page)|entire (?:site|page)|all sections|every section|global)\b/i;
+const WHOLE_SITE_COLOR_TOOLS = new Set(["applyTheme", "updateThemeToken", "generateTheme"]);
+
 /** "toggleSectionVisibility" -> ["toggle","section","visibility"] */
 const splitName = (name) =>
   name.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/_/g, " ").toLowerCase().split(/\s+/);
@@ -130,15 +133,17 @@ export function scoreTool(entry, promptWords) {
  * this budget, so a cap set too close to the core size starves the scored list
  * and drops the very tool the prompt asked for.
  */
-export function selectTools(prompt, { maxTools = 20 } = {}) {
+export function selectTools(prompt, { maxTools = 20, hasSelection = false } = {}) {
   const entries = getIndex();
   const core = entries.filter((entry) => CORE_TOOL_NAMES.includes(entry.tool.name)).map((entry) => entry.tool);
+  const selectedNodeIsTarget = hasSelection && !WHOLE_SITE_SCOPE.test(prompt);
 
   const promptWords = [...new Set(words(prompt).map(stem))];
   if (!promptWords.length) return core;
 
   const ranked = entries
     .filter((entry) => !CORE_TOOL_NAMES.includes(entry.tool.name))
+    .filter((entry) => !selectedNodeIsTarget || !WHOLE_SITE_COLOR_TOOLS.has(entry.tool.name))
     .map((entry) => ({ tool: entry.tool, score: scoreTool(entry, promptWords) }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score)

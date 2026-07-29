@@ -8,12 +8,10 @@ let savePromise = null;
 let saveAgain = false;
 let publishRequested = false;
 
+// The host app owns authentication; it hands us a callback so it can refresh
+// the token and re-render. (This used to postMessage the parent frame.)
 function notifyExpiredSession(session) {
-  if (window.parent === window || !session?.parentOrigin) return;
-  window.parent.postMessage({
-    type: "hackforge:studio:session-expired",
-    hackathonId: session.hackathonId,
-  }, session.parentOrigin);
+  session?.onSessionExpired?.();
 }
 
 export const useIntegrationStore = create((set, get) => ({

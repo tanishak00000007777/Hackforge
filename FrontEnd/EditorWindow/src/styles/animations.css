@@ -1,4 +1,6 @@
-*{
+/* Scoped: a bare `*` transition rule would animate every colour change in the
+   organizer dashboard too. */
+.studio-root *{
 
 transition:
 
@@ -10,13 +12,13 @@ border-color .2s;
 
 }
 
-.scale-click:active{
+.studio-root .scale-click:active{
 
 transform:scale(.97);
 
 }
 
-.fade{
+.studio-root .fade{
 
 animation:fade .25s ease;
 

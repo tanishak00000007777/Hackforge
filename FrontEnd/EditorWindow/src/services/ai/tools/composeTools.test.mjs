@@ -74,6 +74,38 @@ assert.match((await run({ children: [{ text: "no type" }] })).error, /needs a 't
 assert.match((await run({ children: [] })).error, /non-empty/);
 assert.equal(useEditorStore.getState().components.length, 0, "nothing added on failure");
 
+// --- canvas cannot resolve CSS variables: reject rather than render invisible ---
+reset();
+const varErr = await run({
+  section: { background: "var(--color-surface)" },
+  children: [{ type: "paragraph", text: "x" }],
+});
+assert.match(varErr.error, /do not resolve on the canvas/, "shell var rejected");
+assert.match(varErr.error, /section\.background/, "names the offending field");
+
+assert.match(
+  (await run({ children: [{ type: "heading", text: "x", styles: { color: "var(--color-text-primary)" } }] })).error,
+  /do not resolve on the canvas/,
+  "child var rejected",
+);
+assert.equal(useEditorStore.getState().components.length, 0, "nothing added when vars are rejected");
+
+// A literal gradient is fine.
+reset();
+assert.notEqual(
+  (await run({ section: { background: "linear-gradient(135deg, #2B0A5A, #6D28D9)" },
+              children: [{ type: "paragraph", text: "x" }] })).success,
+  false,
+);
+
+// --- padding is px-as-number; "space-20" would render as "space-20px" ---
+reset();
+await run({ section: { paddingTop: "128px", paddingBottom: "space-20" },
+            children: [{ type: "paragraph", text: "x" }] });
+const shell = useEditorStore.getState().components[0];
+assert.equal(shell.props.paddingTop, 128, '"128px" coerced to a number');
+assert.equal(shell.props.paddingBottom, 96, "unparseable padding falls back to the preset default");
+
 // --- runaway specs are capped ---
 reset();
 let deep = { type: "container" };

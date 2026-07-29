@@ -3,10 +3,8 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "//": "Not an app any more. The studio is compiled by FrontEnd/hackforge-react, which aliases this src/ as `@`. There is no dev or build script here on purpose -- a second dev server on port 4175 is exactly what the integration removed.",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
     "lint": "eslint src --ext js,jsx",
     "test": "node --import ./alias-loader.mjs run-tests.mjs"
   },
