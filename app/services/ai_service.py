@@ -121,6 +121,40 @@ async def _request_gemini(client, data, settings):
     )
 
 
+def _provider_message(response) -> str:
+    """The upstream error text, so the UI can say what actually went wrong."""
+    try:
+        body = response.json()
+    except ValueError:
+        return response.text[:200].strip()
+    error = body.get("error") if isinstance(body, dict) else None
+    if isinstance(error, dict):
+        return str(error.get("message") or error.get("status") or error.get("type") or "")[:300]
+    return str(error or body)[:200]
+
+
+def _upstream_error(provider: str, response, attempts) -> HTTPException:
+    tried = ", ".join(f"{name} {result.status_code}" for name, result in attempts)
+    reason = _provider_message(response) or f"HTTP {response.status_code}"
+
+    if response.status_code == 429:
+        retry_after = response.headers.get("retry-after")
+        return HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"{provider} is rate limited or out of quota: {reason} (tried: {tried})",
+            headers={"Retry-After": retry_after} if retry_after else None,
+        )
+    if response.status_code in {401, 403}:
+        return HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"{provider} rejected the API key: {reason} (tried: {tried})",
+        )
+    return HTTPException(
+        status_code=status.HTTP_502_BAD_GATEWAY,
+        detail=f"{provider} could not complete the request: {reason} (tried: {tried})",
+    )
+
+
 async def request_ai_completion(data: AICopilotRequest) -> AICopilotResponse:
     settings = get_settings()
     allowed_names = {tool.name for tool in data.tools}
@@ -147,18 +181,9 @@ async def request_ai_completion(data: AICopilotRequest) -> AICopilotResponse:
             responses = []
             if settings.ai_groq_api_key:
                 responses.append(("groq", await _request_groq(client, data, tools, settings)))
-                if responses[-1][1].is_success:
-                    response = responses[-1][1]
-                else:
-                    response = None
-            else:
-                response = None
-            if response is None and settings.ai_gemini_api_key:
+            if not any(result.is_success for _, result in responses) and settings.ai_gemini_api_key:
                 responses.append(("gemini", await _request_gemini(client, data, settings)))
-                if responses[-1][1].is_success:
-                    response = responses[-1][1]
-            if response is None:
-                response = responses[-1][1]
+            response = next((result for _, result in responses if result.is_success), None)
     except httpx.TimeoutException as exc:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
@@ -170,21 +195,11 @@ async def request_ai_completion(data: AICopilotRequest) -> AICopilotResponse:
             detail="AI service is temporarily unavailable.",
         ) from exc
 
-    if response.status_code == 429:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="AI service is busy. Please try again shortly.",
-        )
-    if response.status_code in {401, 403}:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI service is not configured correctly.",
-        )
-    if response.status_code >= 400:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="AI service could not complete the request.",
-        )
+    if response is None:
+        # Report the PRIMARY provider's failure, not the fallback's. Blaming the
+        # last response made a broken Groq call read as "Gemini is busy", which
+        # sends everyone off replacing keys that were never the problem.
+        raise _upstream_error(*responses[0], attempts=responses)
 
     body = response.json()
     if "choices" in body:
