@@ -44,9 +44,6 @@ const TOOLS = [
   ["uploadAsset", "Registers an asset URL in the project's asset library.", p("url", "name", "type")],
   ["groupElements", "Collects sibling elements into one new container.", p("elementIds", "wrapperType")],
   ["wrapElement", "Wraps an element in a new container-style element.", p("elementId", "wrapperType")],
-  ["executeBatchActions", "Runs several tool calls as one undoable batch.", p("actions")],
-  ["composeSection", "Builds a complete, fully styled section in one call.", p("name", "section", "children")],
-  ["moveElement", "Moves an element next to or inside another node.", p("elementId", "targetId", "position")],
 ];
 
 for (const [name, description, parameters] of TOOLS) {
@@ -79,11 +76,8 @@ assert.ok(names("duplicate two sections").includes("duplicateSection"), "section
 assert.ok(names("hide it on mobile breakpoints").includes("toggleResponsiveVisibility"));
 
 // --- the whole point: the list stays small ---
-// 20, not 18: the core set now carries the styling tools (updateColors /
-// Typography / Spacing) because a created section that is never styled is the
-// main quality failure, and keyword scoring never surfaces them for "add a hero".
 for (const prompt of ["make the heading blue", "audit the page and fix everything", "change section colours and spacing"]) {
-  assert.ok(selectTools(prompt).length <= 20, `too many tools for "${prompt}": ${selectTools(prompt).length}`);
+  assert.ok(selectTools(prompt).length <= 18, `too many tools for "${prompt}": ${selectTools(prompt).length}`);
 }
 assert.ok(selectTools("make the heading blue").length < TOOLS.length, "must not send the whole registry");
 

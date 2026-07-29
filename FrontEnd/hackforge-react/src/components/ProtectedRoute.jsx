@@ -40,7 +40,6 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    sessionStorage.setItem('hackforge_return_path', window.location.pathname + window.location.search);
     return <Navigate to="/login" replace />;
   }
 

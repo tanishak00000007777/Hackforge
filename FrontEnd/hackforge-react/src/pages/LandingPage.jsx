@@ -147,10 +147,10 @@ export default function LandingPage() {
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, letterSpacing: '0.05em', color: 'var(--color-on-secondary-container)', textTransform: 'uppercase' }}>v2.0 Now Live</span>
             </div>
             <h1 style={{ fontFamily: 'var(--font-inter)', fontSize: 48, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: '56px', color: 'var(--color-primary-container)' }}>
-              Build Hackathon Websites. <br /><span style={{ color: 'var(--color-on-primary-container)' }}>Run the Whole Event.</span>
+              Build Exceptional <br /><span style={{ color: 'var(--color-on-primary-container)' }}>Hackathons</span>
             </h1>
             <p style={{ fontSize: 18, lineHeight: '28px', color: 'var(--color-on-surface-variant)', maxWidth: 512 }}>
-              Design a branded hackathon site with our no-code drag &amp; drop builder, then manage registrations, teams, submissions and judging — all from one powerful platform.
+              Launch branded hackathons, manage participants, evaluate projects and celebrate innovation from one powerful platform. Designed for modern tech communities.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16 }}>
               <button
