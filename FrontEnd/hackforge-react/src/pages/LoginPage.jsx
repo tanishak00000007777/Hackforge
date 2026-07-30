@@ -144,7 +144,11 @@ export default function LoginPage() {
           {
             theme: 'outline',
             size: 'large',
-            width: 384,
+            // Google renders this at a fixed pixel width. 384 + the card's
+            // padding is wider than a phone, which pushed the whole card off
+            // screen. Clamp to what the viewport can actually hold (GSI
+            // accepts 200-400).
+            width: Math.max(200, Math.min(384, window.innerWidth - 96)),
             text: 'continue_with',
             shape: 'rectangular',
           }

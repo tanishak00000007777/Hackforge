@@ -1,0 +1,19 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm install --prefix FrontEnd/hackforge-react && npm install --prefix FrontEnd/EditorWindow",
+  "buildCommand": "npm run build --prefix FrontEnd/hackforge-react",
+  "outputDirectory": "FrontEnd/hackforge-react/dist",
+  "functions": {
+    "api/index.py": {
+      "excludeFiles": "{.env,.env.*,.venv/**,.venv312/**,.pytest_cache/**,node_modules/**,FrontEnd/**,Diagrams/**,tests/**,**/__pycache__/**}"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/health", "destination": "/api/index" },
+    { "source": "/docs", "destination": "/api/index" },
+    { "source": "/openapi.json", "destination": "/api/index" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

@@ -508,3 +508,126 @@ body {
   border-radius: var(--radius-md);
   font-size: 14px;
 }
+
+/* ---- Phones ----------------------------------------------------------
+ * The pages here style themselves with inline style={{}} objects, which
+ * cannot carry a breakpoint and outrank any stylesheet rule -- hence the
+ * class hooks and the !important on properties that are set inline.
+ * Anything not marked !important is setting a property no inline style
+ * touches.
+ */
+@media (max-width: 768px) {
+  :root {
+    --spacing-margin-safe: 16px;
+  }
+
+  /* Nothing should ever scroll sideways on a phone. */
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  /* Landing nav: let the brand + links + CTAs wrap onto two rows rather
+     than running off the right edge. No links are hidden. */
+  .lp-nav {
+    height: auto !important;
+    flex-wrap: wrap;
+    justify-content: center !important;
+    gap: 8px 16px;
+    padding: 10px var(--spacing-margin-safe) !important;
+  }
+  /* The two flex groups inside the nav are ~384px of content each, wider
+     than the 358px a 390px phone leaves after padding. Let them wrap and
+     shrink instead of poking past both edges. */
+  .lp-nav > div {
+    flex-wrap: wrap;
+    justify-content: center;
+    min-width: 0;
+    gap: 8px 14px !important;
+  }
+  .lp-nav > div:first-child > span {
+    font-size: 20px !important;
+  }
+  .lp-nav-links {
+    gap: 14px !important;
+  }
+  .lp-nav-links a {
+    font-size: 14px !important;
+  }
+
+  /* Hero: the 5fr/7fr split stacked, so the mockup stops sitting on top
+     of the headline. */
+  .lp-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+  .lp-hero-title {
+    font-size: clamp(26px, 7.5vw, 34px) !important;
+    line-height: 1.2 !important;
+  }
+  .lp-hero-media {
+    height: auto !important;
+    min-height: 260px;
+  }
+  /* Decorative only, and both land on top of the copy at this width. */
+  .lp-hero-media .floating,
+  .lp-hero-blob {
+    display: none !important;
+  }
+
+  /* Feature cards: 3-up with a span-2 first card cannot fit one column. */
+  .lp-grid-3 {
+    grid-template-columns: 1fr !important;
+  }
+  .lp-grid-3 > * {
+    grid-column: auto !important;
+  }
+  /* Text beside an image inside a card leaves ~120px for the heading, which
+     wraps it to three lines. Stack them. */
+  .lp-split {
+    flex-direction: column;
+    gap: 20px !important;
+    align-items: stretch !important;
+  }
+
+  .lp-footer {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 24px;
+  }
+
+  /* Auth cards: reclaim the padding a phone can't spare. */
+  .dash-card,
+  .glass-card {
+    padding: var(--spacing-md);
+  }
+
+  /* Grid and flex children default to min-width:auto, so a long word or a
+     wide child refuses to shrink and pushes the row past the viewport.
+     This is what was clipping the hero copy. */
+  .lp-hero-grid > *,
+  .lp-grid-3 > *,
+  .lp-footer > * {
+    min-width: 0;
+  }
+  .lp-hero-title,
+  .lp-hero-grid p {
+    overflow-wrap: break-word;
+  }
+
+  /* Media must never dictate layout width. */
+  img,
+  svg,
+  video,
+  iframe {
+    max-width: 100%;
+  }
+
+  /* Wide dashboard tables scroll in their own box, not the page. */
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+}

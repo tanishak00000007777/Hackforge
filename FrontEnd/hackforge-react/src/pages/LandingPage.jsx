@@ -59,7 +59,7 @@ export default function LandingPage() {
   return (
     <div style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-on-surface)', overflowX: 'hidden' }}>
       {/* Top Nav */}
-      <nav style={{
+      <nav className="lp-nav" style={{
         position: 'fixed', top: 0, width: '100%', zIndex: 50,
         background: 'rgba(251,248,255,0.6)', backdropFilter: 'blur(24px)',
         borderBottom: '1px solid rgba(14,22,71,0.05)',
@@ -73,7 +73,7 @@ export default function LandingPage() {
           <span style={{ fontFamily: 'var(--font-inter)', fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--color-primary)' }}>
             HackForge
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+          <div className="lp-nav-links" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
             <a href="#features" style={{ color: 'var(--color-on-surface-variant)', fontWeight: 600, textDecoration: 'none', fontSize: 16, borderBottom: '2px solid var(--color-on-tertiary-container)', paddingBottom: 2 }}>Features</a>
             <a href="#pricing" style={{ color: 'var(--color-on-surface-variant)', textDecoration: 'none', fontSize: 16 }}>Pricing</a>
             <a href="/templates" onClick={(e) => { e.preventDefault(); navigate('/templates'); }} style={{ color: 'var(--color-on-surface-variant)', textDecoration: 'none', fontSize: 16 }}>Resources</a>
@@ -140,13 +140,13 @@ export default function LandingPage() {
         background: 'radial-gradient(circle at 50% -20%, #f0dbff 0%, #fbf8ff 60%)',
         overflow: 'hidden', position: 'relative',
       }}>
-        <div style={{ maxWidth: 1440, margin: '0 auto', padding: '0 var(--spacing-margin-safe)', display: 'grid', gridTemplateColumns: '5fr 7fr', gap: 80, alignItems: 'center' }}>
+        <div className="lp-hero-grid" style={{ maxWidth: 1440, margin: '0 auto', padding: '0 var(--spacing-margin-safe)', display: 'grid', gridTemplateColumns: '5fr 7fr', gap: 80, alignItems: 'center' }}>
           {/* Left */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24, zIndex: 10 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 12px', borderRadius: 9999, background: 'rgba(249,181,254,0.3)', width: 'fit-content', marginBottom: 8 }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500, letterSpacing: '0.05em', color: 'var(--color-on-secondary-container)', textTransform: 'uppercase' }}>v2.0 Now Live</span>
             </div>
-            <h1 style={{ fontFamily: 'var(--font-inter)', fontSize: 48, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: '56px', color: 'var(--color-primary-container)' }}>
+            <h1 className="lp-hero-title" style={{ fontFamily: 'var(--font-inter)', fontSize: 48, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: '56px', color: 'var(--color-primary-container)' }}>
               Build Hackathon Websites. <br /><span style={{ color: 'var(--color-on-primary-container)' }}>Run the Whole Event.</span>
             </h1>
             <p style={{ fontSize: 18, lineHeight: '28px', color: 'var(--color-on-surface-variant)', maxWidth: 512 }}>
@@ -178,8 +178,8 @@ export default function LandingPage() {
           </div>
 
           {/* Right - Product Showcase */}
-          <div style={{ position: 'relative', height: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ position: 'absolute', width: 600, height: 600, background: 'rgba(19,2,37,0.05)', borderRadius: '50%', filter: 'blur(80px)' }} />
+          <div className="lp-hero-media" style={{ position: 'relative', height: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="lp-hero-blob" style={{ position: 'absolute', width: 600, height: 600, background: 'rgba(19,2,37,0.05)', borderRadius: '50%', filter: 'blur(80px)' }} />
             {/* Main Dashboard Card */}
             <div className="glass-card glass-edge" style={{ position: 'relative', width: '100%', maxWidth: 576, borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)', zIndex: 20 }}>
               <div style={{ height: 32, background: 'rgba(237,236,255,0.5)', display: 'flex', alignItems: 'center', padding: '0 16px', gap: 6, borderBottom: '1px solid rgba(14,22,71,0.05)' }}>
@@ -298,10 +298,10 @@ export default function LandingPage() {
             <h2 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.01em', color: 'var(--color-primary)', marginBottom: 16 }}>Powerful tools for Every Stage</h2>
             <p style={{ color: 'var(--color-on-surface-variant)', fontSize: 16 }}>From registration to final judging, HackForge provides a seamless infrastructure to scale your innovation events.</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <div className="lp-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {/* Feature 1 - spans 2 cols */}
             <div className="glass-card scroll-reveal" style={{ gridColumn: 'span 2', padding: 32, borderRadius: 16 }}>
-              <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
+              <div className="lp-split" style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
                   <span className="material-symbols-outlined" style={{ color: 'var(--color-on-tertiary-container)', fontSize: 40, display: 'block', marginBottom: 16 }}>web</span>
                   <h3 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)', marginBottom: 8 }}>Drag &amp; Drop Builder</h3>
@@ -416,7 +416,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer style={{ borderTop: '1px solid rgba(14,22,71,0.05)', background: 'var(--color-surface)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--spacing-lg) var(--spacing-margin-safe)', maxWidth: 1440, margin: '0 auto' }}>
+        <div className="lp-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--spacing-lg) var(--spacing-margin-safe)', maxWidth: 1440, margin: '0 auto' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-primary)' }}>HackForge</span>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-on-surface-variant)', maxWidth: 300 }}>The end-to-end infrastructure for professional innovation events.</p>

@@ -74,7 +74,8 @@ export default function RegisterPage() {
           {
             theme: 'outline',
             size: 'large',
-            width: 384,
+            // See LoginPage: a fixed 384 overflows a phone-width card.
+            width: Math.max(200, Math.min(384, window.innerWidth - 96)),
             text: 'signup_with',
             shape: 'rectangular',
           }

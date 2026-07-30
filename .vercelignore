@@ -1,0 +1,14 @@
+node_modules
+.venv
+.venv312
+__pycache__
+*.pyc
+.env
+.env.*
+FrontEnd/hackforge-react/dist
+Diagrams
+tests
+
+# Only the repo-root docs. Markdown under FrontEnd/ is build input:
+# PromptBuilder.js and designBrief.js import .md files with ?raw.
+/*.md
