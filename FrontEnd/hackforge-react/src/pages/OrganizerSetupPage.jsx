@@ -68,11 +68,11 @@ export default function OrganizerSetupPage() {
         website_url: websiteUrl.trim() || null,
         logo_url: logoUrl.trim() || null,
       });
-      const hackathon = await hackathonApi.createHackathon(organization.id, {
+      await hackathonApi.createHackathon(organization.id, {
         title: `${normalizedName} Hackathon`,
         slug: `${normalizedSlug}-hackathon`,
       });
-      navigate(`/organizer/hackathons/${hackathon.id}/studio`, { replace: true });
+      navigate('/organizer', { replace: true, state: { justCreated: true } });
     } catch (requestError) {
       setError(errorMessage(requestError));
     } finally {
