@@ -28,9 +28,28 @@ export class AIProvider {
         body: JSON.stringify({
           hackathon_id: session.hackathonId,
           system: systemInstruction,
-          messages: (history || [])
-            .map(({ role, content }) => ({ role, content }))
-            .filter((message) => message.content),
+          messages: (history || []).map(
+            ({ role, content, tool_calls, tool_call_id, name }) => {
+              const message = {
+                role,
+                content: content || "",
+              };
+
+              if (tool_calls?.length) {
+                message.tool_calls = tool_calls;
+              }
+
+              if (tool_call_id) {
+                message.tool_call_id = tool_call_id;
+              }
+
+              if (name) {
+                message.name = name;
+              }
+
+              return message;
+            }
+          ),
           tools,
         }),
       });
@@ -49,6 +68,7 @@ export class AIProvider {
         id: call.id,
         name: call.name,
         arguments: call.arguments || {},
+        thought_signature: call.thought_signature || null,
       })),
     };
   }

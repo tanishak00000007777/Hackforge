@@ -72,12 +72,31 @@ def _gemini_schema(schema):
     return converted
 
 
+def _groq_message(message):
+    """OpenAI-compatible chat message shape for one AIMessage."""
+    out = {"role": message.role, "content": message.content}
+    if message.role == "assistant" and message.tool_calls:
+        out["tool_calls"] = [
+            {
+                "id": call.id or f"call_{index}",
+                "type": "function",
+                "function": {"name": call.name, "arguments": json.dumps(call.arguments)},
+            }
+            for index, call in enumerate(message.tool_calls)
+        ]
+    if message.role == "tool":
+        out["tool_call_id"] = message.tool_call_id
+        if message.name:
+            out["name"] = message.name
+    return out
+
+
 async def _request_groq(client, data, tools, settings):
     payload = {
         "model": settings.ai_groq_model,
         "messages": [
             {"role": "system", "content": data.system},
-            *[message.model_dump() for message in data.messages],
+            *[_groq_message(message) for message in data.messages],
         ],
         "temperature": 0.1,
         "max_tokens": settings.ai_max_tokens,
@@ -92,6 +111,57 @@ async def _request_groq(client, data, tools, settings):
     )
 
 
+def _gemini_content(message):
+    """Gemini `contents` entry for one AIMessage — branches on role/shape
+    since Gemini's multi-turn function-calling format differs from OpenAI's:
+    an assistant tool call is a `model` turn with `functionCall` parts (no
+    text needed), and a tool result is a `function` turn with a
+    `functionResponse` part, rather than a generic user/assistant text turn.
+    """
+    if message.role == "tool":
+        try:
+            response_payload = json.loads(message.content) if message.content else {}
+        except json.JSONDecodeError:
+            response_payload = {"result": message.content}
+        if not isinstance(response_payload, dict):
+            response_payload = {"result": response_payload}
+        return {
+            "role": "user",
+            "parts": [{
+                "functionResponse": {
+                    "name": message.name or "tool",
+                    "response": response_payload,
+                },
+            }],
+        }
+
+    if message.role == "assistant" and message.tool_calls:
+        parts = []
+
+        for call in message.tool_calls:
+            part = {
+                "functionCall": {
+                    "name": call.name,
+                    "args": call.arguments,
+                }
+            }
+
+            if call.thought_signature:
+                part["thoughtSignature"] = call.thought_signature
+
+            parts.append(part)
+
+        return {
+            "role": "model",
+            "parts": parts,
+        }
+
+    return {
+        "role": "model" if message.role == "assistant" else "user",
+        "parts": [{"text": message.content}],
+    }
+
+
 async def _request_gemini(client, data, settings):
     declarations = []
     for tool in data.tools:
@@ -103,13 +173,7 @@ async def _request_gemini(client, data, settings):
 
     payload = {
         "systemInstruction": {"parts": [{"text": data.system}]},
-        "contents": [
-            {
-                "role": "model" if message.role == "assistant" else "user",
-                "parts": [{"text": message.content}],
-            }
-            for message in data.messages
-        ],
+        "contents": [_gemini_content(message) for message in data.messages],
         "generationConfig": {"temperature": 0.1, "maxOutputTokens": settings.ai_max_tokens},
     }
     if declarations:
@@ -219,5 +283,6 @@ async def request_ai_completion(data: AICopilotRequest) -> AICopilotResponse:
                 id=f"gemini_{index}",
                 name=function["name"],
                 arguments=function.get("args") or {},
+                thought_signature=part.get("thoughtSignature"),
             ))
     return AICopilotResponse(message=message, tool_calls=calls)

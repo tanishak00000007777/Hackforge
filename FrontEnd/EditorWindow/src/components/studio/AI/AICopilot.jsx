@@ -30,6 +30,16 @@ export default function AICopilot({ isOpen, onClose }) {
   // What the last AI turn did to the canvas, so it can be reviewed or rejected.
   const [lastChange, setLastChange] = useState(null);
 
+  // Load any conversation history saved for this hackathon so refreshing the
+  // page doesn't lose the chat. No-op if there's already a local, in-progress
+  // conversation (see MemoryManager.hydrate).
+  useEffect(() => {
+    conversationManager.hydrate().then(() => {
+      setChatHistory(conversationManager.getChatHistory());
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const rejectLastChange = () => {
     conversationManager.revertChange(lastChange);
     setLastChange(null);

@@ -28,6 +28,12 @@ class ConversationManager {
     const historyBefore = before.history.length;
     const pageBefore = before.currentPageId;
 
+    // Hard stops for the agent loop below: without these, a single prompt
+    // could keep calling tools indefinitely (cost/runaway risk). Well above
+    // what any real page-building request should need.
+    const MAX_ROUNDS = 10;
+    const MAX_TOTAL_TOOL_CALLS = 40;
+
     try {
       // 1. Snapshot the world state so the AI has context
       contextEngine.updateSnapshot(before);
@@ -35,16 +41,52 @@ class ConversationManager {
       // 2. Add user message to memory
       memoryManager.addMessage("user", prompt);
 
-      // 3. Understand & Reason
-      const { reasoningText, toolCalls } = await reasoningEngine.analyzeRequest(prompt);
+      // 3-4. Understand & Reason -> Plan & Execute, looping until the model
+      // has no more tool calls to make. A single reasoning call caps out at
+      // ~8 tool calls per round; a prompt that genuinely needs many steps
+      // (e.g. "build a full landing page") needs to see its own results and
+      // decide to keep going, which is what this loop enables.
+      let finalMessage = "";
+      let totalToolCalls = 0;
+      let anyToolCalls = false;
 
-      // 4. Plan, Execute & Verify
-      const rawFinalResponse = await planningEngine.executePlan(reasoningText, toolCalls);
+      for (let round = 0; round < MAX_ROUNDS; round++) {
+        const { reasoningText, toolCalls } = await reasoningEngine.analyzeRequest(prompt);
+
+        if (!toolCalls || toolCalls.length === 0) {
+          finalMessage = reasoningText;
+          break;
+        }
+
+        anyToolCalls = true;
+        memoryManager.addAssistantToolCallMessage(reasoningText, toolCalls);
+        totalToolCalls += toolCalls.length;
+
+        const { failures, succeeded, rateLimited } = await planningEngine.executeToolCalls(toolCalls);
+
+        if (failures.length > 0) {
+          finalMessage = succeeded === 0
+            ? (rateLimited
+                ? "The AI service hit its rate limit. Please try again in a moment."
+                : await planningEngine.explainFailure(reasoningText, failures))
+            : `I applied ${succeeded} change${succeeded === 1 ? "" : "s"}, but could not finish ${failures.length} other step${failures.length === 1 ? "" : "s"}.`;
+          break;
+        }
+
+        if (totalToolCalls >= MAX_TOTAL_TOOL_CALLS || round === MAX_ROUNDS - 1) {
+          finalMessage = "I made a lot of changes and stopped to keep things manageable — let me know if you'd like me to continue.";
+          break;
+        }
+      }
+
+      if (!finalMessage) {
+        finalMessage = totalToolCalls > 0 ? `Done — ${totalToolCalls} change${totalToolCalls === 1 ? "" : "s"} applied.` : "Done.";
+      }
 
       // 5. Format Response
-      let finalMessage = ResponseFormatter.formatResponse(rawFinalResponse);
+      finalMessage = ResponseFormatter.formatResponse(finalMessage);
       const change = this.#describeChange(treeBefore, historyBefore, pageBefore);
-      if (!change && toolCalls.length > 0 && EDIT_INTENT.test(prompt)) {
+      if (!change && anyToolCalls && EDIT_INTENT.test(prompt)) {
         finalMessage = "I could not apply that change. Try selecting the exact element and ask again.";
       }
 
@@ -97,6 +139,11 @@ class ConversationManager {
 
   getChatHistory() {
     return memoryManager.getChatHistory();
+  }
+
+  /** Load persisted conversation history for the current session (see MemoryManager.hydrate). */
+  async hydrate() {
+    await memoryManager.hydrate();
   }
 
   clearMemory() {

@@ -44,3 +44,18 @@ export function publishHackathon(session) {
     method: "POST",
   });
 }
+
+/** Append one AI Copilot conversation turn. Never throws to the caller --
+ * see saveAiMessage in MemoryManager.js: a persistence failure must not
+ * break the live chat. */
+export function saveAiMessage(session, message) {
+  return request(session, `/ai/conversations/${session.hackathonId}/messages`, {
+    method: "POST",
+    body: JSON.stringify(message),
+  });
+}
+
+/** Full AI Copilot history for this hackathon, oldest first. */
+export function getAiConversationHistory(session) {
+  return request(session, `/ai/conversations/${session.hackathonId}/messages`);
+}

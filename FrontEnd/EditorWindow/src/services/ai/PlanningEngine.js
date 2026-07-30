@@ -19,54 +19,39 @@ export function describeResult(name, result) {
 
 export class PlanningEngine {
   /**
-   * Plan -> Execute -> Verify.
-   *
-   * Verification used to be a second full-context LLM call on every turn,
-   * which doubled the token cost of a request that was already at the limit.
-   * Tools now return structured results, so a clean run is summarised locally
-   * and only genuine failures are worth asking the model about.
+   * Execute one round's tool calls and record each result as a real `tool`
+   * turn in memory (see MemoryManager.addToolResultMessage), so the next
+   * round of the agent loop can see what happened and decide whether to
+   * keep going. Returns structured outcomes -- the caller (ConversationManager's
+   * loop) decides whether/how to summarise, since a round with no failures
+   * isn't necessarily the end of the turn.
    */
-  async executePlan(reasoningText, toolCalls) {
-    if (!toolCalls || toolCalls.length === 0) {
-      return reasoningText;
-    }
-
+  async executeToolCalls(toolCalls) {
     const outcomes = [];
     for (const toolCall of toolCalls) {
       const result = await toolExecutor.executeToolCall(toolCall);
-      outcomes.push({ name: toolCall.name, result });
+      outcomes.push({ id: toolCall.id, name: toolCall.name, result });
       memoryManager.logAction(`${toolCall.name} -> ${JSON.stringify(result).slice(0, MAX_RESULT_CHARS)}`);
+      memoryManager.addToolResultMessage(toolCall.id, toolCall.name, result);
     }
 
     const failures = outcomes.filter((outcome) => !outcome.result?.success);
     const succeeded = outcomes.length - failures.length;
-
-    // Raw tool output stays in memory (the model needs the detail on the next
-    // turn) but never reaches the chat: "callTool failed: No tool named
-    // 'changeFontFamily'" means nothing to the person using the editor.
-    if (failures.length === 0) {
-      const done = succeeded === 1 ? "Done." : `Done — ${succeeded} changes applied.`;
-      return reasoningText?.trim() ? `${reasoningText.trim()}\n\n${done}` : done;
-    }
-
-    if (succeeded > 0) {
-      return `I applied ${succeeded} change${succeeded === 1 ? "" : "s"}, but could not finish ${failures.length} other step${failures.length === 1 ? "" : "s"}.`;
-    }
-
-    // Something broke: one round-trip so the model can explain or suggest
-    // another route, carrying only the failures rather than the whole history.
-    // A rate-limited turn must not spend another request explaining itself --
-    // that is what turns one 429 into a minute of them.
     const rateLimited = failures.some(({ result }) => /rate limit/i.test(result?.error || ""));
-    if (rateLimited) {
-      return "The AI service hit its rate limit. Please try again in a moment.";
-    }
 
+    return { outcomes, failures, succeeded, rateLimited };
+  }
+
+  /**
+   * One round-trip so the model can explain a total failure, carrying only
+   * the failures rather than the whole history. Deliberately NOT the full
+   * system prompt: explaining a failure needs no page context or tool list,
+   * and rebuilding them costs ~1k tokens against a per-minute budget that is
+   * already under strain from the round that just failed.
+   */
+  async explainFailure(reasoningText, failures) {
     try {
       const explanation = await aiProvider.sendPrompt(
-        // Deliberately NOT the full system prompt: explaining a failure needs
-        // no page context or tool list, and rebuilding them costs ~1k tokens
-        // against a per-minute budget that is already under strain.
         "You are a friendly design assistant talking to someone who does not know how the editor works internally. " +
           "Some internal steps failed. In at most two sentences, say plainly what could not be done and what the " +
           "person can try instead. Never mention tool names, ids, parameters or error codes. Do not call tools.",

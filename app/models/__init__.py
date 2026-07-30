@@ -14,3 +14,4 @@ from app.models.certificate import Certificate, CertificateTemplate
 from app.models.announcement import Announcement
 from app.models.hackathon_features import HackathonFeature
 from app.models.form import CustomForm, FormQuestion, FormResponse, FormAnswer, FormAttachment
+from app.models.ai_message import AIConversationMessage
