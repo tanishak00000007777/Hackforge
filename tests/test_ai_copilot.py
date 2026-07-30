@@ -53,3 +53,46 @@ def test_ai_tool_calls_are_allowlisted_and_limited():
 
     assert len(normalized) == 8
     assert all(call.name == "createSection" for call in normalized)
+
+
+def test_upstream_error_blames_the_primary_provider_not_the_fallback():
+    """Groq fails, Gemini's quota 429 follows -- the user must hear about Groq."""
+    import httpx
+
+    from app.services.ai_service import _upstream_error
+
+    groq = httpx.Response(
+        400,
+        json={"error": {"message": "tool_use_failed", "type": "invalid_request_error"}},
+        request=httpx.Request("POST", "https://api.groq.com/"),
+    )
+    gemini = httpx.Response(
+        429,
+        json={"error": {"message": "You exceeded your current quota"}},
+        request=httpx.Request("POST", "https://generativelanguage.googleapis.com/"),
+    )
+
+    error = _upstream_error("groq", groq, attempts=[("groq", groq), ("gemini", gemini)])
+
+    assert error.status_code == 502
+    assert "groq" in error.detail
+    assert "tool_use_failed" in error.detail
+    assert "gemini 429" in error.detail  # the fallback is context, not the headline
+
+
+def test_upstream_429_passes_retry_after_through():
+    import httpx
+
+    from app.services.ai_service import _upstream_error
+
+    limited = httpx.Response(
+        429,
+        headers={"retry-after": "33"},
+        json={"error": {"message": "Rate limit reached"}},
+        request=httpx.Request("POST", "https://api.groq.com/"),
+    )
+
+    error = _upstream_error("groq", limited, attempts=[("groq", limited)])
+
+    assert error.status_code == 429
+    assert error.headers["Retry-After"] == "33"
