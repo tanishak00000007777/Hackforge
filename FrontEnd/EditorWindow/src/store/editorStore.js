@@ -3,7 +3,6 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import * as coreCommands from "@/builder/commands/coreCommands";
 import * as coreFactory from "@/builder/factories/coreFactory";
 import { defaultTheme } from "@/builder/styles/theme";
-import { defaultTemplates } from "@/builder/registry/templates";
 
 /**
  * Each entry deep-clones the whole tree, so an unbounded stack grows without
@@ -141,7 +140,17 @@ const createEditorStore = (set, get) => ({
      parks the live tree back into `pages` and loads the next one.
   ============================================================ */
 
-  components: createDefaultComponents(),
+  /* Deliberately empty, NOT createDefaultComponents().
+     create() runs this initial state while the module is still being imported,
+     and createComponent() needs componentRegistry from builder/registry --
+     which is not initialised that early in the production bundle. Calling it
+     here threw "Cannot read properties of undefined (reading 'hero')" and took
+     the whole studio chunk down, leaving organizers a blank editor. Dev never
+     showed it: Vite serves modules unbundled, in import order.
+     Nothing is lost -- integrationStore.initialize() always follows with
+     hydrateProject() or resetProject(), both of which build the defaults once
+     the registry is ready. */
+  components: [],
 
   /* ============================================================
      PAGES
@@ -558,7 +567,14 @@ const createEditorStore = (set, get) => ({
      TEMPLATES
   ============================================================ */
 
-  savedTemplates: defaultTemplates,
+  /* User-saved templates only. The built-in defaults are static and live in
+     builder/registry/templates -- read both together via listTemplates().
+     They are deliberately NOT here: persist serialises this slice the moment
+     the store is created, and building a default template needs
+     componentRegistry, which is not initialised that early in the bundle.
+     Doing it anyway threw "Cannot read properties of undefined (reading
+     'hero')" and took the whole studio down with it. */
+  savedTemplates: [],
   isTemplatesModalOpen: false,
   isCopilotOpen: false,
   isAIEditorOpen: false,

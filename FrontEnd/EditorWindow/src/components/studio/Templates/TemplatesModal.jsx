@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useEditorStore } from "@/store/editorStore";
 import { duplicateNode } from "@/builder/factories/coreFactory";
+import { listTemplates } from "@/builder/registry/templates";
 
 export default function TemplatesModal() {
   const isTemplatesModalOpen = useEditorStore((state) => state.isTemplatesModalOpen);
@@ -14,7 +15,7 @@ export default function TemplatesModal() {
 
   if (!isTemplatesModalOpen) return null;
 
-  const filteredTemplates = savedTemplates.filter(t => t.type === activeTab);
+  const filteredTemplates = listTemplates(savedTemplates).filter(t => t.type === activeTab);
 
   const handleUseTemplate = (template) => {
     if (template.type === "section") {
