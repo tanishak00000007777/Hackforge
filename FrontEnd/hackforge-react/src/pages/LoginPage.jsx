@@ -139,16 +139,19 @@ export default function LoginPage() {
           callback: handleGoogleCredentialResponse,
         });
 
+        const host = document.getElementById('google-login-btn');
+        // Google renders this at a fixed pixel width, so a hard 384 spilled out
+        // of the card. Measure the slot it sits in -- the card's padding is part
+        // of the budget. The host itself is empty (offsetWidth 0) until Google
+        // fills it, so measure its full-width parent. GSI accepts 200-400.
+        const slot = Math.round(host?.parentElement?.offsetWidth || 0);
+
         window.google.accounts.id.renderButton(
-          document.getElementById('google-login-btn'),
+          host,
           {
             theme: 'outline',
             size: 'large',
-            // Google renders this at a fixed pixel width. 384 + the card's
-            // padding is wider than a phone, which pushed the whole card off
-            // screen. Clamp to what the viewport can actually hold (GSI
-            // accepts 200-400).
-            width: Math.max(200, Math.min(384, window.innerWidth - 96)),
+            width: Math.max(200, Math.min(400, slot || 384)),
             text: 'continue_with',
             shape: 'rectangular',
           }
@@ -238,7 +241,7 @@ export default function LoginPage() {
 
       {/* Login Card */}
       <main style={{ width: '100%', maxWidth: 480, zIndex: 10 }}>
-        <div style={{ background: '#fff', border: '1px solid rgba(43,25,61,0.05)', boxShadow: '0 20px 50px -12px rgba(43,25,61,0.12)', borderRadius: 24, padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div className="auth-card" style={{ background: '#fff', border: '1px solid rgba(43,25,61,0.05)', boxShadow: '0 20px 50px -12px rgba(43,25,61,0.12)', borderRadius: 24, padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-lg)', width: '100%' }}>
             <div
@@ -310,7 +313,7 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, marginLeft: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 6, marginLeft: 4 }}>
                 <label htmlFor="password" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-on-surface-variant)' }}>Password</label>
                 <a href="#" style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-on-secondary-container)', textDecoration: 'none' }}
                   onMouseEnter={e => e.currentTarget.style.color = 'var(--color-primary)'}

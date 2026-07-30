@@ -69,13 +69,17 @@ export default function RegisterPage() {
           callback: handleGoogleCredentialResponse,
         });
 
+        const host = document.getElementById('google-register-btn');
+        // See LoginPage: measure the full-width parent slot, not the empty host,
+        // or a fixed 384 spills out of the card.
+        const slot = Math.round(host?.parentElement?.offsetWidth || 0);
+
         window.google.accounts.id.renderButton(
-          document.getElementById('google-register-btn'),
+          host,
           {
             theme: 'outline',
             size: 'large',
-            // See LoginPage: a fixed 384 overflows a phone-width card.
-            width: Math.max(200, Math.min(384, window.innerWidth - 96)),
+            width: Math.max(200, Math.min(400, slot || 384)),
             text: 'signup_with',
             shape: 'rectangular',
           }
@@ -168,7 +172,7 @@ export default function RegisterPage() {
 
       {/* Register Card */}
       <main style={{ width: '100%', maxWidth: 480, zIndex: 10 }}>
-        <div style={{ background: '#fff', border: '1px solid rgba(43,25,61,0.05)', boxShadow: '0 20px 50px -12px rgba(43,25,61,0.12)', borderRadius: 24, padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div className="auth-card" style={{ background: '#fff', border: '1px solid rgba(43,25,61,0.05)', boxShadow: '0 20px 50px -12px rgba(43,25,61,0.12)', borderRadius: 24, padding: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-lg)', width: '100%' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 'var(--spacing-sm)', cursor: 'pointer' }} onClick={() => navigate('/')}>

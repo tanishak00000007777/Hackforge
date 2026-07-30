@@ -597,7 +597,20 @@ body {
     gap: 24px;
   }
 
-  /* Auth cards: reclaim the padding a phone can't spare. */
+  /* --spacing-xl is 80px, so the login/register card spent 160px of a
+     390px screen on padding and left 182px for the form. That is what made
+     the inputs narrow and the Google button overhang its own slot. */
+  .auth-card {
+    padding: var(--spacing-md) !important;
+  }
+
+  /* Room for the placeholder: 48px of left padding on a narrow field
+     truncated "name@company.com" mid-word. */
+  .auth-card input {
+    padding-left: 42px !important;
+    font-size: 15px !important;
+  }
+
   .dash-card,
   .glass-card {
     padding: var(--spacing-md);
