@@ -4,6 +4,7 @@ import { useAuthStore } from './store/authStore.js';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import RoleRoute from './components/RoleRoute.jsx';
 import OrganizerSetupRoute from './components/OrganizerSetupRoute.jsx';
+import ParticipantSetupRoute from './components/ParticipantSetupRoute.jsx';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -57,7 +58,7 @@ export default function App() {
         <Route path="/organizer/hackathons/:hackathonId/studio" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><StudioBridgePage /></OrganizerSetupRoute></RoleRoute>} />
         <Route path="/participant" element={
           <RoleRoute allowedRoles={['participant']}>
-            <ParticipantDashboard />
+            <ParticipantSetupRoute><ParticipantDashboard /></ParticipantSetupRoute>
           </RoleRoute>
         } />
         <Route path="/participant/certificates" element={<RoleRoute allowedRoles={['participant']}><MyCertificatesPage /></RoleRoute>} />
