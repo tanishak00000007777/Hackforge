@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore.js';
 import * as hackathonApi from '../services/hackathonApi.js';
 import * as registrationApi from '../services/registrationApi.js';
@@ -35,7 +35,6 @@ const STATUS_STYLES = {
 
 export default function OrganizerDashboard() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, logout } = useAuthStore();
   const [activeNav, setActiveNav] = useState('dashboard');
   const [showAIPanel, setShowAIPanel] = useState(false);
@@ -43,7 +42,6 @@ export default function OrganizerDashboard() {
   const [registrations, setRegistrations] = useState([]);
   const [selectedHackathon, setSelectedHackathon] = useState(null);
   const [loadingRegs, setLoadingRegs] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(Boolean(location.state?.justCreated));
 
   // Load organizer-owned hackathons on mount.
   useEffect(() => {
@@ -228,24 +226,6 @@ export default function OrganizerDashboard() {
               </button>
             </div>
           </header>
-
-          {/* First-time welcome banner */}
-          {showWelcome && (
-            <div style={{ marginBottom: 'var(--spacing-lg)', padding: '20px 24px', borderRadius: 12, background: 'var(--color-primary-container)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, boxShadow: '0 8px 24px rgba(43,25,61,0.2)' }}>
-              <div>
-                <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>Welcome to HackForge, {userName.split(' ')[0]}!</h2>
-                <p style={{ margin: 0, fontSize: 13, opacity: 0.9 }}>Your organization is set up. This dashboard is home base — track registrations here, and use the cards below to build out your event.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowWelcome(false)}
-                aria-label="Dismiss welcome message"
-                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer' }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>close</span>
-              </button>
-            </div>
-          )}
 
           {/* Quick actions */}
           <div style={{ marginBottom: 'var(--spacing-lg)' }}>

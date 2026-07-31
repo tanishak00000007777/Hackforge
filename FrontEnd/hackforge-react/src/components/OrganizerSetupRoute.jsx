@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore.js';
 import * as organizationApi from '../services/organizationApi.js';
+import OrganizerWelcomePage from '../pages/OrganizerWelcomePage.jsx';
 
 function errorMessage(error) {
   return typeof error?.detail === 'string'
@@ -70,7 +70,7 @@ export default function OrganizerSetupRoute({ children }) {
   }
 
   if (status === 'needs-setup') {
-    return <Navigate to="/organizer/setup" replace />;
+    return <OrganizerWelcomePage />;
   }
 
   return children;

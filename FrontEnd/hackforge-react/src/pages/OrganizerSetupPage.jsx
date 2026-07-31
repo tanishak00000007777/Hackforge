@@ -72,7 +72,7 @@ export default function OrganizerSetupPage() {
         title: `${normalizedName} Hackathon`,
         slug: `${normalizedSlug}-hackathon`,
       });
-      navigate('/organizer', { replace: true, state: { justCreated: true } });
+      navigate('/organizer', { replace: true });
     } catch (requestError) {
       setError(errorMessage(requestError));
     } finally {
