@@ -44,3 +44,25 @@ export function publishHackathon(session) {
     method: "POST",
   });
 }
+
+export function listVersions(session) {
+  return request(session, `/hackathons/${session.hackathonId}/versions`);
+}
+
+export function createVersion(session, body) {
+  return request(session, `/hackathons/${session.hackathonId}/versions`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Unlike the list rows, this carries the full project document. */
+export function getVersion(session, versionId) {
+  return request(session, `/hackathons/${session.hackathonId}/versions/${versionId}`);
+}
+
+export function restoreVersion(session, versionId) {
+  return request(session, `/hackathons/${session.hackathonId}/versions/${versionId}/restore`, {
+    method: "POST",
+  });
+}

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 // The studio is the heaviest screen in the app. Keeping it behind a lazy
 // boundary means organizers who never open the editor never download it.
-const StudioHost = lazy(() => import('./studio/StudioHost.jsx'));
+const StudioHost = lazy(() => import('./studio/LovableStudioHost.jsx'));
 
 export default function StudioPage() {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export default function StudioPage() {
         type="button"
         onClick={() => navigate('/organizer')}
         style={{
-          position: 'fixed', left: 12, bottom: 12, zIndex: 20, border: '1px solid #ded9e8',
+          position: 'fixed', left: 12, bottom: 12, zIndex: 30, border: '1px solid #ded9e8',
           borderRadius: 8, background: 'rgba(255,255,255,0.94)', color: '#2b0a5a',
           padding: '8px 12px', cursor: 'pointer', fontWeight: 700, boxShadow: '0 4px 16px rgba(19,2,37,0.12)',
         }}

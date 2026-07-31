@@ -40,6 +40,85 @@ const STOP_WORDS = new Set([
 const WHOLE_SITE_SCOPE = /\b(theme|palette|site[- ]?wide|whole (?:site|page)|entire (?:site|page)|all sections|every section|global)\b/i;
 const WHOLE_SITE_COLOR_TOOLS = new Set(["applyTheme", "updateThemeToken", "generateTheme"]);
 
+/**
+ * Page management is gated behind explicit intent.
+ *
+ * The canvas IS a page, so ordinary edit requests say the word constantly --
+ * "make this page look better", "add a hero to the page". Every one of these
+ * tools carries "page" in its NAME, which scores at the top weight, so they
+ * outranked the tools that do the actual edit. The model then took the highest
+ * ranked option and created or switched pages instead of editing: the canvas
+ * went blank, the page switcher in the header changed, and because switching
+ * pages clears the undo stack there was nothing to undo.
+ *
+ * They stay reachable through discoverTools/callTool, so a real request for a
+ * second page still works.
+ */
+const PAGE_TOOL_NAMES = new Set([
+  "createPage", "switchPage", "deletePage", "renamePage", "duplicatePage", "listPages",
+]);
+
+/** Verbs that only ever mean a NEW page ("create this page" is not a request). */
+const PAGE_CREATE_VERBS = new Set(["create", "add", "make"]);
+
+/** Verbs that act on a whole page, and still do so with "this" ("rename this page"). */
+const PAGE_MANAGE_VERBS = new Set([
+  "rename", "delete", "remove", "duplicate", "copy", "switch", "navigate", "go", "open", "list",
+]);
+
+/** Function words that can sit between the verb and "page" without changing it. */
+const PAGE_FILLERS = new Set([
+  "a", "an", "the", "to", "on", "into", "my", "our", "new", "another", "second",
+  "third", "next", "previous", "last", "first", "blank", "empty", "called", "named",
+]);
+
+/** "this page" is the canvas the user is already looking at. */
+const PAGE_DEMONSTRATIVES = new Set(["this", "that", "current", "same", "whole", "entire"]);
+
+/** Words that can follow "page" in a real request about pages. */
+const PAGE_TRAILERS = new Set([
+  "and", "or", "then", "please", "now", "instead", "here", "too", "also", "for", "from", "with", "as", "it",
+]);
+
+export function wantsPageTools(prompt) {
+  const tokens = String(prompt || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+
+  for (let i = 0; i < tokens.length; i++) {
+    // Plural is only used when talking about more than one of them.
+    if (tokens[i] === "pages") return true;
+    if (tokens[i] !== "page") continue;
+
+    // "page title", "page header": here "page" modifies the next noun and the
+    // request is about that noun, not about pages.
+    const next = tokens[i + 1];
+    if (next && !PAGE_FILLERS.has(next) && !PAGE_TRAILERS.has(next)) continue;
+
+    // Walk back to the verb. A second content word on the way means the verb
+    // was aimed at something else: in "delete the hero on this page" the verb
+    // belongs to the hero, not the page.
+    let contentWords = 0;
+    let demonstrative = false;
+
+    for (let back = 1; back <= 4 && i - back >= 0; back++) {
+      const word = tokens[i - back];
+
+      if (PAGE_MANAGE_VERBS.has(word)) {
+        if (contentWords === 0 || !demonstrative) return true;
+        break;
+      }
+      // "make this page look better" is an edit request, not a new page.
+      if (PAGE_CREATE_VERBS.has(word)) {
+        if (!demonstrative) return true;
+        break;
+      }
+      if (PAGE_DEMONSTRATIVES.has(word)) { demonstrative = true; continue; }
+      if (PAGE_FILLERS.has(word)) continue;
+      if (++contentWords > 1) break;
+    }
+  }
+  return false;
+}
+
 /** "toggleSectionVisibility" -> ["toggle","section","visibility"] */
 const splitName = (name) =>
   name.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/_/g, " ").toLowerCase().split(/\s+/);
@@ -137,6 +216,7 @@ export function selectTools(prompt, { maxTools = 20, hasSelection = false } = {}
   const entries = getIndex();
   const core = entries.filter((entry) => CORE_TOOL_NAMES.includes(entry.tool.name)).map((entry) => entry.tool);
   const selectedNodeIsTarget = hasSelection && !WHOLE_SITE_SCOPE.test(prompt);
+  const pageManagement = wantsPageTools(prompt);
 
   const promptWords = [...new Set(words(prompt).map(stem))];
   if (!promptWords.length) return core;
@@ -144,6 +224,7 @@ export function selectTools(prompt, { maxTools = 20, hasSelection = false } = {}
   const ranked = entries
     .filter((entry) => !CORE_TOOL_NAMES.includes(entry.tool.name))
     .filter((entry) => !selectedNodeIsTarget || !WHOLE_SITE_COLOR_TOOLS.has(entry.tool.name))
+    .filter((entry) => pageManagement || !PAGE_TOOL_NAMES.has(entry.tool.name))
     .map((entry) => ({ tool: entry.tool, score: scoreTool(entry, promptWords) }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score)

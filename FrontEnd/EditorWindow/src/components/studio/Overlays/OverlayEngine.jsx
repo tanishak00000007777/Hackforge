@@ -4,6 +4,7 @@ import SelectionLayer from "./SelectionLayer";
 import HoverLayer from "./HoverLayer";
 
 import DropLayer from "./DropLayer";
+import AIChangeLayer from "./AIChangeLayer";
 
 export default function OverlayEngine({ dropTarget }) {
   const hoveredId = useEditorStore((state) => state.hoveredId);
@@ -101,6 +102,8 @@ export default function OverlayEngine({ dropTarget }) {
       ))}
 
       {dropRect && <DropLayer rect={dropRect} />}
+
+      <AIChangeLayer zoom={zoom} />
 
       {(draggedSidebarComponent || draggedComponentId) && (
         <div 

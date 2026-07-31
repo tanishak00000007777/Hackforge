@@ -2,7 +2,8 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.hackathon import Hackathon, HackathonStatus
-from app.models.user import User
+from app.models.organization import Organization
+from app.models.user import User, UserRole
 from app.schemas.hackathon import HackathonCreate, HackathonUpdate
 import uuid
 from app.services.feature_service import create_default_features
@@ -12,13 +13,16 @@ async def get_owned_hackathon(
     hackathon_id: uuid.UUID,
     current_user: User,
     db: AsyncSession,
+    *,
+    for_update: bool = False,
 ) -> Hackathon:
-    result = await db.execute(
-        select(Hackathon).where(
-            Hackathon.id == hackathon_id,
-            Hackathon.created_by == current_user.id,
-        )
+    query = select(Hackathon).where(
+        Hackathon.id == hackathon_id,
+        Hackathon.created_by == current_user.id,
     )
+    if for_update:
+        query = query.with_for_update().execution_options(populate_existing=True)
+    result = await db.execute(query)
     hackathon = result.scalar_one_or_none()
     if not hackathon:
         # Do not reveal whether another organizer owns this event.
@@ -31,6 +35,21 @@ async def create_hackathon(
     current_user: User,
     db: AsyncSession,
 ) -> Hackathon:
+    if current_user.role not in {UserRole.organizer, UserRole.admin}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only organizers and admins can create hackathons",
+        )
+
+    organization = await db.get(Organization, organization_id)
+    if not organization:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    if current_user.role != UserRole.admin and organization.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not own this organization",
+        )
+
     result = await db.execute(
         select(Hackathon).where(Hackathon.slug == data.slug)
     )
@@ -57,7 +76,10 @@ async def create_hackathon(
 
 async def get_hackathon_by_slug(slug: str, db: AsyncSession) -> Hackathon:
     result = await db.execute(
-        select(Hackathon).where(Hackathon.slug == slug)
+        select(Hackathon).where(
+            Hackathon.slug == slug,
+            Hackathon.status == HackathonStatus.published,
+        )
     )
     hackathon = result.scalar_one_or_none()
     if not hackathon:
@@ -83,7 +105,12 @@ async def update_website_config(
     current_user: User,
     db: AsyncSession,
 ) -> Hackathon:
-    hackathon = await get_owned_hackathon(hackathon_id, current_user, db)
+    hackathon = await get_owned_hackathon(
+        hackathon_id,
+        current_user,
+        db,
+        for_update=True,
+    )
 
     # Update website configuration JSON
     hackathon.website_config = config

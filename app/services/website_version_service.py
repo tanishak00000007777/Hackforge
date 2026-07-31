@@ -69,7 +69,12 @@ async def create_version(
     if source not in VALID_SOURCES:
         raise HTTPException(status_code=422, detail=f"Unknown version source '{source}'")
 
-    hackathon = await get_owned_hackathon(hackathon_id, current_user, db)
+    hackathon = await get_owned_hackathon(
+        hackathon_id,
+        current_user,
+        db,
+        for_update=True,
+    )
 
     # Default to whatever the draft currently holds, so a checkpoint never
     # depends on the client re-uploading the document it just saved.
@@ -155,7 +160,12 @@ async def restore_version(
     draft is checkpointed first, so a restore is itself undoable and nothing
     later in the timeline is destroyed.
     """
-    hackathon = await get_owned_hackathon(hackathon_id, current_user, db)
+    hackathon = await get_owned_hackathon(
+        hackathon_id,
+        current_user,
+        db,
+        for_update=True,
+    )
     target = await get_version(hackathon_id, version_id, current_user, db)
 
     if hackathon.website_config:
@@ -189,7 +199,12 @@ async def publish_website(
     db: AsyncSession,
 ) -> WebsiteVersion:
     """Promote the current draft to live, keeping the previous snapshot."""
-    hackathon = await get_owned_hackathon(hackathon_id, current_user, db)
+    hackathon = await get_owned_hackathon(
+        hackathon_id,
+        current_user,
+        db,
+        for_update=True,
+    )
     if not hackathon.website_config:
         raise HTTPException(
             status_code=422,
@@ -225,12 +240,36 @@ async def get_published_version(
     return result.scalar_one_or_none()
 
 
+async def get_public_website(hackathon_id: uuid.UUID, db: AsyncSession) -> dict:
+    """Return only the immutable live snapshot; the mutable draft is never read."""
+    version = await get_published_version(hackathon_id, db)
+    if not version:
+        raise HTTPException(status_code=404, detail="Published website not found")
+
+    hackathon = await db.get(Hackathon, hackathon_id)
+    if not hackathon:
+        raise HTTPException(status_code=404, detail="Published website not found")
+
+    return {
+        "hackathon_id": hackathon.id,
+        "title": hackathon.title,
+        "slug": hackathon.slug,
+        "project": version.project,
+        "published_at": version.created_at,
+    }
+
+
 async def unpublish_website(
     hackathon_id: uuid.UUID,
     current_user: User,
     db: AsyncSession,
 ) -> None:
-    hackathon = await get_owned_hackathon(hackathon_id, current_user, db)
+    hackathon = await get_owned_hackathon(
+        hackathon_id,
+        current_user,
+        db,
+        for_update=True,
+    )
     await db.execute(
         update(WebsiteVersion)
         .where(

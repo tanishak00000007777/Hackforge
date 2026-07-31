@@ -85,7 +85,7 @@ export class AIGateway {
     if (!this.isConfigured) {
       throw new AIProviderError({
         kind: "auth",
-        message: "No AI provider is configured. Set VITE_GROQ_API_KEY, VITE_GEMINI_API_KEY or VITE_KIMI_API_KEY.",
+        message: "HackForge AI is not configured. Ask an administrator to configure an AI provider.",
       });
     }
 

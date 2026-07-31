@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { componentRegistry, elementRegistry } from "@/builder/registry";
+import { createElement, createFromCatalogue } from "@/builder/factories/coreFactory";
+import { dropIndex, reorderIndex } from "@/builder/commands/stackDrop";
 import { useEditorStore } from "@/store/editorStore";
 import ZoomToolbar from "../Toolbar/ZoomToolbar";
 import OverlayEngine from "../Overlays/OverlayEngine";
@@ -46,11 +48,42 @@ export default function Canvas() {
   const moveNode = useEditorStore((state) => state.moveNode);
   const insertNode = useEditorStore((state) => state.insertNode);
   const addComponent = useEditorStore((state) => state.addComponent);
+  const addComponentAt = useEditorStore((state) => state.addComponentAt);
+  const moveComponent = useEditorStore((state) => state.moveComponent);
   const updateComponentTransient = useEditorStore((state) => state.updateComponentTransient);
   const updateComponent = useEditorStore((state) => state.updateComponent);
   const deleteComponent = useEditorStore((state) => state.deleteComponent);
-  const [dropTarget, setDropTarget] = useState(null); // kept for potential future nesting, but mostly unused now
+  // Where a dragged section will land: { beforeId, rect, position }. Sections
+  // stack down the page, so a drop is an insertion point, not a coordinate.
+  const [dropTarget, setDropTarget] = useState(null);
   const [pendingDrag, setPendingDrag] = useState(null); // { id, startX, startY }
+
+  const isSectionType = (type) => !!componentRegistry[type];
+
+  /** Top-level sections in page order, with their on-screen boxes. */
+  const sectionRows = (excludeId = null) =>
+    [...(document.getElementById("canvas-root")?.children || [])]
+      .filter((el) => el.hasAttribute("data-node-id") && el.getAttribute("data-node-id") !== excludeId)
+      .map((el) => ({ id: el.getAttribute("data-node-id"), rect: el.getBoundingClientRect() }))
+      // Free-floating elements are not part of the stack and must not act as
+      // insertion points for it.
+      .filter((row) => components.some((node) => node.id === row.id && isSectionType(node.type)));
+
+  /** Which gap in the stack the pointer is currently over. */
+  const dropTargetAt = (clientY, excludeId = null) => {
+    const rows = sectionRows(excludeId);
+    if (!rows.length) return null;
+
+    for (const row of rows) {
+      if (clientY < row.rect.top + row.rect.height / 2) {
+        return { beforeId: row.id, rect: row.rect, position: "before" };
+      }
+    }
+    const last = rows[rows.length - 1];
+    return { beforeId: null, rect: last.rect, position: "after" };
+  };
+
+  const indexOfDrop = (target) => dropIndex(components, target?.beforeId);
   // Where inside the node the user grabbed it, in canvas units. Without this the
   // node jumps so its top-left snaps under the cursor the moment dragging starts.
   const grabOffsetRef = useRef({ x: 50, y: 20 });
@@ -126,16 +159,22 @@ export default function Canvas() {
       if (e.clientX < margin) containerRef.current.scrollLeft -= 10;
       if (e.clientX > window.innerWidth - margin) containerRef.current.scrollLeft += 10;
 
-      if (draggedComponentId) {
-        // Free dragging existing components
+      const draggedNode = components.find((node) => node.id === draggedComponentId);
+
+      // A section belongs in the page stack: dragging it reorders the page and
+      // previews the gap it will fall into. Letting it float to a coordinate is
+      // what produced overlapping, half-off-canvas pages.
+      if (draggedNode && isSectionType(draggedNode.type)) {
+        setDropTarget(dropTargetAt(e.clientY, draggedComponentId));
+      } else if (draggedComponentId) {
+        // Loose elements (a button, an image) stay freely positionable.
         const root = document.getElementById("canvas-root");
         if (root) {
           const rect = root.getBoundingClientRect();
           const zoomFactor = zoom / 100;
           const x = (e.clientX - rect.left) / zoomFactor;
           const y = (e.clientY - rect.top) / zoomFactor;
-          
-          // Apply transient style updates so the element follows the cursor freely
+
           const grab = grabOffsetRef.current;
           updateComponentTransient(draggedComponentId, {
             styles: {
@@ -145,8 +184,9 @@ export default function Canvas() {
             }
           });
         }
+      } else if (draggedSidebarComponent && isSectionType(draggedSidebarComponent)) {
+        setDropTarget(dropTargetAt(e.clientY));
       } else {
-        // We do not need a drop target for new items anymore, since they drop anywhere
         setDropTarget(null);
       }
       return;
@@ -186,26 +226,27 @@ export default function Canvas() {
     };
 
     if (draggedAsset) {
+      // Must be this canvas, not any <main>: the sidebar sits inside the
+      // layout's own <main>, so `closest("main")` treated releasing a card
+      // back over the sidebar as a drop onto the page.
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      const isOverCanvas = el && (el.closest("main") !== null || el.closest("#canvas-root") !== null);
+      const isOverCanvas = !!el && !!containerRef.current?.contains(el);
 
       if (isOverCanvas) {
         const coords = calculateDropCoords(e.clientX, e.clientY);
-        import("@/builder/factories/coreFactory").then((coreFactory) => {
-          const type = draggedAsset.type === "video" ? "video" : "image";
-          const newNode = coreFactory.createElement(type);
-          if (newNode) {
-            newNode.props = { ...newNode.props, src: draggedAsset.url };
-            newNode.styles = {
-              ...newNode.styles,
-              position: "absolute",
-              left: `${coords.x}px`,
-              top: `${coords.y}px`,
-              zIndex: "10"
-            };
-            addComponent(newNode);
-          }
-        });
+        const newNode = createElement(draggedAsset.type === "video" ? "video" : "image");
+        if (newNode) {
+          newNode.props = { ...newNode.props, src: draggedAsset.url };
+          newNode.styles = {
+            ...newNode.styles,
+            position: "absolute",
+            left: `${coords.x}px`,
+            top: `${coords.y}px`,
+            zIndex: "10"
+          };
+          addComponent(newNode);
+          select(newNode.id);
+        }
       }
       setDraggedAsset(null);
       setDropTarget(null);
@@ -213,30 +254,33 @@ export default function Canvas() {
     }
 
     if (draggedSidebarComponent) {
+      // Must be this canvas, not any <main>: the sidebar sits inside the
+      // layout's own <main>, so `closest("main")` treated releasing a card
+      // back over the sidebar as a drop onto the page.
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      const isOverCanvas = el && (el.closest("main") !== null || el.closest("#canvas-root") !== null);
+      const isOverCanvas = !!el && !!containerRef.current?.contains(el);
 
       if (isOverCanvas) {
-        const coords = calculateDropCoords(e.clientX, e.clientY);
-        import("@/builder/registry/catalogue").then(({ catalogueMetadata }) => {
-          import("@/builder/factories/coreFactory").then((coreFactory) => {
-            const meta = catalogueMetadata[draggedSidebarComponent];
-            const newNode = meta?.category === "Sections" 
-              ? coreFactory.createComponent(draggedSidebarComponent)
-              : coreFactory.createElement(draggedSidebarComponent);
-              
-            if (newNode) {
-              newNode.styles = {
-                ...newNode.styles,
-                position: "absolute",
-                left: `${coords.x}px`,
-                top: `${coords.y}px`,
-                zIndex: "10"
-              };
-              addComponent(newNode);
-            }
-          });
-        });
+        const newNode = createFromCatalogue(draggedSidebarComponent);
+        if (newNode && isSectionType(draggedSidebarComponent)) {
+          // Sections join the stack at the previewed gap, full width, no
+          // coordinates -- exactly how the page will actually read.
+          addComponentAt(newNode, indexOfDrop(dropTargetAt(e.clientY)));
+          select(newNode.id);
+        } else if (newNode) {
+          const coords = calculateDropCoords(e.clientX, e.clientY);
+          newNode.styles = {
+            ...newNode.styles,
+            position: "absolute",
+            left: `${coords.x}px`,
+            top: `${coords.y}px`,
+            zIndex: "10"
+          };
+          addComponent(newNode);
+          // Selecting what was just dropped puts the Inspector on it straight
+          // away; otherwise the next thing the organizer does is hunt for it.
+          select(newNode.id);
+        }
       }
       setDraggedSidebarComponent(null);
       setDropTarget(null);
@@ -244,23 +288,31 @@ export default function Canvas() {
     }
 
     if (draggedComponentId) {
-      // Just stop dragging, the position is already saved via updateComponentTransient
-      // But we should commit it to history!
-      const root = document.getElementById("canvas-root");
-      if (root) {
-        const rect = root.getBoundingClientRect();
-        const zoomFactor = zoom / 100;
-        const x = (e.clientX - rect.left) / zoomFactor;
-        const y = (e.clientY - rect.top) / zoomFactor;
-        
-        const grab = grabOffsetRef.current;
-        updateComponent(draggedComponentId, {
-          styles: {
-            position: "absolute",
-            left: `${Math.round(x - grab.x)}px`,
-            top: `${Math.round(y - grab.y)}px`
-          }
-        });
+      const draggedNode = components.find((node) => node.id === draggedComponentId);
+
+      if (draggedNode && isSectionType(draggedNode.type)) {
+        const from = components.findIndex((node) => node.id === draggedComponentId);
+        const to = reorderIndex(from, indexOfDrop(dropTarget));
+        if (to !== null) moveComponent(from, to);
+      } else {
+        // A loose element keeps the coordinate it was dropped at; the move so
+        // far was transient, so commit it as one undoable step.
+        const root = document.getElementById("canvas-root");
+        if (root) {
+          const rect = root.getBoundingClientRect();
+          const zoomFactor = zoom / 100;
+          const x = (e.clientX - rect.left) / zoomFactor;
+          const y = (e.clientY - rect.top) / zoomFactor;
+
+          const grab = grabOffsetRef.current;
+          updateComponent(draggedComponentId, {
+            styles: {
+              position: "absolute",
+              left: `${Math.round(x - grab.x)}px`,
+              top: `${Math.round(y - grab.y)}px`
+            }
+          });
+        }
       }
       stopDragging();
       setDropTarget(null);

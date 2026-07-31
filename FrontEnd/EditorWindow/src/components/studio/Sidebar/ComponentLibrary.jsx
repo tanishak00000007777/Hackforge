@@ -57,13 +57,16 @@ export default function ComponentLibrary() {
   }
 
   return (
-    <div className="px-5 pb-10 space-y-8">
-      {Object.entries(groupedComponents).map(([category, items]) => (
+    <div className="px-5 pb-10 space-y-6">
+      {Object.entries(groupedComponents).map(([category, items], _, all) => (
         <div key={category}>
-          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">
-            {category}
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
+          {/* One group means the tab already said what these are. */}
+          {all.length > 1 && (
+            <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+              {category}
+            </h3>
+          )}
+          <div className="grid grid-cols-2 gap-2.5">
             {items.map((item) => (
               <ComponentCard
                 key={item.type}

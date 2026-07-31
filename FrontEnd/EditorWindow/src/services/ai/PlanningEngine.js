@@ -26,17 +26,20 @@ export class PlanningEngine {
    * Tools now return structured results, so a clean run is summarised locally
    * and only genuine failures are worth asking the model about.
    */
-  async executePlan(reasoningText, toolCalls) {
+  async executePlan(reasoningText, toolCalls, onStage = () => {}) {
     if (!toolCalls || toolCalls.length === 0) {
       return reasoningText;
     }
 
     const outcomes = [];
-    for (const toolCall of toolCalls) {
+    for (const [index, toolCall] of toolCalls.entries()) {
+      onStage({ stage: "applying", done: index, total: toolCalls.length });
       const result = await toolExecutor.executeToolCall(toolCall);
       outcomes.push({ name: toolCall.name, result });
       memoryManager.logAction(`${toolCall.name} -> ${JSON.stringify(result).slice(0, MAX_RESULT_CHARS)}`);
     }
+
+    onStage({ stage: "applying", done: toolCalls.length, total: toolCalls.length });
 
     const failures = outcomes.filter((outcome) => !outcome.result?.success);
     const succeeded = outcomes.length - failures.length;

@@ -25,11 +25,7 @@ export default function StudioLayout() {
 
       {/* Toolbar is 56px; preview hides both rails so the page stands alone. */}
       <main className="flex h-[calc(100vh-56px)] overflow-hidden bg-[#FCFAFF]">
-        {!isPreviewMode && (
-          <aside className="w-[300px] min-w-[300px] overflow-y-auto border-r border-[#E7E8F4] bg-[#FCFBFE]">
-            <LeftSidebar />
-          </aside>
-        )}
+        {!isPreviewMode && <LeftSidebar />}
 
         <Canvas />
 

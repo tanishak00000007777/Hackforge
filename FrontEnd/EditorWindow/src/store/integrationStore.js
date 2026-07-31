@@ -1,6 +1,14 @@
 import { create } from "zustand";
 import { createProjectSnapshot, useEditorStore } from "@/store/editorStore";
-import { getManagedHackathon, publishHackathon, saveWebsiteConfig } from "@/services/hackforgeApi";
+import {
+  createVersion,
+  getManagedHackathon,
+  getVersion,
+  listVersions,
+  publishHackathon,
+  restoreVersion,
+  saveWebsiteConfig,
+} from "@/services/hackforgeApi";
 
 let initializationPromise = null;
 let initializationKey = "";
@@ -75,6 +83,9 @@ export const useIntegrationStore = create((set, get) => ({
           saveStatus: shouldPublish ? "published" : "saved",
           lastSavedAt: new Date().toISOString(),
         });
+        // Publishing writes a version server-side; the timeline would otherwise
+        // keep showing yesterday's list until the panel is reopened.
+        if (shouldPublish) get().loadVersions();
       } while (saveAgain || publishRequested);
     };
 
@@ -88,5 +99,59 @@ export const useIntegrationStore = create((set, get) => ({
         savePromise = null;
       });
     return savePromise;
+  },
+
+  /* ============================================================
+     VERSION HISTORY
+
+     Named checkpoints on the server, separate from the in-memory undo stack:
+     undo dies with the tab, a version survives it.
+  ============================================================ */
+
+  versions: [],
+  versionsStatus: "idle",
+  versionsError: null,
+
+  loadVersions: async () => {
+    const session = get().session;
+    if (!session) return;
+
+    set({ versionsStatus: "loading", versionsError: null });
+    try {
+      set({ versions: await listVersions(session), versionsStatus: "ready" });
+    } catch (error) {
+      if (error.status === 401) notifyExpiredSession(session);
+      set({ versionsStatus: "error", versionsError: error.message });
+    }
+  },
+
+  /** Snapshot exactly what is on screen, not the last autosave. */
+  saveCheckpoint: async (label) => {
+    const session = get().session;
+    if (!session) throw new Error("Studio session is not connected");
+
+    await createVersion(session, {
+      label,
+      source: "manual",
+      project: createProjectSnapshot(useEditorStore.getState()),
+    });
+    await get().loadVersions();
+  },
+
+  readVersion: (versionId) => {
+    const session = get().session;
+    if (!session) throw new Error("Studio session is not connected");
+    return getVersion(session, versionId);
+  },
+
+  restoreToVersion: async (versionId) => {
+    const session = get().session;
+    if (!session) throw new Error("Studio session is not connected");
+
+    // The server checkpoints the current draft before overwriting it, so this
+    // is itself undoable from the timeline.
+    const restored = await restoreVersion(session, versionId);
+    useEditorStore.getState().hydrateProject(restored.project);
+    await get().loadVersions();
   },
 }));

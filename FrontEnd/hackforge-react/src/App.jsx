@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore.js';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -35,6 +35,8 @@ import OrganizerHackathons from './pages/organizer/OrganizerHackathons.jsx';
 import OrganizerRegistrations from './pages/organizer/OrganizerRegistrations.jsx';
 import OrganizerStudioRedirect from './pages/organizer/OrganizerStudioRedirect.jsx';
 
+const PublishedCanvasPage = lazy(() => import('./pages/PublishedCanvasPage'));
+
 const organizerOnly = (element) => (
   <RoleRoute allowedRoles={['organizer', 'admin']}>{element}</RoleRoute>
 );
@@ -55,6 +57,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forms/:slug" element={<PublicFormPage />} />
         <Route path="/certificates/verify/:verificationId" element={<CertificateVerifyPage />} />
+        <Route path="/sites/:hackathonId/:siteSlug" element={<Suspense fallback={null}><PublishedCanvasPage /></Suspense>} />
 
         {/* Organizer — nested under a shared dashboard shell */}
         <Route path="/organizer" element={organizerOnly(<OrganizerSetupRoute><OrganizerLayout /></OrganizerSetupRoute>)}>

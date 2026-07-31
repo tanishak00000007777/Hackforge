@@ -1,7 +1,7 @@
 {
   "name": "hackforge",
   "private": true,
-  "description": "Root orchestration for the HackForge stack: FastAPI API, organizer web app, and the website studio.",
+  "description": "Root orchestration for the HackForge FastAPI API and primary web app with inline Website Studio.",
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload",
@@ -11,15 +11,16 @@
 
     "start": "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000",
 
-    "test": "concurrently -n api,studio -c blue,magenta \"npm:test:api\" \"npm:test:studio\"",
+    "test": "npm run test:api",
     "test:api": "python -m pytest tests -q",
-    "test:studio": "npm --prefix FrontEnd/EditorWindow test",
+    "test:legacy-studio": "npm --prefix FrontEnd/EditorWindow test",
 
-    "lint": "concurrently -n web,studio -c green,magenta \"npm:lint:web\" \"npm:lint:studio\"",
+    "lint": "npm run lint:web",
     "lint:web": "npm --prefix FrontEnd/hackforge-react run lint",
-    "lint:studio": "npm --prefix FrontEnd/EditorWindow run lint",
+    "lint:legacy-studio": "npm --prefix FrontEnd/EditorWindow run lint",
 
-    "install:all": "npm install && npm --prefix FrontEnd/hackforge-react install && npm --prefix FrontEnd/EditorWindow install"
+    "install:all": "npm install && npm --prefix FrontEnd/hackforge-react install",
+    "install:legacy-studio": "npm --prefix FrontEnd/EditorWindow install"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

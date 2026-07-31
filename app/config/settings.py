@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
 
-    allowed_origins: str = "http://127.0.0.1:5174,http://localhost:5174,http://127.0.0.1:4175,http://localhost:4175"
+    allowed_origins: str = "http://127.0.0.1:5174,http://localhost:5174"
     frontend_url: str = "http://127.0.0.1:5174"
     cloudinary_cloud_name: str = ""
     cloudinary_api_key: str = ""

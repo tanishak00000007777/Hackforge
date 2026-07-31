@@ -3,7 +3,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.schemas.hackathon import HackathonCreate, HackathonResponse, WebsiteConfigUpdate
+from app.schemas.hackathon import (
+    HackathonCreate,
+    HackathonResponse,
+    PublicHackathonResponse,
+    PublishedWebsiteResponse,
+    WebsiteConfigUpdate,
+)
 from app.schemas.website_version import VersionCreate, VersionDetail, VersionSummary
 from app.services.hackathon_service import (
     create_hackathon,
@@ -41,7 +47,15 @@ async def get_for_management(
     return await get_owned_hackathon(hackathon_id, current_user, db)
 
 
-@router.get("/{slug}", response_model=HackathonResponse)
+@router.get("/public/{hackathon_id}/website", response_model=PublishedWebsiteResponse)
+async def get_public_website(
+    hackathon_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    return await versions.get_public_website(hackathon_id, db)
+
+
+@router.get("/{slug}", response_model=PublicHackathonResponse)
 async def get_by_slug(
     slug: str,
     db: AsyncSession = Depends(get_db),
@@ -133,7 +147,7 @@ async def update_config(
     )
 
 
-@router.get("/", response_model=list[HackathonResponse])
+@router.get("/", response_model=list[PublicHackathonResponse])
 async def list_published(db: AsyncSession = Depends(get_db)):
     from app.services.hackathon_service import get_all_hackathons
     return await get_all_hackathons(db)

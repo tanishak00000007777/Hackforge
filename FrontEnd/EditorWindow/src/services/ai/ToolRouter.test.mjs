@@ -47,6 +47,12 @@ const TOOLS = [
   ["executeBatchActions", "Runs several tool calls as one undoable batch.", p("actions")],
   ["composeSection", "Builds a complete, fully styled section in one call.", p("name", "section", "children")],
   ["moveElement", "Moves an element next to or inside another node.", p("elementId", "targetId", "position")],
+  ["createPage", "Adds a new page to the site and opens it.", p("name", "path")],
+  ["switchPage", "Opens another page on the canvas so later edits apply to it.", p("page")],
+  ["deletePage", "Deletes a page and everything on it.", p("page")],
+  ["renamePage", "Changes a page's name and/or URL path.", p("page", "name", "path")],
+  ["duplicatePage", "Copies a page, with all its sections, to a new path.", p("page")],
+  ["listPages", "Lists every page in the site.", p()],
 ];
 
 for (const [name, description, parameters] of TOOLS) {
@@ -122,6 +128,49 @@ assert.ok(
   "the right tool must win decisively enough for callTool to auto-recover",
 );
 assert.ok(!invented.slice(0, 2).some((t) => t.name === "changeElementType"), "verb-only matches must not rank first");
+
+/* --- regression: an edit request must not offer page management ---
+   Reported: prompts went off and opened a different page instead of editing.
+   Every page tool has "page" in its name, which scores at the top weight, and
+   the canvas IS a page so edit requests say the word constantly. The model took
+   the highest ranked option; the canvas went blank, the header's page switcher
+   changed, and switching pages had already cleared the undo stack. */
+const PAGE_TOOLS = ["createPage", "switchPage", "deletePage", "renamePage", "duplicatePage", "listPages"];
+const offersPageTools = (prompt) => names(prompt).some((name) => PAGE_TOOLS.includes(name));
+
+for (const prompt of [
+  "make this page look better",
+  "add a hero section to the page",
+  "change the heading on the page to Welcome",
+  "remove the extra padding on the page",
+  "delete the sponsors section on this page",
+  "improve the whole page",
+  // "page title" is a compound noun -- the request is about the heading.
+  "In this new section add a page title heading Problem Statement",
+]) {
+  assert.ok(!offersPageTools(prompt), `editing the canvas must not offer page management: "${prompt}"`);
+}
+
+// ...but genuinely asking for page management still works.
+for (const prompt of [
+  "add a page",
+  "create an About page",
+  "make a new page called Schedule",
+  "switch to the About page",
+  "go to the sponsors page",
+  "delete the About page",
+  "rename this page to Home",
+  "how many pages does this site have",
+]) {
+  assert.ok(offersPageTools(prompt), `page management must stay available: "${prompt}"`);
+}
+
+// The edit tools the prompt actually wanted are the ones that surface.
+assert.ok(names("add a hero section to the page").includes("createSection"));
+assert.ok(names("change the heading on the page to Welcome").includes("setContent"));
+
+// Excluding them from the turn must not remove the capability.
+assert.ok(searchToolIndex("create a new page").some((t) => t.name === "createPage"));
 
 // the same must hold for other invented names a model might reach for
 assert.equal(searchToolIndex("setBackgroundColor", 3, ["backgroundColor"])[0].name, "updateColors");

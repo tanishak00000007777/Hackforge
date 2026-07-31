@@ -15,7 +15,7 @@ const studioSrc = fileURLToPath(new URL('../EditorWindow/src', import.meta.url))
  * @tailwindcss/vite plugins are enforce:"pre", so a post transform sees their
  * generated CSS on the serve path; build substitutes after the transform
  * chain, so the emitted asset has to be patched separately. */
-function scopeTailwindTheme(selector = '.studio-root') {
+function scopeTailwindTheme(selector = ':where(.studio-root, .lovable-canvas-root)') {
   const SCOPED = /:root\s*,\s*:host/g
   return {
     name: 'hackforge:scope-tailwind-theme',

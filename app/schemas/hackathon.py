@@ -43,7 +43,7 @@ class WebsiteConfigUpdate(BaseModel):
     model_config = {"extra": "forbid"}
 
 
-class HackathonResponse(BaseModel):
+class PublicHackathonResponse(BaseModel):
     id: uuid.UUID
     organization_id: uuid.UUID
     title: str
@@ -56,7 +56,6 @@ class HackathonResponse(BaseModel):
     max_team_size: int
     min_team_size: int
     registration_mode: RegistrationMode
-    website_config: dict | None = None
     banner_url: str | None
     logo_url: str | None
     prize_pool: str | None
@@ -64,3 +63,15 @@ class HackathonResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class HackathonResponse(PublicHackathonResponse):
+    website_config: dict | None = None
+
+
+class PublishedWebsiteResponse(BaseModel):
+    hackathon_id: uuid.UUID
+    title: str
+    slug: str
+    project: dict
+    published_at: datetime
