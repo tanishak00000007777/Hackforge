@@ -16,23 +16,34 @@ const navItems = [
   { icon: 'analytics', label: 'Analytics', key: 'analytics' },
 ];
 
+const REGISTRATION_STATUS_STYLES = {
+  pending: { bg: 'rgba(222,224,255,0.4)', color: 'var(--color-on-secondary-container)', label: 'PENDING' },
+  approved: { bg: '#f0fdf4', color: '#15803d', label: 'APPROVED' },
+  rejected: { bg: '#fef2f2', color: '#dc2626', label: 'REJECTED' },
+  waitlisted: { bg: '#fffbeb', color: '#d97706', label: 'WAITLISTED' },
+};
+
 export default function ParticipantDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [activeNav, setActiveNav] = useState('dashboard');
-  const [progress, setProgress] = useState({ mvp: 0, docs: 0 });
   const [hackathons, setHackathons] = useState([]);
   const [selectedHackathon, setSelectedHackathon] = useState(null);
   const [myTeam, setMyTeam] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
-  const [isRegistered, setIsRegistered] = useState(false);
+  const [myRegistrations, setMyRegistrations] = useState([]);
+  const [mySubmission, setMySubmission] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const isRegistered = myRegistrations.some((r) => r.hackathon_id === selectedHackathon?.id);
+
+  const refreshMyRegistrations = () => registrationApi.getMyRegistrations().then(setMyRegistrations).catch(() => {});
 
   // Parse query params to auto-select hackathon if passed
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const hackathonId = params.get('hackathon');
-    
+
     setLoading(true);
     hackathonApi.listPublishedHackathons()
       .then(data => {
@@ -44,38 +55,33 @@ export default function ParticipantDashboard() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    refreshMyRegistrations();
   }, []);
 
   // Fetch hackathon-specific user data
   useEffect(() => {
     if (!selectedHackathon) return;
-    
-    // Check team status
+
     teamApi.getMyTeam(selectedHackathon.id)
       .then(setMyTeam)
       .catch(() => setMyTeam(null));
 
-    // Fetch announcements
     announcementApi.getAnnouncements(selectedHackathon.id)
       .then(setAnnouncements)
       .catch(() => setAnnouncements([]));
+  }, [selectedHackathon]);
 
-    // Check if user is registered by requesting registrations (hacky but works since we can verify)
-    registrationApi.getRegistrations(selectedHackathon.id)
-      .then(regs => {
-        const registered = regs.some(r => r.user_id === user?.id);
-        setIsRegistered(registered);
-      })
-      .catch(() => setIsRegistered(false));
-  }, [selectedHackathon, user]);
-
+  // Fetch this team's submission for the selected hackathon, once a team exists
   useEffect(() => {
-    // Animate progress bars on mount
-    const timer = setTimeout(() => {
-      setProgress({ mvp: 75, docs: 30 });
-    }, 200);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!selectedHackathon || !myTeam) {
+      setMySubmission(null);
+      return;
+    }
+    submissionApi.getHackathonSubmissions(selectedHackathon.id)
+      .then((subs) => setMySubmission(subs.find((s) => s.team_id === myTeam.id) || null))
+      .catch(() => setMySubmission(null));
+  }, [selectedHackathon, myTeam]);
 
   // Mouse follow gradient
   useEffect(() => {
@@ -103,17 +109,41 @@ export default function ParticipantDashboard() {
       alert('You need to join or create a team first!');
     }
   };
-  const handleResumeDraft = () => alert('Opening submission draft editor...');
   const handleRegisterNow = async (hackathonId) => {
     try {
       await registrationApi.registerForHackathon(hackathonId, { form_data: { experience: 'Intermediate' } });
       alert('Successfully registered!');
-      setIsRegistered(true);
+      refreshMyRegistrations();
     } catch (err) {
       alert(err.detail || 'Failed to register');
     }
   };
-  
+
+  const handleStartSubmission = async () => {
+    const title = window.prompt('Project title:');
+    if (!title) return;
+    const description = window.prompt('Short description:');
+    if (!description) return;
+    try {
+      const submission = await submissionApi.createSubmission(selectedHackathon.id, { title, description });
+      setMySubmission(submission);
+    } catch (err) {
+      alert(err.detail || 'Failed to start submission');
+    }
+  };
+
+  const handleSubmitNow = async () => {
+    if (!mySubmission) return;
+    if (!window.confirm('Submit your project? You can still update details until judging starts.')) return;
+    try {
+      const updated = await submissionApi.submitSubmission(mySubmission.id);
+      setMySubmission(updated);
+    } catch (err) {
+      alert(err.detail || 'Failed to submit');
+    }
+  };
+
+
   const handleCreateTeam = async () => {
     const teamName = window.prompt("Enter team name:");
     if (!teamName) return;
@@ -364,38 +394,29 @@ export default function ParticipantDashboard() {
             </div>
           </section>
 
-          {/* Project Progress */}
+          {/* Recent Registrations */}
           <section id="analytics" style={{ gridColumn: 'span 4' }}>
             <div className="glass-card" style={{ borderRadius: 12, padding: 'var(--spacing-md)', height: '100%' }}>
-              <h3 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)', marginBottom: 'var(--spacing-md)' }}>Project Progress</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-                {[
-                  { label: 'MVP Development', pct: progress.mvp, bg: 'var(--color-primary)' },
-                  { label: 'Documentation', pct: progress.docs, bg: 'var(--color-secondary)' },
-                ].map(bar => (
-                  <div key={bar.label}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 8 }}>
-                      <span style={{ color: 'var(--color-on-surface-variant)' }}>{bar.label}</span>
-                      <span style={{ fontWeight: 700 }}>{bar.pct}%</span>
-                    </div>
-                    <div style={{ width: '100%', background: 'var(--color-surface-container)', borderRadius: 9999, height: 8 }}>
-                      <div style={{ background: bar.bg, height: 8, borderRadius: 9999, width: `${bar.pct}%`, transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)' }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ marginTop: 'var(--spacing-xl)' }}>
-                <div style={{ background: 'var(--color-surface-container-low)', borderRadius: 8, padding: 16, border: '1px solid rgba(14,22,71,0.05)' }}>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-on-surface-variant)', textTransform: 'uppercase', marginBottom: 8 }}>Next Deadline</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span className="material-symbols-outlined" style={{ color: 'var(--color-error)' }}>timer</span>
-                    <div>
-                      <p style={{ fontWeight: 700, color: 'var(--color-primary)' }}>Final Video Pitch</p>
-                      <p style={{ fontSize: 12, color: 'var(--color-on-surface-variant)' }}>Tomorrow at 11:59 PM</p>
-                    </div>
-                  </div>
+              <h3 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)', marginBottom: 'var(--spacing-md)' }}>Recent Registrations</h3>
+              {myRegistrations.length === 0 ? (
+                <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)' }}>You haven't registered for a hackathon yet. Pick one from Active Events to get started.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {myRegistrations.slice(0, 5).map((reg) => {
+                    const st = REGISTRATION_STATUS_STYLES[reg.status] || REGISTRATION_STATUS_STYLES.pending;
+                    const title = hackathons.find((h) => h.id === reg.hackathon_id)?.title || 'Hackathon';
+                    return (
+                      <div key={reg.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 0', borderBottom: '1px solid rgba(14,22,71,0.05)' }}>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-primary)' }}>{title}</p>
+                          <p style={{ fontSize: 10, color: 'var(--color-on-surface-variant)' }}>{new Date(reg.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <span style={{ padding: '2px 8px', background: st.bg, color: st.color, borderRadius: 9999, fontSize: 10, fontWeight: 700, border: `1px solid ${st.color}22`, flexShrink: 0 }}>{st.label}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
+              )}
             </div>
           </section>
 
@@ -404,21 +425,59 @@ export default function ParticipantDashboard() {
             <div className="glass-card" style={{ borderRadius: 12, padding: 'var(--spacing-md)' }}>
               <h3 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-primary)', marginBottom: 'var(--spacing-md)' }}>Submission Status</h3>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'var(--spacing-md) 0', textAlign: 'center' }}>
-                <div style={{ width: 96, height: 96, borderRadius: '50%', border: '4px solid rgba(100,128,248,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--spacing-md)' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 40, color: 'var(--color-on-tertiary-container)' }}>pending</span>
-                </div>
-                <p style={{ fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>Awaiting Final Review</p>
-                <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)', maxWidth: 200 }}>You have completed 3 of 4 required submission steps.</p>
-                <button
-                  onClick={handleResumeDraft}
-                  style={{ marginTop: 24, background: 'var(--color-primary-container)', color: '#fff', padding: '8px 24px', borderRadius: 8, border: 'none', fontSize: 14, cursor: 'pointer', transition: 'opacity 0.2s, transform 0.1s' }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                  onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                  onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                >
-                  Resume Draft
-                </button>
+                {!myTeam ? (
+                  <>
+                    <div style={{ width: 96, height: 96, borderRadius: '50%', border: '4px solid rgba(100,128,248,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--spacing-md)' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 40, color: 'var(--color-outline)' }}>group_off</span>
+                    </div>
+                    <p style={{ fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>No team yet</p>
+                    <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)', maxWidth: 220 }}>Join or create a team for this hackathon before starting a submission.</p>
+                  </>
+                ) : !mySubmission ? (
+                  <>
+                    <div style={{ width: 96, height: 96, borderRadius: '50%', border: '4px solid rgba(100,128,248,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--spacing-md)' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 40, color: 'var(--color-on-tertiary-container)' }}>note_add</span>
+                    </div>
+                    <p style={{ fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>No submission yet</p>
+                    <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)', maxWidth: 220 }}>Start one whenever your team is ready — you can keep editing until you submit.</p>
+                    <button
+                      onClick={handleStartSubmission}
+                      style={{ marginTop: 24, background: 'var(--color-primary-container)', color: '#fff', padding: '8px 24px', borderRadius: 8, border: 'none', fontSize: 14, cursor: 'pointer', transition: 'opacity 0.2s, transform 0.1s' }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                      onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+                      onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      Start Submission
+                    </button>
+                  </>
+                ) : mySubmission.status === 'submitted' ? (
+                  <>
+                    <div style={{ width: 96, height: 96, borderRadius: '50%', border: '4px solid rgba(21,128,61,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--spacing-md)' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 40, color: '#15803d' }}>check_circle</span>
+                    </div>
+                    <p style={{ fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>Submitted</p>
+                    <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)', maxWidth: 220 }}>{mySubmission.title}</p>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ width: 96, height: 96, borderRadius: '50%', border: '4px solid rgba(100,128,248,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--spacing-md)' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 40, color: 'var(--color-on-tertiary-container)' }}>pending</span>
+                    </div>
+                    <p style={{ fontWeight: 700, color: 'var(--color-primary)', marginBottom: 8 }}>Draft in progress</p>
+                    <p style={{ fontSize: 14, color: 'var(--color-on-surface-variant)', maxWidth: 220 }}>{mySubmission.title}</p>
+                    <button
+                      onClick={handleSubmitNow}
+                      style={{ marginTop: 24, background: 'var(--color-primary-container)', color: '#fff', padding: '8px 24px', borderRadius: 8, border: 'none', fontSize: 14, cursor: 'pointer', transition: 'opacity 0.2s, transform 0.1s' }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                      onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+                      onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      Submit Now
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 

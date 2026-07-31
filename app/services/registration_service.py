@@ -61,6 +61,18 @@ async def get_hackathon_registrations(
     return list(result.scalars().all())
 
 
+async def get_my_registrations(
+    current_user: User,
+    db: AsyncSession,
+) -> list[Registration]:
+    result = await db.execute(
+        select(Registration)
+        .where(Registration.user_id == current_user.id)
+        .order_by(Registration.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
 async def update_registration_status(
     registration_id: uuid.UUID,
     new_status: RegistrationStatus,

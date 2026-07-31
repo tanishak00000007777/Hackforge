@@ -7,10 +7,19 @@ from app.schemas.registration import RegistrationCreate, RegistrationResponse, R
 from app.services.registration_service import (
     register_for_hackathon,
     get_hackathon_registrations,
+    get_my_registrations,
     update_registration_status,
 )
 
 router = APIRouter(prefix="/registrations", tags=["Registrations"])
+
+
+@router.get("/me", response_model=list[RegistrationResponse])
+async def list_my_registrations(
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await get_my_registrations(current_user, db)
 
 
 @router.post("/{hackathon_id}", response_model=RegistrationResponse, status_code=201)

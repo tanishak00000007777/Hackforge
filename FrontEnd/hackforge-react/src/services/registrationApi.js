@@ -8,6 +8,10 @@ export function getRegistrations(hackathonId) {
   return apiGet(`/registrations/${hackathonId}`);
 }
 
+export function getMyRegistrations() {
+  return apiGet('/registrations/me');
+}
+
 export function updateRegistrationStatus(registrationId, status) {
   return apiPatch(`/registrations/${registrationId}/status`, { status });
 }
