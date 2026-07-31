@@ -17,6 +17,7 @@ import { templateTools } from "./templateTools";
 import { assetTools } from "./assetTools";
 import { analysisTools } from "./analysisTools";
 import { contentTools } from "./contentTools";
+import { composeTools } from "./composeTools";
 import { utilityTools } from "./utilityTools";
 import { aiTools } from "./aiTools";
 import { metaTools } from "./metaTools";
@@ -40,6 +41,7 @@ export const toolsByCategory = {
   asset: assetTools,
   analysis: analysisTools,
   content: contentTools,
+  compose: composeTools,
   utility: utilityTools,
   ai: aiTools,
   meta: metaTools,

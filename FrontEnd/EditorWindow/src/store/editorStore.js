@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import * as coreCommands from "@/builder/commands/coreCommands";
 import * as coreFactory from "@/builder/factories/coreFactory";
+import { unpinSections } from "@/builder/commands/stackDrop";
+import { componentRegistry } from "@/builder/registry";
 import { defaultTheme } from "@/builder/styles/theme";
 import { defaultTemplates } from "@/builder/registry/templates";
 
@@ -54,6 +56,11 @@ const createDefaultComponents = () => [
 ].filter(Boolean);
 
 const createDefaultPages = () => [{ id: HOME_PAGE_ID, name: "Home", path: "/" }];
+
+/** Repair pages saved before sections stacked; see unpinSections. */
+const restack = (components) => unpinSections(components, (type) => !!componentRegistry[type]);
+const restackPages = (pages = []) =>
+  pages.map((page) => (page.components ? { ...page, components: restack(page.components) } : page));
 
 const scopedProjectStorage = {
   getItem(name) {
@@ -345,6 +352,22 @@ const createEditorStore = (set, get) => ({
      UPDATE COMPONENT
   ============================================================ */
 
+  // Resolve anywhere in the tree, not just the root list: canvas drag and the
+  // inspector both hand us the id of whatever is selected, which is usually a
+  // nested element. Root nodes still match, so this is a superset of the old
+  // top-level-only behaviour.
+  /**
+   * Swap the whole tree in one undoable step. Used by page-wide rewrites such
+   * as a theme repaint, which touch many nodes at once; going through
+   * setState directly would skip the history snapshot and leave "Undo this"
+   * unable to put the old colours back.
+   */
+  replaceComponents: (components) =>
+    set((state) => ({
+      ...createHistorySnapshot(state),
+      components,
+    })),
+
   updateComponent: (id, changes) =>
     set((state) => ({
       ...createHistorySnapshot(state),
@@ -365,6 +388,14 @@ const createEditorStore = (set, get) => ({
       ...createHistorySnapshot(state),
       components: coreCommands.insertComponent(state.components, component),
     })),
+
+  /** Insert a section between two others, so a drop lands where it was aimed. */
+  addComponentAt: (component, index) =>
+    set((state) => {
+      const components = [...state.components];
+      components.splice(Math.max(0, Math.min(index, components.length)), 0, component);
+      return { ...createHistorySnapshot(state), components };
+    }),
 
   deleteComponent: (id) =>
     set((state) => ({
@@ -557,6 +588,13 @@ const createEditorStore = (set, get) => ({
       isCopilotOpen: isOpen,
     }),
 
+  /* Nodes the last AI turn touched. The canvas rings them and scrolls to the
+     first one, so "it changed something, somewhere" becomes "it changed this".
+     Deliberately not persisted -- it describes one turn, not the project. */
+  aiChangedIds: [],
+
+  setAIChangedIds: (ids) => set({ aiChangedIds: ids || [] }),
+
   setAIEditorOpen: (isOpen) =>
     set({
       isAIEditorOpen: isOpen,
@@ -617,8 +655,8 @@ const createEditorStore = (set, get) => ({
         : (Array.isArray(project?.components) ? structuredClone(project.components) : createDefaultComponents());
 
       return {
-        components,
-        pages,
+        components: restack(components),
+        pages: restackPages(pages),
         currentPageId,
         globalTheme: project?.globalTheme || state.globalTheme,
         assets: Array.isArray(project?.assets) ? project.assets : [],
@@ -681,10 +719,10 @@ export const useEditorStore = create(
       return {
         ...current,
         ...persisted,
-        pages,
+        pages: restackPages(pages),
         currentPageId,
         // Trust the page record over the loose `components` copy when they differ.
-        components: pages.find((page) => page.id === currentPageId)?.components || components,
+        components: restack(pages.find((page) => page.id === currentPageId)?.components || components),
         globalTheme: persisted?.globalTheme || current.globalTheme,
         history: [],
         future: [],

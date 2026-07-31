@@ -13,13 +13,13 @@ HackForge is a platform where organizers can run a hackathon end to end — thin
 - **Judges** score submissions against a rubric the organizer defines.
 - **Leaderboards and certificates** are generated automatically once judging closes.
 
-This is a monorepo containing the backend API and two frontend applications:
+This is a monorepo containing one backend API and one primary frontend application with the Lovable workspace embedded inline:
 
 | Part | Path | What it is |
 |---|---|---|
 | **Backend API** | `app/` (repo root) | FastAPI service — auth, hackathons, teams, judging, certificates, etc. |
 | **Main web app** | `FrontEnd/hackforge-react/` | The product itself — login, organizer/participant/judge dashboards, forms, certificates |
-| **Website Studio** | `FrontEnd/EditorWindow/Editor window/hackforge-studio/` | A drag-and-drop page builder organizers use to design their hackathon's public microsite |
+| **Lovable Canvas Studio** | `FrontEnd/hackforge-react/src/lovable-canvas/` | The exact drag-and-drop Lovable workspace, mounted inside the primary app |
 
 ---
 
@@ -28,7 +28,7 @@ This is a monorepo containing the backend API and two frontend applications:
 - **Auth** — email/password signup & login, plus "Continue with Google" (Google Identity Services), JWT access + refresh tokens
 - **Organizer workspace** — create an organization, create and publish hackathons, manage registrations, invite judges, view analytics
 - **Hackathon builder & microsite generator** — each hackathon has a `website_config` that drives a public landing page at a unique slug
-- **Website Studio** — visual, drag-and-drop builder (separate app) for designing that public microsite
+- **Website Studio** - the Lovable visual builder, protected and mounted inline at the organizer hackathon route
 - **Custom form builder** — organizers build arbitrary registration/application forms (text, choice, file-upload questions via Cloudinary); participants fill them out publicly
 - **Team formation** — create a team, get an invite code, join by code, max team size enforcement
 - **Submissions** — teams submit projects, organizers/judges can list and review them
@@ -53,7 +53,7 @@ This is a monorepo containing the backend API and two frontend applications:
 | File storage | Cloudinary (form file-upload questions) |
 | PDF generation | ReportLab (certificates) |
 | Main frontend | React 19, React Router 7, Zustand, Vite |
-| Website Studio | React 19, Tailwind CSS 4, dnd-kit, Framer Motion, Vite |
+| Website Studio | React 19, Tailwind CSS 4, react-grid-layout, Vite |
 | Deployment | Railway (`railway.json` included) |
 
 ---
@@ -90,7 +90,8 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Open .env and fill in DATABASE_URL, SECRET_KEY, and (optionally) GOOGLE_CLIENT_ID / Cloudinary keys
+# Fill in DATABASE_URL and SECRET_KEY. Add AI_GROQ_API_KEY and/or AI_GEMINI_API_KEY for live Studio AI.
+# GOOGLE_CLIENT_ID and Cloudinary credentials are optional unless those features are enabled.
 
 # Run all migrations
 alembic upgrade head
@@ -117,19 +118,11 @@ cp .env.example .env
 npm run dev
 ```
 
-Runs at `http://localhost:5173` by default (Vite picks the next free port if that's taken).
+Runs at `http://127.0.0.1:5174`.
 
-### 4. Website Studio (optional)
+### 4. Website Studio
 
-Only needed if you're working on the drag-and-drop microsite builder.
-
-```bash
-cd "FrontEnd/EditorWindow/Editor window/hackforge-studio"
-npm install
-npm run dev
-```
-
-If it doesn't land on port `4175`, update `VITE_STUDIO_URL` in `FrontEnd/hackforge-react/.env` to match — that's what the main app links to for "Website Builder."
+Studio is part of the main frontend build. No second install, iframe, `VITE_STUDIO_URL`, or port `4175` process is used. See [STUDIO_INTEGRATION.md](STUDIO_INTEGRATION.md).
 
 ---
 
@@ -145,25 +138,33 @@ If it doesn't land on port `4175`, update `VITE_STUDIO_URL` in `FrontEnd/hackfor
 | `JWT_ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS` | No | JWT tuning, sensible defaults provided |
 | `ALLOWED_ORIGINS` | Yes | Comma-separated list of frontend origins allowed by CORS |
 | `FRONTEND_URL` | Yes | Where the backend redirects browser hits on `/`, `/login`, etc. |
+| `AI_GROQ_API_KEY` and/or `AI_GEMINI_API_KEY` | For live Studio AI | Server-only provider credentials; never expose these through `VITE_*` variables |
+| `AI_GROQ_MODEL`, `AI_GEMINI_MODEL` | No | Provider model overrides |
+| `AI_REQUEST_TIMEOUT_SECONDS`, `AI_REQUESTS_PER_MINUTE`, `AI_MAX_TOKENS` | No | AI timeout, per-user request limit, and response budget |
 | `CLOUDINARY_CLOUD_NAME` / `_API_KEY` / `_API_SECRET` | For form file uploads | Only required if a form has a file-upload question |
+
+`AI_REQUESTS_PER_MINUTE` is enforced in memory per API process. A multi-worker deployment needs a shared rate limiter if the limit must apply across every worker.
 
 ### Frontend — `FrontEnd/hackforge-react/.env`
 
 | Variable | Required | Purpose |
 |---|---|---|
 | `VITE_API_BASE_URL` | Yes | Backend base URL, e.g. `http://localhost:8000/api/v1` |
-| `VITE_STUDIO_URL` | Yes | Where the "Website Builder" nav item sends organizers |
 | `VITE_GOOGLE_CLIENT_ID` | For Google login | Same Client ID as the backend's `GOOGLE_CLIENT_ID` |
 | `VITE_ENABLE_DEV_MOCKS` | No | See [Dev login bypass](#dev-login-bypass) below — leave unset unless you want it |
 
 > ⚠️ Never commit `.env`. Only commit `.env.example`. Both are already covered by `.gitignore`.
+
+### Current frontend audit note
+
+As of 2026-07-30, `npm audit --omit=dev` reports two high-severity findings through `react-router-dom@7.18.2` for a React Router Server Components CSRF issue. HackForge uses a client-side `BrowserRouter` SPA and does not enable React Router's Server Components mode. No fixed release is currently published; keep this visible in release review and upgrade when a fixed version becomes available instead of automatically downgrading to npm's suggested older release.
 
 ### Setting up Google Sign-In (optional)
 
 1. [Google Cloud Console](https://console.cloud.google.com/) → create/select a project.
 2. **APIs & Services → OAuth consent screen** → configure it (External, add yourself as a test user if in Testing mode).
 3. **APIs & Services → Credentials → Create Credentials → OAuth client ID** → Application type: **Web application**.
-4. Under **Authorized JavaScript origins**, add the URL your frontend runs on (e.g. `http://localhost:5173`).
+4. Under **Authorized JavaScript origins**, add the URL your frontend runs on (e.g. `http://localhost:5174`).
 5. Copy the generated **Client ID** into both `GOOGLE_CLIENT_ID` (backend `.env`) and `VITE_GOOGLE_CLIENT_ID` (frontend `.env`) — same value in both, no secret needed for this flow.
 6. Restart both dev servers (env vars are only read at startup).
 
@@ -178,6 +179,7 @@ Every table has `id` (UUID), `created_at`, `updated_at` via a shared base model.
 | `users` | All users — organizers, participants, judges |
 | `organizations` | The college/company/team that owns hackathons |
 | `hackathons` | Hackathon events, including `website_config` for the public microsite |
+| `website_versions` | Versioned website project snapshots, including the currently published snapshot |
 | `registrations` | Who registered for which hackathon, plus custom form answers |
 | `teams` / `team_members` | Teams within a hackathon and their membership |
 | `tracks` | Problem tracks (e.g. AI, Web3, Sustainability) |
@@ -216,7 +218,8 @@ Full request/response schemas are self-documented at `/docs` (Swagger) once the 
 |---|---|---|
 | Auth | `/api/v1/auth` | Register, login, Google login |
 | Organizations | `/api/v1/organizations` | Create org, list my orgs |
-| Hackathons | `/api/v1/hackathons` | CRUD, publish, website config, public listing by slug |
+| Hackathons | `/api/v1/hackathons` | CRUD, owner-managed website config, publishing, versions, public listing, and published website snapshots |
+| AI | `/api/v1/ai` | Owner-protected Studio canvas generation and copilot requests |
 | Tracks | `/api/v1/tracks` | Problem tracks per hackathon |
 | Registrations | `/api/v1/registrations` | Register, list, approve/reject/waitlist |
 | Teams | `/api/v1/teams` | Create, join by invite code, leave |
@@ -230,7 +233,7 @@ Full request/response schemas are self-documented at `/docs` (Swagger) once the 
 | Forms | `/api/v1/forms` | Custom form builder, public submission, response grading |
 | Sponsors, Users | `/api/v1/sponsors`, `/api/v1/users` | Routers scaffolded, not yet implemented |
 
-Public endpoints (no auth) include the health check, hackathon listing/detail by slug, public form view/submit, and certificate verification. Everything else requires `Authorization: Bearer <access_token>`.
+Public endpoints (no auth) include the health check, published hackathon listing/detail by slug, `GET /api/v1/hackathons/public/{hackathon_id}/website`, public form view/submit, and certificate verification. Everything else requires `Authorization: Bearer <access_token>`.
 
 ---
 
@@ -266,4 +269,4 @@ It's off by default and compiled out of production builds either way — never s
 
 ## Deployment
 
-`railway.json` is configured for [Railway](https://railway.app): it runs `alembic upgrade head` before each deploy, starts the API with `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and health-checks `/health`. Point `DATABASE_URL`, `SECRET_KEY`, `GOOGLE_CLIENT_ID`, `ALLOWED_ORIGINS`, and `FRONTEND_URL` at your production values via Railway's environment variables — don't reuse local dev secrets.
+`railway.json` is configured for [Railway](https://railway.app): it runs `alembic upgrade head` before each deploy, starts the API with `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and health-checks `/health`. Point `DATABASE_URL`, `SECRET_KEY`, `GOOGLE_CLIENT_ID`, `ALLOWED_ORIGINS`, and `FRONTEND_URL` at your production values via Railway's environment variables. Add at least one server-side AI provider key when live Studio AI is enabled, and never reuse local development secrets.

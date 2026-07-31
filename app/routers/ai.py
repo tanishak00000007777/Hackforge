@@ -10,8 +10,14 @@ from app.schemas.ai import (
     AICopilotResponse,
     AIConversationMessageCreate,
     AIConversationMessageResponse,
+    CanvasGenerateRequest,
+    CanvasGenerateResponse,
 )
-from app.services.ai_service import enforce_ai_rate_limit, request_ai_completion
+from app.services.ai_service import (
+    enforce_ai_rate_limit,
+    generate_canvas_layout,
+    request_ai_completion,
+)
 from app.services import ai_conversation_service
 from app.services.hackathon_service import get_owned_hackathon
 
@@ -56,3 +62,14 @@ async def list_conversation_messages(
 ):
     await get_owned_hackathon(hackathon_id, current_user, db)
     return await ai_conversation_service.get_conversation_history(hackathon_id, current_user, db)
+
+
+@router.post("/canvas-generate", response_model=CanvasGenerateResponse)
+async def canvas_generate(
+    data: CanvasGenerateRequest,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await get_owned_hackathon(data.hackathon_id, current_user, db)
+    await enforce_ai_rate_limit(str(current_user.id))
+    return await generate_canvas_layout(data)

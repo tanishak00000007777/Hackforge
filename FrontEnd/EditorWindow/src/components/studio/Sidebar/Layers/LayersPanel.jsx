@@ -9,13 +9,7 @@ export default function LayersPanel() {
   return (
     <div className="h-full flex flex-col">
 
-      <div className="px-4 py-4 border-b">
-        <h2 className="font-bold text-lg">
-          Layers
-        </h2>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div className="flex-1 overflow-y-auto px-3 pb-10 space-y-1">
 
         {components.map((component) => (
           <LayerItem

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore.js';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -23,7 +23,9 @@ import OrganizerTeamsPage from './pages/OrganizerTeamsPage';
 import OrganizerSubmissionsPage from './pages/OrganizerSubmissionsPage';
 import OrganizerAnalyticsPage from './pages/OrganizerAnalyticsPage';
 import OrganizerSetupPage from './pages/OrganizerSetupPage';
-import StudioBridgePage from './pages/StudioBridgePage';
+import StudioPage from './pages/StudioPage';
+
+const PublishedCanvasPage = lazy(() => import('./pages/PublishedCanvasPage'));
 
 export default function App() {
   const restoreSession = useAuthStore((s) => s.restoreSession);
@@ -41,6 +43,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forms/:slug" element={<PublicFormPage />} />
         <Route path="/certificates/verify/:verificationId" element={<CertificateVerifyPage />} />
+        <Route path="/sites/:hackathonId/:siteSlug" element={<Suspense fallback={null}><PublishedCanvasPage /></Suspense>} />
 
         {/* Role-protected dashboards */}
         <Route path="/organizer" element={
@@ -55,7 +58,7 @@ export default function App() {
         <Route path="/organizer/forms" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><FormsDashboard /></OrganizerSetupRoute></RoleRoute>} />
         <Route path="/organizer/forms/:formId" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><FormBuilderPage /></OrganizerSetupRoute></RoleRoute>} />
         <Route path="/organizer/certificates" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><CertificatesDashboard /></OrganizerSetupRoute></RoleRoute>} />
-        <Route path="/organizer/hackathons/:hackathonId/studio" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><StudioBridgePage /></OrganizerSetupRoute></RoleRoute>} />
+        <Route path="/organizer/hackathons/:hackathonId/studio" element={<RoleRoute allowedRoles={['organizer', 'admin']}><OrganizerSetupRoute><StudioPage /></OrganizerSetupRoute></RoleRoute>} />
         <Route path="/participant" element={
           <RoleRoute allowedRoles={['participant']}>
             <ParticipantSetupRoute><ParticipantDashboard /></ParticipantSetupRoute>

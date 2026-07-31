@@ -15,22 +15,25 @@ export default function LeftSidebar() {
     <aside
       className="
       w-[300px]
+      min-w-[300px]
       shrink-0
       bg-[#FCFBFE]
       border-r
-      border-[#E7E8F4]/60
+      border-[#E7E8F4]
       flex
       flex-col
       overflow-y-auto
-      px-5
-      py-6
+      overflow-x-hidden
+      py-5
       "
     >
       <SidebarHeader />
 
-      <SidebarSearch />
-
       <SidebarTabs />
+
+      {/* Search only filters the block catalogue; on Layers, Media and Versions
+          it was a box that did nothing. */}
+      {(sidebarTab === "Sections" || sidebarTab === "Elements") && <SidebarSearch />}
 
       {sidebarTab === "Layers" ? (
         <LayersPanel />

@@ -1,55 +1,32 @@
-html,
-body,
-#root{
+/* Everything here is scoped to `.studio-root` so the studio can mount inside
+ * the HackForge organizer shell without restyling it.
+ *
+ * The old html/body/#root height chain is gone: `100dvh` on the root element
+ * needs no cooperation from ancestors, so the same rule works standalone and
+ * embedded. */
 
-height:100%;
-
+.studio-root {
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--background);
+  font-family: "Inter", sans-serif;
+  color: var(--on-surface);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-body{
-
-margin:0;
-
-background:var(--background);
-
-font-family:'Inter',sans-serif;
-
-color:var(--on-surface);
-
-overflow:hidden;
-
-text-rendering:optimizeLegibility;
-
--webkit-font-smoothing:antialiased;
-
+.studio-root button {
+  font-family: inherit;
 }
 
-*{
-
-box-sizing:border-box;
-
+.studio-root input,
+.studio-root textarea,
+.studio-root select {
+  font-family: inherit;
+  outline: none;
 }
 
-button{
-
-font-family:inherit;
-
-}
-
-input,
-textarea,
-select{
-
-font-family:inherit;
-
-outline:none;
-
-}
-
-a{
-
-text-decoration:none;
-
-color:inherit;
-
+.studio-root a {
+  text-decoration: none;
+  color: inherit;
 }

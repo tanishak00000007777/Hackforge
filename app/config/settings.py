@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
 
-    allowed_origins: str = "http://127.0.0.1:5174,http://localhost:5174,http://127.0.0.1:4175,http://localhost:4175"
+    allowed_origins: str = "http://127.0.0.1:5174,http://localhost:5174"
     frontend_url: str = "http://127.0.0.1:5174"
     cloudinary_cloud_name: str = ""
     cloudinary_api_key: str = ""
@@ -27,7 +27,11 @@ class Settings(BaseSettings):
     ai_gemini_model: str = "gemini-flash-latest"
     ai_request_timeout_seconds: float = 45
     ai_requests_per_minute: int = 10
-    ai_max_tokens: int = 800
+    # A section-building tool call carries a whole styled tree as JSON arguments
+    # (~1.2-2.5k tokens). At the old 800 the model emitted its preamble, began
+    # the tool call and was cut off mid-argument, so the UI showed a truncated
+    # sentence and nothing happened on the canvas.
+    ai_max_tokens: int = 4000
 
     @field_validator("database_url", mode="before")
     @classmethod

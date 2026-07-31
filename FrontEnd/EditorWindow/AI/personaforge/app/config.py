@@ -30,25 +30,30 @@ BLOCKED_EXTENSIONS = {
 }
 
 # LLM provider config (section 24). Any OpenAI-compatible endpoint works.
-# A hosted key (Groq, shared with the studio) is used when present, because a
-# local Ollama is not running on most machines; otherwise fall back to Ollama.
+# Groq, sharing the key configured for the studio.
 _HOSTED_KEY = os.environ.get("GROQ_API_KEY") or os.environ.get("VITE_GROQ_API_KEY")
 
-if _HOSTED_KEY:
-    # 8b-instant over 70b-versatile: a job makes several multi-thousand-token
-    # calls, and the free tier's daily budget for 70b covers barely two jobs.
-    # Override with PERSONAFORGE_LLM_MODEL on a paid tier.
-    _DEFAULT_BASE_URL, _DEFAULT_MODEL, _DEFAULT_KEY = (
-        "https://api.groq.com/openai/v1", "llama-3.1-8b-instant", _HOSTED_KEY,
-    )
-else:
-    _DEFAULT_BASE_URL, _DEFAULT_MODEL, _DEFAULT_KEY = (
-        "http://localhost:11434/v1", "qwen2.5-coder:7b", "ollama",
-    )
+# 70b-versatile, not 8b-instant. An 8b model cannot hold a design brief across a
+# multi-thousand-token job: it returns generic, unstyled markup, which is the
+# whole complaint this backend exists to fix. The free tier's daily budget for
+# 70b is small, so PERSONAFORGE_LLM_MODEL is the knob to drop back to
+# llama-3.1-8b-instant when quota matters more than quality.
+_DEFAULT_BASE_URL = "https://api.groq.com/openai/v1"
+_DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
+# No silent localhost fallback. A local Ollama is not running on most machines,
+# so falling back to it turned "the key is missing" into a confusing connection
+# error against port 11434. Point PERSONAFORGE_LLM_BASE_URL at Ollama to opt in.
 LLM_BASE_URL = os.environ.get("PERSONAFORGE_LLM_BASE_URL", _DEFAULT_BASE_URL)
 LLM_MODEL = os.environ.get("PERSONAFORGE_LLM_MODEL", _DEFAULT_MODEL)
-LLM_API_KEY = os.environ.get("PERSONAFORGE_LLM_API_KEY", _DEFAULT_KEY)
+LLM_API_KEY = os.environ.get("PERSONAFORGE_LLM_API_KEY", _HOSTED_KEY)
+
+if not LLM_API_KEY:
+    raise RuntimeError(
+        "No LLM credentials. Set GROQ_API_KEY (or VITE_GROQ_API_KEY) in "
+        "FrontEnd/EditorWindow/.env, or set PERSONAFORGE_LLM_BASE_URL and "
+        "PERSONAFORGE_LLM_API_KEY to use a different OpenAI-compatible provider."
+    )
 LLM_TIMEOUT_SECONDS = float(os.environ.get("PERSONAFORGE_LLM_TIMEOUT", "60"))
 LLM_MAX_RETRIES = 1
 # Hosted tiers throttle on tokens-per-minute; a job makes several large calls

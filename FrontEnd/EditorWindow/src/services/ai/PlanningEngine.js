@@ -26,14 +26,17 @@ export class PlanningEngine {
    * loop) decides whether/how to summarise, since a round with no failures
    * isn't necessarily the end of the turn.
    */
-  async executeToolCalls(toolCalls) {
+  async executeToolCalls(toolCalls, onStage = () => {}) {
     const outcomes = [];
-    for (const toolCall of toolCalls) {
+    for (const [index, toolCall] of toolCalls.entries()) {
+      onStage({ stage: "applying", done: index, total: toolCalls.length });
       const result = await toolExecutor.executeToolCall(toolCall);
       outcomes.push({ id: toolCall.id, name: toolCall.name, result });
       memoryManager.logAction(`${toolCall.name} -> ${JSON.stringify(result).slice(0, MAX_RESULT_CHARS)}`);
       memoryManager.addToolResultMessage(toolCall.id, toolCall.name, result);
     }
+
+    onStage({ stage: "applying", done: toolCalls.length, total: toolCalls.length });
 
     const failures = outcomes.filter((outcome) => !outcome.result?.success);
     const succeeded = outcomes.length - failures.length;

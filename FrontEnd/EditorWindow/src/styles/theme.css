@@ -1,4 +1,7 @@
-:root{
+/* Scoped to `.studio-root`, not `:root`: several of these names (--primary,
+   --surface, --shadow) also exist in the HackForge shell with different
+   values, and whichever stylesheet loaded last would win. */
+.studio-root{
 
 /* ===========================
    COLORS

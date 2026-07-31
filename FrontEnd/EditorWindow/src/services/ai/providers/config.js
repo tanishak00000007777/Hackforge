@@ -14,7 +14,7 @@ import { createGeminiProvider } from "./gemini";
 
 export const PROVIDER_DEFAULTS = {
   groq: {
-    label: "Groq",
+    label: "HackForge AI",
     baseUrl: "https://api.groq.com/openai/v1",
     model: "llama-3.3-70b-versatile",
     create: createOpenAICompatibleProvider,

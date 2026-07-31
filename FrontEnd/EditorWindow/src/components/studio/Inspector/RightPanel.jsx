@@ -3,7 +3,6 @@ import { useEditorStore } from "@/store/editorStore";
 import { Trash2 } from "lucide-react";
 import Inspector from "./Inspector";
 import ThemeInspector from "./ThemeInspector";
-import PremiumCard from "./PremiumCard";
 import FooterStatus from "./FooterStatus";
 
 export default function RightPanel() {
@@ -81,8 +80,7 @@ export default function RightPanel() {
       {/* ======================================
           FOOTER
       ======================================= */}
-      <div className="border-t border-[#E7E8F4]/60 p-5 space-y-4">
-        <PremiumCard />
+      <div className="border-t border-[#E7E8F4]/60 px-5 py-3">
         <FooterStatus />
       </div>
     </aside>

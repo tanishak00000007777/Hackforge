@@ -2,9 +2,60 @@ import React, { useState, useEffect } from "react";
 import { useEditorStore } from "@/store/editorStore";
 import { conversationManager } from "@/services/ai/ConversationManager";
 import { runFullAudit } from "@/services/ai/tools/analysisTools";
-import { Sparkles, MessageSquare, ShieldCheck, Search, AlertCircle, X, Send } from "lucide-react";
+import { Sparkles, MessageSquare, ShieldCheck, Search, AlertCircle, X, Send, Check, Loader2 } from "lucide-react";
 
 const SEVERITY_RANK = { low: 0, medium: 1, high: 2 };
+
+/** Named phases, in the order the pipeline emits them. */
+const STAGES = [
+  { id: "reading", label: "Reading your page" },
+  { id: "thinking", label: "Working out the changes" },
+  { id: "applying", label: "Applying to the page" },
+];
+
+/**
+ * A model call can run for fifteen seconds. Three anonymous bouncing dots for
+ * that long reads as a frozen editor, so each phase is named and ticked off as
+ * it completes.
+ */
+function GenerationProgress({ progress }) {
+  const activeIndex = STAGES.findIndex((stage) => stage.id === progress?.stage);
+
+  return (
+    <div className="rounded-2xl rounded-tl-sm border border-[#E7E8F4] bg-white px-4 py-3 shadow-sm">
+      <ul className="space-y-2">
+        {STAGES.map((stage, index) => {
+          const isDone = activeIndex > index;
+          const isActive = activeIndex === index;
+          const counter =
+            isActive && stage.id === "applying" && progress.total
+              ? ` ${Math.min(progress.done + 1, progress.total)} of ${progress.total}`
+              : "";
+
+          return (
+            <li
+              key={stage.id}
+              className={`flex items-center gap-2 text-[12.5px] transition-colors
+                ${isDone ? "text-slate-400" : isActive ? "font-medium text-[#2B0A5A]" : "text-slate-300"}`}
+            >
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                {isDone ? (
+                  <Check size={13} strokeWidth={2.4} className="text-emerald-500" />
+                ) : isActive ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                )}
+              </span>
+              {stage.label}
+              {counter}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 const CATEGORY_LABELS = {
   accessibility: "Accessibility",
   seo: "SEO",
@@ -23,7 +74,8 @@ export default function AICopilot({ isOpen, onClose }) {
   const [prompt, setPrompt] = useState("");
   const [chatHistory, setChatHistory] = useState(conversationManager.getChatHistory());
   const [isGenerating, setIsGenerating] = useState(false);
-  
+  const [progress, setProgress] = useState(null);
+
   const [auditIssues, setAuditIssues] = useState(null);
   const [isAuditing, setIsAuditing] = useState(false);
 
@@ -40,10 +92,28 @@ export default function AICopilot({ isOpen, onClose }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const setAIChangedIds = useEditorStore((state) => state.setAIChangedIds);
+
   const rejectLastChange = () => {
     conversationManager.revertChange(lastChange);
     setLastChange(null);
+    setAIChangedIds([]);
   };
+
+  const keepLastChange = () => {
+    setLastChange(null);
+    setAIChangedIds([]);
+  };
+
+  // The canvas markers describe the last turn; closing the panel ends it.
+  useEffect(() => () => setAIChangedIds([]), [setAIChangedIds]);
+
+  // Follow the conversation: a reply that lands below the fold reads as no reply.
+  const scrollRef = React.useRef(null);
+  useEffect(() => {
+    const list = scrollRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, [chatHistory, isGenerating, progress, lastChange]);
 
   const selectedNode = React.useMemo(() => {
     let found = null;
@@ -78,11 +148,15 @@ export default function AICopilot({ isOpen, onClose }) {
     // Optimistic UI update for user message
     setChatHistory([...conversationManager.getChatHistory(), { role: "user", content: userMsg }]);
     setIsGenerating(true);
+    setProgress({ stage: "reading" });
 
     try {
-      const { change } = await conversationManager.handleUserPrompt(userMsg);
+      const { change } = await conversationManager.handleUserPrompt(userMsg, setProgress);
       setChatHistory([...conversationManager.getChatHistory()]);
       setLastChange(change?.changed ? change : null);
+      // Ring the edits on the canvas, so the result is visible where the page
+      // is rather than only described in the chat.
+      setAIChangedIds(change?.ids || []);
     } catch (err) {
       console.error(err);
       setChatHistory([...conversationManager.getChatHistory(), { 
@@ -91,6 +165,7 @@ export default function AICopilot({ isOpen, onClose }) {
       }]);
     } finally {
       setIsGenerating(false);
+      setProgress(null);
     }
   };
 
@@ -156,27 +231,39 @@ export default function AICopilot({ isOpen, onClose }) {
       {/* Chat Interface */}
       {activeTab === "chat" && (
         <div className="flex-1 flex flex-col h-full overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+            {chatHistory.length === 0 && !isGenerating && (
+              <div className="pt-6 text-center">
+                <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-[#F1EEF9] text-[#2B0A5A]">
+                  <Sparkles size={19} strokeWidth={1.8} />
+                </span>
+                <p className="mt-3 text-[13px] font-semibold text-[#130225]">Describe the change you want</p>
+                <p className="mx-auto mt-1 max-w-[250px] text-[12px] leading-relaxed text-slate-500">
+                  Plain English is fine — “make the hero headline shorter and the button orange”.
+                </p>
+              </div>
+            )}
+
             {chatHistory.map((msg, idx) => {
               const isUser = msg.role === "user";
               const isSystem = msg.role === "system";
-              
+
               if (isSystem) {
                 return (
-                  <div key={idx} className="flex justify-center my-2">
-                    <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                  <div key={idx} className="my-2 flex justify-center">
+                    <span className="rounded-full border border-[#EFEDF6] bg-[#FAF9FD] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                       {msg.content}
                     </span>
                   </div>
                 );
               }
-              
+
               return (
                 <div key={idx} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] break-words whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed shadow-sm
-                    ${isUser 
-                      ? "bg-[#2B0A5A] text-white rounded-tr-sm" 
-                      : "bg-slate-100 text-slate-700 rounded-tl-sm border border-slate-200"
+                  <div className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed
+                    ${isUser
+                      ? "rounded-br-md bg-[#2B0A5A] text-white"
+                      : "rounded-bl-md border border-[#E7E8F4] bg-white text-slate-700 shadow-sm"
                     }
                   `}>
                     {msg.content}
@@ -186,33 +273,37 @@ export default function AICopilot({ isOpen, onClose }) {
             })}
             {isGenerating && (
               <div className="flex justify-start">
-                <div className="bg-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 text-slate-500 flex gap-1">
-                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
-                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></span>
-                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
-                </div>
+                <GenerationProgress progress={progress} />
               </div>
             )}
           </div>
           
           {lastChange && (
-            <div className="mx-3 mb-2 rounded-xl border border-violet-200 bg-violet-50/70 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-violet-700">
-                  {lastChange.pageSwitched ? "Page changed" : `Applied — ${lastChange.summary}`}
+            <div className="mx-3 mb-2 overflow-hidden rounded-xl border border-violet-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between gap-2 bg-violet-50 px-3 py-2">
+                <span className="flex min-w-0 items-center gap-1.5 text-[11.5px] font-semibold text-[#2B0A5A]">
+                  <Check size={12} strokeWidth={2.6} className="shrink-0 text-emerald-600" />
+                  <span className="truncate">
+                    {lastChange.pageSwitched
+                      ? `Opened another page — you were on ${lastChange.fromPageName}`
+                      : lastChange.summary}
+                  </span>
                 </span>
-                <div className="flex items-center gap-1">
-                  {lastChange.undoSteps > 0 && (
+
+                <div className="flex shrink-0 items-center gap-1">
+                  {/* A page switch clears the undo stack, so its way back is
+                      reopening the old page, not an undo. */}
+                  {(lastChange.undoSteps > 0 || lastChange.pageSwitched) && (
                     <button
                       onClick={rejectLastChange}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                      className="rounded-lg border border-[#E7E8F4] bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                     >
-                      Undo this
+                      {lastChange.pageSwitched ? `Back to ${lastChange.fromPageName}` : "Undo this"}
                     </button>
                   )}
                   <button
-                    onClick={() => setLastChange(null)}
-                    className="rounded-lg px-2 py-1 text-[11px] font-semibold text-violet-700 transition hover:bg-violet-100"
+                    onClick={keepLastChange}
+                    className="rounded-lg bg-[#2B0A5A] px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-[#1d0342]"
                   >
                     Keep
                   </button>
@@ -220,9 +311,9 @@ export default function AICopilot({ isOpen, onClose }) {
               </div>
 
               {lastChange.lines?.length > 0 && (
-                <ul className="mt-2 space-y-1">
+                <ul className="divide-y divide-[#F1EEF9]">
                   {lastChange.lines.map((line, i) => (
-                    <li key={i} className="truncate font-mono text-[10.5px] leading-relaxed text-slate-600" title={line}>
+                    <li key={i} className="truncate px-3 py-1.5 text-[11px] leading-relaxed text-slate-600" title={line}>
                       {line}
                     </li>
                   ))}
@@ -231,37 +322,40 @@ export default function AICopilot({ isOpen, onClose }) {
             </div>
           )}
 
-          <div className="p-3 bg-slate-50 border-t border-slate-100">
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {suggestions.map((sug, i) => (
-                <button 
-                  key={i}
-                  onClick={() => handleSendPrompt(null, sug)}
-                  className="whitespace-nowrap px-3 py-1.5 bg-white border border-violet-100 rounded-full text-[11px] text-violet-700 font-medium shadow-sm hover:bg-violet-50 transition"
-                >
-                  {sug}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <form onSubmit={(e) => handleSendPrompt(e)} className="p-4 border-t border-slate-100 bg-white">
+          <form onSubmit={(e) => handleSendPrompt(e)} className="shrink-0 border-t border-[#EFEDF6] bg-white px-3 pb-3 pt-2.5">
+            {suggestions.length > 0 && (
+              <div className="mb-2 flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
+                {suggestions.map((sug, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => handleSendPrompt(null, sug)}
+                    disabled={isGenerating}
+                    className="whitespace-nowrap rounded-full border border-[#E7E8F4] bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 transition hover:border-violet-300 hover:bg-violet-50 hover:text-[#2B0A5A] disabled:opacity-50"
+                  >
+                    {sug}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="relative flex items-center">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={prompt}
-                onChange={e => setPrompt(e.target.value)}
+                onChange={(e) => setPrompt(e.target.value)}
                 maxLength={1000}
                 aria-label="AI design request"
-                placeholder="Ask AI to generate a section..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-full pl-4 pr-12 py-2.5 text-[13px] outline-none focus:border-violet-500 focus:bg-white transition"
+                placeholder="Describe a change to this page…"
+                className="w-full rounded-xl border border-[#E7E8F4] bg-[#FAF9FD] py-2.5 pl-3.5 pr-11 text-[13px] outline-none transition focus:border-violet-400 focus:bg-white"
               />
-              <button 
+              <button
                 type="submit"
                 disabled={!prompt.trim() || isGenerating}
-                className="absolute right-1 w-8 h-8 flex items-center justify-center bg-[#2B0A5A] text-white rounded-full disabled:opacity-50 disabled:bg-slate-300 transition"
+                aria-label="Send"
+                className="absolute right-1.5 flex h-8 w-8 items-center justify-center rounded-lg bg-[#2B0A5A] text-white transition hover:bg-[#1d0342] disabled:bg-[#D9D5E4]"
               >
-                <Send size={14} />
+                {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               </button>
             </div>
           </form>

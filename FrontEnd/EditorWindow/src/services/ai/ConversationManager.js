@@ -21,8 +21,12 @@ class ConversationManager {
    * page directly, so the user needs to see the change and be able to reject
    * it in one click -- not hunt for it and press undo an unknown number of
    * times.
+   *
+   * `onStage` receives { stage, done, total } as the turn progresses. A model
+   * call can take fifteen seconds; a spinner that never says what it is doing
+   * reads as a hang, so the UI narrates the phase instead.
    */
-  async handleUserPrompt(prompt) {
+  async handleUserPrompt(prompt, onStage = () => {}) {
     const before = useEditorStore.getState();
     const treeBefore = structuredClone(before.components);
     const historyBefore = before.history.length;
@@ -36,6 +40,7 @@ class ConversationManager {
 
     try {
       // 1. Snapshot the world state so the AI has context
+      onStage({ stage: "reading" });
       contextEngine.updateSnapshot(before);
 
       // 2. Add user message to memory
@@ -51,6 +56,7 @@ class ConversationManager {
       let anyToolCalls = false;
 
       for (let round = 0; round < MAX_ROUNDS; round++) {
+        onStage({ stage: "thinking" });
         const { reasoningText, toolCalls } = await reasoningEngine.analyzeRequest(prompt);
 
         if (!toolCalls || toolCalls.length === 0) {
@@ -62,7 +68,7 @@ class ConversationManager {
         memoryManager.addAssistantToolCallMessage(reasoningText, toolCalls);
         totalToolCalls += toolCalls.length;
 
-        const { failures, succeeded, rateLimited } = await planningEngine.executeToolCalls(toolCalls);
+        const { failures, succeeded, rateLimited } = await planningEngine.executeToolCalls(toolCalls, onStage);
 
         if (failures.length > 0) {
           finalMessage = succeeded === 0
@@ -93,6 +99,7 @@ class ConversationManager {
       // 6. Update Memory with final AI Response
       memoryManager.addMessage("ai", finalMessage);
 
+      onStage({ stage: "done" });
       return { message: finalMessage, change };
     } catch (err) {
       console.error("AI Agent Error:", err);
@@ -111,9 +118,19 @@ class ConversationManager {
     const state = useEditorStore.getState();
 
     // Switching pages resets history, so a rewind count would be meaningless
-    // and the trees are not comparable anyway.
+    // and the trees are not comparable anyway. Carrying the page we came from
+    // is what makes it recoverable: undo cannot bring it back.
     if (state.currentPageId !== pageBefore) {
-      return { changed: true, pageSwitched: true, undoSteps: 0, summary: "opened another page", lines: [] };
+      const from = state.pages.find((page) => page.id === pageBefore);
+      return {
+        changed: true,
+        pageSwitched: true,
+        fromPageId: pageBefore,
+        fromPageName: from?.name || "the previous page",
+        undoSteps: 0,
+        summary: "opened another page",
+        lines: [],
+      };
     }
 
     const diff = diffTrees(treeBefore, state.components);
@@ -125,12 +142,22 @@ class ConversationManager {
       undoSteps: Math.max(0, state.history.length - historyBefore),
       summary: diff.summary,
       lines: describeDiff(diff),
+      // Ids that still exist on the canvas, so it can point at the edit rather
+      // than leaving the user to spot it. Removed nodes have nothing to mark.
+      ids: [...diff.added, ...diff.modified].map((entry) => entry.id),
       counts: { added: diff.added.length, removed: diff.removed.length, modified: diff.modified.length },
     };
   }
 
   /** Reject the last AI turn by rewinding exactly the steps it made. */
   revertChange(change) {
+    // A page switch is not on the undo stack -- switching cleared it -- so the
+    // only way back is to open the page we came from.
+    if (change?.pageSwitched && change.fromPageId) {
+      useEditorStore.getState().switchPage(change.fromPageId);
+      return true;
+    }
+
     if (!change?.undoSteps) return false;
     const { undo } = useEditorStore.getState();
     for (let step = 0; step < change.undoSteps; step++) undo();

@@ -1,0 +1,187 @@
+/* Tailwind entry for the website studio.
+ *
+ * It lives here rather than in EditorWindow so the studio compiles against
+ * this app's single Tailwind install. Imported only from the lazily loaded
+ * studio chunk, so the rest of the app never pays for it.
+ *
+ * `@import "tailwindcss"` is expanded so preflight can be left out: Tailwind's
+ * preflight resets html, body, every element, headings and form controls
+ * globally, which would restyle the whole organizer dashboard. The scoped
+ * replacement is at the bottom of this file. */
+
+@layer theme, base;
+
+@import "tailwindcss/theme.css" layer(theme);
+
+/* Utilities are deliberately NOT in a layer. This app's index.css opens with
+ * an unlayered `*, *::before, *::after { margin: 0; padding: 0 }`, and
+ * unlayered rules beat every layered one no matter how the layers are
+ * ordered -- so a layered `p-4` lost to the shell's reset and the whole editor
+ * rendered with its spacing collapsed. Unlayered, `.p-4` (0,1,0) simply
+ * outranks `*` (0,0,0) and the cascade does the right thing.
+ *
+ * `source(none)` turns off automatic content detection so utilities are
+ * generated from the studio's markup only; nothing here is emitted on account
+ * of a word that happens to appear in the shell's source. */
+@import "tailwindcss/utilities.css" source(none);
+
+/* Unlayered on purpose: the studio's own tokens and element styles, which
+   should win over utilities exactly as they did when it ran standalone. */
+@import "@/styles/theme.css";
+@import "@/styles/globals.css";
+@import "@/styles/utilities.css";
+@import "@/styles/animations.css";
+@import "@/styles/scrollbar.css";
+
+/* The studio's markup lives outside this package, so automatic content
+   detection does not reach it. */
+@source "../../EditorWindow/src/**/*.{js,jsx}";
+
+/* -------------------------------------------------------------------------- */
+/* Scoped preflight                                                           */
+/* -------------------------------------------------------------------------- */
+
+/* Tailwind's preflight resets `html`, `body`, `*`, headings, lists and form
+ * controls globally. Once the studio shares a document with the organizer
+ * shell that reset restyles the whole dashboard, and CSS is global, so the
+ * damage outlives navigating away from the builder. This keeps only the rules
+ * Tailwind *utilities* depend on, under `.studio-root`. The load-bearing one
+ * is `border: 0 solid`: the `border` utility sets border-width alone and
+ * renders nothing without a default border-style.
+ *
+ * It is inlined here rather than @imported because layer precedence follows
+ * document order, and in dev Vite injects each imported CSS file as its own
+ * <style> tag -- so an imported `@layer base` could land after `utilities` and
+ * win, turning `padding: 0` below into an override of every `p-*` utility.
+ * Same file as the `@layer` statement above means the order is guaranteed. */
+
+@layer base {
+  .studio-root,
+  .studio-root *,
+  .studio-root ::before,
+  .studio-root ::after,
+  .studio-root ::backdrop,
+  .studio-root ::file-selector-button {
+    box-sizing: border-box;
+    border: 0 solid;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Preflight puts these on `html`; `.studio-root` is our root element. The
+     line-height matters -- without it everything inherits the UA's `normal`
+     (~1.2) and the studio's spacing renders tighter than designed. */
+  .studio-root {
+    line-height: 1.5;
+    tab-size: 4;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .studio-root hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+
+  .studio-root abbr:where([title]) {
+    text-decoration: underline dotted;
+  }
+
+  .studio-root h1,
+  .studio-root h2,
+  .studio-root h3,
+  .studio-root h4,
+  .studio-root h5,
+  .studio-root h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  .studio-root a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  .studio-root b,
+  .studio-root strong {
+    font-weight: bolder;
+  }
+
+  .studio-root code,
+  .studio-root kbd,
+  .studio-root samp,
+  .studio-root pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 1em;
+  }
+
+  .studio-root ol,
+  .studio-root ul,
+  .studio-root menu {
+    list-style: none;
+  }
+
+  .studio-root img,
+  .studio-root svg,
+  .studio-root video,
+  .studio-root canvas,
+  .studio-root audio,
+  .studio-root iframe,
+  .studio-root embed,
+  .studio-root object {
+    display: block;
+    vertical-align: middle;
+  }
+
+  .studio-root img,
+  .studio-root video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .studio-root table {
+    border-collapse: collapse;
+    text-indent: 0;
+    border-color: inherit;
+  }
+
+  .studio-root button,
+  .studio-root input,
+  .studio-root optgroup,
+  .studio-root select,
+  .studio-root textarea {
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+    background: transparent;
+    border-radius: 0;
+    opacity: 1;
+  }
+
+  .studio-root button,
+  .studio-root [type="button"],
+  .studio-root [type="reset"],
+  .studio-root [type="submit"] {
+    appearance: button;
+    background-color: transparent;
+    background-image: none;
+  }
+
+  .studio-root :disabled {
+    cursor: default;
+  }
+
+  .studio-root textarea {
+    resize: vertical;
+  }
+
+  .studio-root ::placeholder {
+    opacity: 1;
+    color: color-mix(in oklab, currentColor 50%, transparent);
+  }
+
+  .studio-root [hidden] {
+    display: none !important;
+  }
+}

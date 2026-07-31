@@ -94,8 +94,14 @@ const allDown = new AIGateway([fake("a", quotaError), fake("b", quotaError)], { 
 await assert.rejects(() => allDown.send({}), (err) => err.kind === "quota");
 await assert.rejects(() => allDown.send({}), (err) => err.retryAfterSeconds > 0);
 
-// no configuration at all is an actionable message, not a crash
-await assert.rejects(() => new AIGateway([]).send({}), /No AI provider is configured/);
+// no configuration at all is an actionable message, not a crash. It names no
+// provider or environment variable: an organizer cannot act on either, and the
+// system prompt forbids leaking them.
+await assert.rejects(() => new AIGateway([]).send({}), /HackForge AI is not configured/);
+await assert.rejects(
+  () => new AIGateway([]).send({}),
+  (err) => !/groq|gemini|kimi|VITE_/i.test(err.message),
+);
 
 // a recovered key clears its noted state
 const flaky = { calls: 0 };

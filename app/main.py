@@ -1,7 +1,5 @@
-from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 from app.config.settings import get_settings
@@ -66,8 +64,6 @@ async def health_check():
     return {"status": "ok", "version": settings.app_version}
 
 
-FRONTEND_DIR = Path(__file__).resolve().parent.parent / "FrontEnd"
-STUDIO_DIR = FRONTEND_DIR / "EditorWindow" / "dist"
 REACT_ROUTES = {
     "/": "/",
     "/login": "/login",
@@ -89,5 +85,3 @@ for path, react_path in REACT_ROUTES.items():
 @app.get("/dashboard", include_in_schema=False)
 async def dashboard():
     return RedirectResponse(f"{settings.frontend_url.rstrip('/')}/login")
-
-# app.mount("/studio", StaticFiles(directory=STUDIO_DIR, html=True), name="studio")

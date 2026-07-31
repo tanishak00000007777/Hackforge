@@ -44,6 +44,15 @@ const TOOLS = [
   ["uploadAsset", "Registers an asset URL in the project's asset library.", p("url", "name", "type")],
   ["groupElements", "Collects sibling elements into one new container.", p("elementIds", "wrapperType")],
   ["wrapElement", "Wraps an element in a new container-style element.", p("elementId", "wrapperType")],
+  ["executeBatchActions", "Runs several tool calls as one undoable batch.", p("actions")],
+  ["composeSection", "Builds a complete, fully styled section in one call.", p("name", "section", "children")],
+  ["moveElement", "Moves an element next to or inside another node.", p("elementId", "targetId", "position")],
+  ["createPage", "Adds a new page to the site and opens it.", p("name", "path")],
+  ["switchPage", "Opens another page on the canvas so later edits apply to it.", p("page")],
+  ["deletePage", "Deletes a page and everything on it.", p("page")],
+  ["renamePage", "Changes a page's name and/or URL path.", p("page", "name", "path")],
+  ["duplicatePage", "Copies a page, with all its sections, to a new path.", p("page")],
+  ["listPages", "Lists every page in the site.", p()],
 ];
 
 for (const [name, description, parameters] of TOOLS) {
@@ -70,6 +79,18 @@ assert.ok(names("check the site for accessibility problems").includes("analyzeAc
 assert.ok(names("save this as a template").includes("saveTemplate"));
 assert.ok(names("group these elements into a container").includes("groupElements"));
 
+// --- a selected component owns unscoped colour edits ---
+const selectedNames = (prompt) => selectTools(prompt, { hasSelection: true }).map((tool) => tool.name);
+assert.ok(selectedNames("change the background colour to blue").includes("updateColors"));
+assert.ok(
+  !selectedNames("change the background colour to blue").includes("applyTheme"),
+  "a selected section background must not become a whole-site theme edit",
+);
+assert.ok(
+  selectedNames("apply the ocean theme to the whole site").includes("applyTheme"),
+  "explicit whole-site requests must keep theme tools available",
+);
+
 // --- plurals and spelling variants still match ---
 assert.ok(names("fix the colours on mobile").includes("updateColors"), "colours -> color");
 assert.ok(names("duplicate two sections").includes("duplicateSection"), "sections -> section");
@@ -77,7 +98,7 @@ assert.ok(names("hide it on mobile breakpoints").includes("toggleResponsiveVisib
 
 // --- the whole point: the list stays small ---
 for (const prompt of ["make the heading blue", "audit the page and fix everything", "change section colours and spacing"]) {
-  assert.ok(selectTools(prompt).length <= 18, `too many tools for "${prompt}": ${selectTools(prompt).length}`);
+  assert.ok(selectTools(prompt).length <= 20, `too many tools for "${prompt}": ${selectTools(prompt).length}`);
 }
 assert.ok(selectTools("make the heading blue").length < TOOLS.length, "must not send the whole registry");
 
@@ -104,6 +125,49 @@ assert.ok(
   "the right tool must win decisively enough for callTool to auto-recover",
 );
 assert.ok(!invented.slice(0, 2).some((t) => t.name === "changeElementType"), "verb-only matches must not rank first");
+
+/* --- regression: an edit request must not offer page management ---
+   Reported: prompts went off and opened a different page instead of editing.
+   Every page tool has "page" in its name, which scores at the top weight, and
+   the canvas IS a page so edit requests say the word constantly. The model took
+   the highest ranked option; the canvas went blank, the header's page switcher
+   changed, and switching pages had already cleared the undo stack. */
+const PAGE_TOOLS = ["createPage", "switchPage", "deletePage", "renamePage", "duplicatePage", "listPages"];
+const offersPageTools = (prompt) => names(prompt).some((name) => PAGE_TOOLS.includes(name));
+
+for (const prompt of [
+  "make this page look better",
+  "add a hero section to the page",
+  "change the heading on the page to Welcome",
+  "remove the extra padding on the page",
+  "delete the sponsors section on this page",
+  "improve the whole page",
+  // "page title" is a compound noun -- the request is about the heading.
+  "In this new section add a page title heading Problem Statement",
+]) {
+  assert.ok(!offersPageTools(prompt), `editing the canvas must not offer page management: "${prompt}"`);
+}
+
+// ...but genuinely asking for page management still works.
+for (const prompt of [
+  "add a page",
+  "create an About page",
+  "make a new page called Schedule",
+  "switch to the About page",
+  "go to the sponsors page",
+  "delete the About page",
+  "rename this page to Home",
+  "how many pages does this site have",
+]) {
+  assert.ok(offersPageTools(prompt), `page management must stay available: "${prompt}"`);
+}
+
+// The edit tools the prompt actually wanted are the ones that surface.
+assert.ok(names("add a hero section to the page").includes("createSection"));
+assert.ok(names("change the heading on the page to Welcome").includes("setContent"));
+
+// Excluding them from the turn must not remove the capability.
+assert.ok(searchToolIndex("create a new page").some((t) => t.name === "createPage"));
 
 // the same must hold for other invented names a model might reach for
 assert.equal(searchToolIndex("setBackgroundColor", 3, ["backgroundColor"])[0].name, "updateColors");

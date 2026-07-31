@@ -1,4 +1,4 @@
-import { componentRegistry, elementRegistry } from "@/builder/registry";
+import { catalogueMetadata, componentRegistry, elementRegistry } from "@/builder/registry";
 
 function assignIds(node) {
   if (!node) return node;
@@ -41,6 +41,11 @@ export function createElement(type) {
     hidden: false,
   };
   return assignIds(element);
+}
+
+/** A sidebar catalogue entry -> a node, section or element depending on its category. */
+export function createFromCatalogue(type) {
+  return catalogueMetadata[type]?.category === "Sections" ? createComponent(type) : createElement(type);
 }
 
 export function duplicateNode(node) {
