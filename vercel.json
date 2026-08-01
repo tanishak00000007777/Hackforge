@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "installCommand": "npm install --prefix FrontEnd/hackforge-react && npm install --prefix FrontEnd/EditorWindow",
+  "installCommand": "cd FrontEnd/hackforge-react && npm install && cd ../EditorWindow && npm install",
   "buildCommand": "npm run build --prefix FrontEnd/hackforge-react",
   "outputDirectory": "FrontEnd/hackforge-react/dist",
   "functions": {
