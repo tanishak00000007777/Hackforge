@@ -106,3 +106,4 @@ node_modules/
 # Tooling scratch
 # ==========================================
 .playwright-mcp/
+.vercel
