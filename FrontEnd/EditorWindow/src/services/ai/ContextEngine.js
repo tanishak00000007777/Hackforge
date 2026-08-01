@@ -1,5 +1,6 @@
 import { useEditorStore } from "@/store/editorStore";
 import { resolveNodeRef } from "@/builder/commands/treeHelpers";
+import { listTemplates } from "@/builder/registry/templates";
 
 export class ContextEngine {
   constructor() {
@@ -44,7 +45,7 @@ export class ContextEngine {
       ),
       globalTheme: storeState.globalTheme,
       viewport: storeState.device,
-      availableTemplates: storeState.savedTemplates,
+      availableTemplates: listTemplates(storeState.savedTemplates),
       undoHistorySize: storeState.history.length
     };
   }
@@ -123,7 +124,7 @@ PAGE COMPOSITION
 ${this.composition(state.components)}
 PAGE OUTLINE — each line is: type (id: <id>) "text"
 ${this.outline(state.components).join("\n")}
-TEMPLATES: ${(state.savedTemplates || []).map((t) => t.name).join(", ") || "none"}
+TEMPLATES: ${listTemplates(state.savedTemplates || []).map((t) => t.name).join(", ") || "none"}
 When a tool asks for an id, pass ONLY the value inside (id: ...) — never the type, never "type#id".
 ----------------------
 `;

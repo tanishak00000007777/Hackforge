@@ -2,10 +2,14 @@ import { defineTool, ok, fail, resolveTarget, summarizeNode } from "./defineTool
 import { useEditorStore } from "@/store/editorStore";
 import { duplicateNode } from "@/builder/factories/coreFactory";
 import { editorAdapter } from "../EditorAdapter";
+import { listTemplates } from "@/builder/registry/templates";
 
 const TEMPLATE_TYPES = ["section", "page", "website"];
 
 const store = () => useEditorStore.getState();
+// Built-in templates are not in the store (see editorStore), so every
+// lookup has to go through listTemplates or the AI cannot see them.
+const templates = () => listTemplates(store().savedTemplates);
 
 const describe = (template) => ({
   id: template.id,
@@ -55,7 +59,7 @@ export const loadTemplate = defineTool({
     required: ["templateId"],
   },
   execute: ({ templateId }) => {
-    const template = store().savedTemplates.find((t) => t.id === templateId);
+    const template = templates().find((t) => t.id === templateId);
     if (!template) return fail(`No template found with id '${templateId}'.`);
 
     return ok({
@@ -79,7 +83,7 @@ export const searchTemplates = defineTool({
   },
   execute: ({ query, type }) => {
     const needle = query?.toLowerCase();
-    const matches = store().savedTemplates.filter((template) => {
+    const matches = templates().filter((template) => {
       if (type && template.type !== type) return false;
       if (needle && !template.name.toLowerCase().includes(needle)) return false;
       return true;
@@ -100,7 +104,7 @@ export const applyTemplate = defineTool({
     required: ["templateId"],
   },
   execute: ({ templateId, confirmReplace }) => {
-    const template = store().savedTemplates.find((t) => t.id === templateId);
+    const template = templates().find((t) => t.id === templateId);
     if (!template) return fail(`No template found with id '${templateId}'.`);
 
     if (template.type === "section") {
